@@ -1,0 +1,369 @@
+import Head from "next/head";
+import { useEffect, useState } from "react";
+import {
+  FiBell,
+  FiMoon,
+  FiGlobe,
+  FiLock,
+  FiDatabase,
+  FiHelpCircle,
+  FiFileText,
+  FiLogOut,
+  FiChevronRight,
+} from "react-icons/fi";
+
+function Toggle({ checked, onChange, id }) {
+  return (
+    <button
+      type="button"
+      className={`toggle${checked ? " checked" : ""}`}
+      role="switch"
+      aria-checked={checked}
+      aria-labelledby={id}
+      onClick={() => onChange(!checked)}
+    >
+      <span className="toggle-track">
+        <span className="toggle-thumb" />
+      </span>
+    </button>
+  );
+}
+
+export default function Settings() {
+  const [theme, setTheme] = useState("light");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem("theme") || "light";
+    setTheme(storedTheme);
+    document.documentElement.dataset.theme = storedTheme;
+
+    const storedNotifications = localStorage.getItem("notifications-enabled");
+    if (storedNotifications) {
+      setNotificationsEnabled(storedNotifications === "on");
+    }
+  }, []);
+
+  const applyTheme = (value) => {
+    setTheme(value);
+    document.documentElement.dataset.theme = value;
+    localStorage.setItem("theme", value);
+  };
+
+  const toggleNotifications = (nextState) => {
+    setNotificationsEnabled(nextState);
+    localStorage.setItem("notifications-enabled", nextState ? "on" : "off");
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Setari - Calming</title>
+      </Head>
+
+      <main className="settings-layout">
+        <section className="card">
+          <div className="section-title">Cont</div>
+          <div className="settings-item">
+            <div>
+              <div className="item-title">Sarah Mitchell</div>
+              <div className="muted">sarah.mitchell@email.com</div>
+            </div>
+            <button className="btn">Editeaza</button>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-title">Preferinte</div>
+          <div className="settings-group">
+            <div className="settings-item">
+              <div className="item-leading globe">
+                <FiGlobe />
+              </div>
+              <div className="grow">
+                <div className="item-title" id="language-label">
+                  Limba
+                </div>
+                <div className="muted">Romana</div>
+              </div>
+              <FiChevronRight className="chevron" aria-hidden />
+            </div>
+
+            <div className="settings-item">
+              <div className="item-leading bell">
+                <FiBell />
+              </div>
+              <div className="grow">
+                <div className="item-title" id="notifications-label">
+                  Notificari
+                </div>
+                <div className="muted">
+                  {notificationsEnabled ? "Activate" : "Dezactivate"}
+                </div>
+              </div>
+              <Toggle
+                checked={notificationsEnabled}
+                onChange={toggleNotifications}
+                id="notifications-label"
+              />
+            </div>
+
+            <div className="settings-item">
+              <div className="item-leading moon">
+                <FiMoon />
+              </div>
+              <div className="grow">
+                <div className="item-title" id="theme-label">
+                  Mod intunecat
+                </div>
+                <div className="muted">{theme === "dark" ? "Pornit" : "Oprit"}</div>
+              </div>
+              <Toggle
+                checked={theme === "dark"}
+                onChange={(value) => applyTheme(value ? "dark" : "light")}
+                id="theme-label"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-title">Confidentialitate si securitate</div>
+          <div className="settings-group">
+            <button className="settings-link">
+              <span className="item-leading lock">
+                <FiLock />
+              </span>
+              <span className="grow">Setari confidentialitate</span>
+              <FiChevronRight className="chevron" aria-hidden />
+            </button>
+            <button className="settings-link">
+              <span className="item-leading database">
+                <FiDatabase />
+              </span>
+              <span className="grow">Date si stocare</span>
+              <FiChevronRight className="chevron" aria-hidden />
+            </button>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="section-title">Suport</div>
+          <div className="settings-group">
+            <button className="settings-link">
+              <span className="item-leading help">
+                <FiHelpCircle />
+              </span>
+              <span className="grow">Centru de ajutor</span>
+              <FiChevronRight className="chevron" aria-hidden />
+            </button>
+            <button className="settings-link">
+              <span className="item-leading file">
+                <FiFileText />
+              </span>
+              <span className="grow">Termeni si confidentialitate</span>
+              <FiChevronRight className="chevron" aria-hidden />
+            </button>
+          </div>
+        </section>
+
+        <div className="footer">
+          <div className="version">Calming v1.0.0</div>
+          <button className="signout" type="button">
+            <FiLogOut />
+            <span>Deconectare</span>
+          </button>
+        </div>
+      </main>
+
+      
+        .settings-layout {
+          display: grid;
+          gap: 20px;
+        }
+        .settings-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 16px 0;
+        }
+        .settings-item + .settings-item {
+          border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .settings-group .settings-item:first-child,
+        .settings-group .settings-link:first-child {
+          padding-top: 0;
+        }
+        .settings-group .settings-item:last-child,
+        .settings-group .settings-link:last-child {
+          padding-bottom: 0;
+          border-bottom: none;
+        }
+        .settings-group .settings-item {
+          padding-left: 0;
+          padding-right: 0;
+        }
+        .item-title {
+          font-weight: 600;
+        }
+        .grow {
+          flex: 1 1 auto;
+        }
+        .item-leading {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          display: grid;
+          place-items: center;
+          font-size: 18px;
+          background: #fde3e8;
+          color: #cf4d71;
+        }
+        .item-leading.globe {
+          background: #ffe7e7;
+        }
+        .item-leading.bell {
+          background: #fbe8ff;
+          color: #a755c2;
+        }
+        .item-leading.moon {
+          background: #e7f0ff;
+          color: #4a6bd6;
+        }
+        .item-leading.lock {
+          background: #ffe7e7;
+        }
+        .item-leading.database {
+          background: #fff3d6;
+          color: #f7a441;
+        }
+        .item-leading.help {
+          background: #e5f7f2;
+          color: #2ecc9a;
+        }
+        .item-leading.file {
+          background: #ebe8ff;
+          color: #7d6bff;
+        }
+        .settings-group {
+          display: flex;
+          flex-direction: column;
+          padding-top: 12px;
+        }
+        .settings-link {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 16px 0;
+          border: none;
+          background: transparent;
+          text-align: left;
+          font: inherit;
+          color: inherit;
+          cursor: pointer;
+        }
+        .settings-link + .settings-link {
+          border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .settings-link:hover {
+          color: var(--primary-700);
+        }
+        .chevron {
+          font-size: 20px;
+          color: rgba(0, 0, 0, 0.35);
+        }
+        .toggle {
+          width: 46px;
+          height: 26px;
+          padding: 0;
+          border-radius: 999px;
+          border: none;
+          background: rgba(0, 0, 0, 0.1);
+          cursor: pointer;
+          position: relative;
+          transition: background 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-start;
+          box-sizing: border-box;
+          appearance: none;
+          -webkit-appearance: none;
+        }
+        html[data-theme="dark"] .toggle {
+          background: rgba(255, 255, 255, 0.25);
+        }
+        .toggle:hover {
+          background: rgba(0, 0, 0, 0.18);
+        }
+        html[data-theme="dark"] .toggle:hover {
+          background: rgba(255, 255, 255, 0.35);
+        }
+        .toggle:focus-visible {
+          outline: 2px solid var(--primary-500);
+          outline-offset: 2px;
+        }
+        .toggle-track {
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          display: block;
+        }
+        .toggle-thumb {
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #ffffff;
+          transition: transform 0.2s ease;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+        html[data-theme="dark"] .toggle-thumb {
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+        }
+        .toggle.checked {
+          background: var(--primary-600);
+        }
+        html[data-theme="dark"] .toggle.checked {
+          background: var(--primary-400);
+        }
+        .toggle.checked .toggle-thumb {
+          transform: translateX(20px);
+        }
+        .footer {
+          display: grid;
+          gap: 12px;
+          justify-items: center;
+          margin-top: 12px;
+        }
+        .version {
+          font-size: 12px;
+          color: rgba(0, 0, 0, 0.45);
+        }
+        .signout {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 12px 18px;
+          border-radius: 16px;
+          border: 1px solid #f8b4c4;
+          background: #ffeef2;
+          color: #cf4d71;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .signout:hover {
+          background: #ffdbe4;
+        }
+      `}</style
+      >
+    </>
+  );
+}
+
+
+
+
+
