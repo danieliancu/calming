@@ -190,6 +190,46 @@ main {
   color: var(--primary-700);
 }
 
+.icon-link.avatar {
+  width: 36px;
+  height: 36px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  background: rgba(74, 144, 226, 0.15);
+  color: var(--primary-700);
+}
+
+.icon-link.avatar:hover,
+.icon-link.avatar.active {
+  background: var(--primary-500);
+  color: #fff;
+}
+
+.icon-link.avatar span {
+  pointer-events: none;
+}
+
+.icon-link.has-badge {
+  position: relative;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
 .hamburger {
   display: none;
   flex-direction: column;
@@ -429,6 +469,35 @@ main {
 
 .row.wrap {
   flex-wrap: wrap;
+}
+
+.mood-row {
+  width: 100%;
+}
+
+@media (max-width: 500px) {
+  .mood-row {
+    flex-wrap: nowrap;
+    --mood-gap: clamp(4px, 1.5vw, var(--space-2));
+    --mood-item-width: calc((100% - (5 * var(--mood-gap))) / 6);
+    gap: var(--mood-gap);
+  }
+
+  .mood-row .mood-button {
+    flex: 0 0 var(--mood-item-width);
+    height: calc(var(--mood-item-width) * 1.25);
+    width: 14%;
+    min-width: 18%;
+    font-size: clamp(8px, 1vw, 12px);
+  }
+
+  .mood-row .mood-emoji {
+    font-size: clamp(18px, 4.2vw, 20px);
+  }
+
+  .mood-row .mood-label {
+    font-size: clamp(12px, 2.5vw, 18px);
+  }
 }
 
 .mood-button {
@@ -741,7 +810,7 @@ main {
   border-radius: var(--radius-lg);
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: var(--primary-100);
-  height: 340px;
+  height: 240px;
   object-fit: cover;
 }
 
@@ -1062,6 +1131,47 @@ main {
   gap: var(--space-4);
 }
 
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-3) auto;
+}
+
+.profile-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  font-weight: 600;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--surface);
+  color: var(--text-700);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.profile-action.primary {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.profile-action.primary:hover {
+  filter: brightness(1.05);
+}
+
+.profile-action.secondary:hover {
+  background: rgba(74, 144, 226, 0.12);
+  color: var(--primary-700);
+}
+
+.profile-action.secondary span {
+  font-weight: 600;
+}
+
 .profile-card {
   display: grid;
   gap: var(--space-3);
@@ -1133,6 +1243,128 @@ main {
   display: grid;
   gap: var(--space-2);
   box-shadow: var(--shadow-sm);
+}
+
+.journal-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.journal-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.journal-header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.journal-footer {
+  display: flex;
+  justify-content: flex-start;
+  margin:auto;
+}
+
+.journal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.journal-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  align-items: flex-start;
+      border-bottom: 1px solid black;
+    padding-bottom: 30px;
+    margin-bottom: 20px;
+}
+
+.journal-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(74, 144, 226, 0.15);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.journal-body {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.journal-meta {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  font-size: 14px;
+  color: var(--text-700);
+  justify-content: space-between;
+}
+
+.journal-mood {
+  font-size:10px;
+}
+
+.journal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-500);
+}
+
+.journal-tags .label {
+  font-weight: 600;
+  color: var(--text-700);
+}
+
+.journal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.journal-delete {
+  border: none;
+  background: none;
+  color: #ef4444;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.journal-delete:hover {
+  text-decoration: underline;
+}
+
+.journal-delete:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.journal-type {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(74, 144, 226, 0.12);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.journal-notes {
+  font-size: 15px;
+  color: var(--text-700);
+}
+
+.journal-date {
+  font-size: 12px;
+  color: var(--text-500);
 }
 
 .stats-icon {
@@ -1524,6 +1756,7 @@ main {
   transition: 0.2s ease;
   max-width: 300px;
   margin: auto;
+  font-size: 16px;
 }
 
 .settings-signout-card:hover {
@@ -1578,4 +1811,79 @@ main {
 
 .toggle.checked .toggle-thumb {
   transform: translateX(22px);
+}
+
+.auth-card {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.auth-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.auth-field {
+  display: grid;
+  gap: var(--space-1);
+  font-size: 14px;
+  color: var(--text-700);
+}
+
+.auth-field input {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  font-size: 15px;
+}
+
+.auth-field input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+}
+
+.error {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.info {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #047857;
+  font-size: 14px;
+}
+
+.auth-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary-600);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.link-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.small-text {
+  font-size: 13px;
+  color: var(--text-500);
+  margin: 0;
 }

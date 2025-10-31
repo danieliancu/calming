@@ -7,9 +7,9 @@ export default function NewJournalPage() {
   return (
     <>
       <Head>
-        <title>Jurnal ? Intrare | CalmMind</title>
+        <title>Jurnal - Nota completa</title>
       </Head>
-      <JournalModal onClose={() => { router.push("/", undefined, { shallow: true }); }} />
+      <JournalModal onClose={() => { router.replace("/journal"); }} />
     </>
   );
 }

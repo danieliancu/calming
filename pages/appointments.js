@@ -1,19 +1,30 @@
 import Head from "next/head";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { query } from "@/lib/db";
+import { useAuth } from "@/contexts/AuthContext";
 
-const TYPES = ["Consultatie", "Evaluare", "Follow-up", "Consiliere online"];
-const TIMES = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
-
-export default function Appointments() {
+export default function Appointments({ types, timeSlots, psychologists }) {
   const today = new Date();
-  const [type, setType] = useState(TYPES[0]);
-  const [doctor, setDoctor] = useState(null);
+  const [selectedTypeId, setSelectedTypeId] = useState(types[0]?.id ?? null);
+  const [selectedDoctorId, setSelectedDoctorId] = useState(psychologists[0]?.id ?? null);
   const [month, setMonth] = useState(today.getMonth());
   const [year, setYear] = useState(today.getFullYear());
   const [date, setDate] = useState(null);
   const [time, setTime] = useState(null);
+  const { isAuthenticated, promptAuth } = useAuth();
 
   const days = useMemo(() => buildMonthGrid(year, month), [year, month]);
+
+  const typeLabel = types.find((item) => item.id === selectedTypeId)?.label ?? "Tip sedinta";
+  const doctor = psychologists.find((item) => item.id === selectedDoctorId) ?? null;
+
+  const handleConfirm = useCallback(() => {
+    if (!isAuthenticated) {
+      promptAuth();
+      return;
+    }
+    alert("Programarea ta a fost trimisa (demo).");
+  }, [isAuthenticated, promptAuth]);
 
   return (
     <>
@@ -24,13 +35,13 @@ export default function Appointments() {
       <section className="card accent">
         <div className="section-title">Tip sedinta</div>
         <div className="row wrap">
-          {TYPES.map((entry) => (
+          {types.map((entry) => (
             <button
-              key={entry}
-              className={`btn ${entry === type ? "primary" : ""}`}
-              onClick={() => setType(entry)}
+              key={entry.id}
+              className={`btn ${entry.id === selectedTypeId ? "primary" : ""}`}
+              onClick={() => setSelectedTypeId(entry.id)}
             >
-              {entry}
+              {entry.label}
             </button>
           ))}
         </div>
@@ -70,13 +81,13 @@ export default function Appointments() {
       <section className="card u-mt-4">
         <div className="section-title">Alege ora</div>
         <div className="row wrap">
-          {TIMES.map((slot) => (
+          {timeSlots.map((slot) => (
             <button
-              key={slot}
-              className={`btn ${slot === time ? "primary" : ""}`}
-              onClick={() => setTime(slot)}
+              key={slot.id}
+              className={`btn ${slot.slot === time ? "primary" : ""}`}
+              onClick={() => setTime(slot.slot)}
             >
-              {slot}
+              {slot.slot}
             </button>
           ))}
         </div>
@@ -86,18 +97,36 @@ export default function Appointments() {
         <div className="row">
           <div className="grow">
             <div>
-              <b>{type}</b>
-              {doctor ? ` / ${doctor.name}` : ""}
+              <b>{typeLabel}</b>
+              {doctor ? ` / ${doctor.full_name}` : ""}
             </div>
             <div className="muted">
               {date ? formatDate(date) : "Selecteaza data"} {time ? `/ ${time}` : ""}
             </div>
           </div>
-          <button className="btn primary">Confirma programarea</button>
+          <button className="btn primary" type="button" onClick={handleConfirm}>
+            Confirma programarea
+          </button>
         </div>
       </section>
     </>
   );
+}
+
+export async function getServerSideProps() {
+  const [types, timeSlots, psychologists] = await Promise.all([
+    query("SELECT id, label FROM appointment_types ORDER BY id"),
+    query("SELECT id, slot FROM appointment_time_slots ORDER BY slot"),
+    query("SELECT id, full_name, specialty FROM psychologists ORDER BY rating DESC, full_name ASC"),
+  ]);
+
+  return {
+    props: {
+      types,
+      timeSlots,
+      psychologists,
+    },
+  };
 }
 
 const MONTHS = [

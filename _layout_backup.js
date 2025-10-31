@@ -17,15 +17,10 @@ export default function Layout({ children }) {
     const envValue = Number(process.env.NEXT_PUBLIC_DEFAULT_USER_ID ?? 0);
     return Number.isFinite(envValue) && envValue > 0 ? envValue : null;
   })();
-  const resolveInitialUser = useCallback(() => {
-    const cookieId =
-      typeof window !== "undefined" ? getUserIdForClient(document.cookie) : null;
-    const effectiveId = cookieId ?? fallbackUserId;
-    return { id: effectiveId, initials: null, name: null, newNotifications: 0 };
-  }, [fallbackUserId]);
-
-  const [authUser, setAuthUser] = useState(resolveInitialUser);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [authUser, setAuthUser] = useState(() => {
+    const id = typeof window !== "undefined" ? getUserIdForClient(document.cookie) : fallbackUserId;
+    return { id, initials: null, name: null, newNotifications: 0 };
+  });
   const isAuthenticated = typeof authUser.id === "number" && authUser.id > 0;
 
   const mainLinks = [
@@ -79,10 +74,6 @@ export default function Layout({ children }) {
     setShowAuthModal(true);
   }, []);
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
   const computeAuthUser = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/status");
@@ -100,9 +91,10 @@ export default function Layout({ children }) {
       };
     } catch (error) {
       console.error("Auth status error", error);
-      return resolveInitialUser();
+      const id = typeof window !== "undefined" ? getUserIdForClient(document.cookie) : fallbackUserId;
+      return { id, initials: null, name: null, newNotifications: 0 };
     }
-  }, [resolveInitialUser]);
+  }, [fallbackUserId]);
 
   const refreshAuthStatus = useCallback(async () => {
     const next = await computeAuthUser();
@@ -138,13 +130,6 @@ export default function Layout({ children }) {
       setShowAuthModal(false);
     }
   }, [refreshAuthStatus]);
-
-  const handleJournalSaved = useCallback(() => {
-    if (router.pathname === "/journal") {
-      return router.replace(router.pathname, undefined, { scroll: false });
-    }
-    return undefined;
-  }, [router]);
 
   const {
     id: currentUserId,
@@ -196,40 +181,29 @@ export default function Layout({ children }) {
 
               if (link.href === "/notifications") {
                 const Icon = link.icon;
-                const count = isHydrated ? currentNewNotifications ?? 0 : 0;
+                const count = currentNewNotifications ?? 0;
                 const displayCount = count > 99 ? "99+" : count;
-                const classes = ["icon-link"];
-                if (isHydrated && count > 0) {
-                  classes.push("has-badge");
-                }
-                if (active) {
-                  classes.push("active");
-                }
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
                     aria-label={link.label}
-                    className={classes.join(" ")}
+                    className={`icon-link ${count > 0 ? "has-badge" : ""} ${active ? "active" : ""}`}
                   >
                     <Icon />
-                    {isHydrated && count > 0 ? <span className="notif-badge">{displayCount}</span> : null}
+                    {count > 0 ? <span className="notif-badge">{displayCount}</span> : null}
                   </Link>
                 );
               }
 
-              if (link.href === "/profile" && isHydrated && isAuthenticated) {
+              if (link.href === "/profile" && isAuthenticated) {
                 const initials = (currentUserInitials || link.label.slice(0, 2)).toUpperCase();
-                const classes = ["icon-link", "avatar"];
-                if (active) {
-                  classes.push("active");
-                }
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
                     aria-label={link.label}
-                    className={classes.join(" ")}
+                    className={`icon-link avatar ${active ? "active" : ""}`}
                   >
                     <span>{initials}</span>
                   </Link>
@@ -237,16 +211,12 @@ export default function Layout({ children }) {
               }
 
               const Icon = link.icon;
-              const classes = ["icon-link"];
-              if (active) {
-                classes.push("active");
-              }
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   aria-label={link.label}
-                  className={classes.join(" ")}
+                  className={`icon-link ${active ? "active" : ""}`}
                 >
                   <Icon />
                 </Link>
@@ -279,7 +249,7 @@ export default function Layout({ children }) {
       </header>
 
       <main className="container">{children}</main>
-      {journalOpen && isAuthenticated && <JournalModal onClose={closeJournal} onSaved={handleJournalSaved} />}
+      {journalOpen && isAuthenticated && <JournalModal onClose={closeJournal} />}
       {showAuthModal && <AuthPromptModal onClose={handleCloseAuth} />}
 
       <Footer />
@@ -360,7 +330,7 @@ function Footer() {
               <Link href="/community">Comunitate</Link>
             </li>
             <li>
-              <Link href="/psychologists">Programari</Link>
+              <Link href="/psychologists">Programări</Link>
             </li>
           </ul>
         </div>

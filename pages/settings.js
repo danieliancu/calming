@@ -1,4 +1,4 @@
-﻿import Head from "next/head";
+import Head from "next/head";
 import { useEffect, useState } from "react";
 import {
   FiBell,
@@ -11,6 +11,7 @@ import {
   FiLogOut,
   FiChevronRight,
 } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
 
 function Toggle({ checked, onChange, id }) {
   return (
@@ -32,6 +33,7 @@ function Toggle({ checked, onChange, id }) {
 export default function Settings() {
   const [theme, setTheme] = useState("light");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const { isAuthenticated, promptAuth, signOut } = useAuth();
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme") || "light";
@@ -62,133 +64,146 @@ export default function Settings() {
       </Head>
 
       <main className="settings-main">
-
-          <div className="card">
-            <span className="section-title">Preferinte</span>
-            <div className="grid community-group-grid">
-              <div className="list-item">
-                <div className="settings-leading">
-                  <span className="settings-icon-bubble">
-                    <FiGlobe />
-                  </span>
-                  <div className="settings-item-content">
-                    <span className="settings-item-title">Limba</span>
-                    <span className="settings-item-muted">Romana</span>
-                  </div>
+        <div className="card">
+          <span className="section-title">Preferinte</span>
+          <div className="grid community-group-grid">
+            <div className="list-item">
+              <div className="settings-leading">
+                <span className="settings-icon-bubble">
+                  <FiGlobe />
+                </span>
+                <div className="settings-item-content">
+                  <span className="settings-item-title">Limba</span>
+                  <span className="settings-item-muted">Romana</span>
                 </div>
-                <FiChevronRight className="settings-chevron" aria-hidden />
               </div>
+              <FiChevronRight className="settings-chevron" aria-hidden />
+            </div>
 
-              <div className="list-item">
-                <div className="settings-leading">
-                  <span className="settings-icon-bubble">
-                    <FiBell />
+            <div className="list-item">
+              <div className="settings-leading">
+                <span className="settings-icon-bubble">
+                  <FiBell />
+                </span>
+                <div className="settings-item-content">
+                  <span className="settings-item-title" id="notifications-label">
+                    Notificari
                   </span>
-                  <div className="settings-item-content">
-                    <span className="settings-item-title" id="notifications-label">Notificari</span>
-                    <span className="settings-item-muted">
-                      {notificationsEnabled ? "Activate" : "Dezactivate"}
-                    </span>
-                  </div>
+                  <span className="settings-item-muted">
+                    {notificationsEnabled ? "Activate" : "Dezactivate"}
+                  </span>
                 </div>
-                <Toggle checked={notificationsEnabled} onChange={toggleNotifications} id="notifications-label" />
               </div>
+              <Toggle checked={notificationsEnabled} onChange={toggleNotifications} id="notifications-label" />
+            </div>
 
-              <div className="list-item">
-                <div className="settings-leading">
-                  <span className="settings-icon-bubble">
-                    <FiMoon />
+            <div className="list-item">
+              <div className="settings-leading">
+                <span className="settings-icon-bubble">
+                  <FiMoon />
+                </span>
+                <div className="settings-item-content">
+                  <span className="settings-item-title" id="theme-label">
+                    Mod intunecat
                   </span>
-                  <div className="settings-item-content">
-                    <span className="settings-item-title" id="theme-label">Mod intunecat</span>
-                    <span className="settings-item-muted">{theme === "dark" ? "Pornit" : "Oprit"}</span>
-                  </div>
+                  <span className="settings-item-muted">{theme === "dark" ? "Pornit" : "Oprit"}</span>
                 </div>
-                <Toggle
-                  checked={theme === "dark"}
-                  onChange={(value) => applyTheme(value ? "dark" : "light")}
-                  id="theme-label"
-                />
               </div>
+              <Toggle
+                checked={theme === "dark"}
+                onChange={(value) => applyTheme(value ? "dark" : "light")}
+                id="theme-label"
+              />
             </div>
           </div>
+        </div>
 
-          <div className="card">
-            <span className="section-title">Confidentialitate & Securitate</span>
-            <div className="grid community-group-grid">
-              <div className="list-item">
-                <div className="settings-leading">
-                  <span className="settings-icon-bubble">
-                    <FiLock />
-                  </span>
-                  <div className="settings-item-content">
-                    <span className="settings-item-title">Setari confidentialitate</span>
-                  </div>
+        <div className="card">
+          <span className="section-title">Confidentialitate &amp; Securitate</span>
+          <div className="grid community-group-grid">
+            <div className="list-item">
+              <div className="settings-leading">
+                <span className="settings-icon-bubble">
+                  <FiLock />
+                </span>
+                <div className="settings-item-content">
+                  <span className="settings-item-title">Setari confidentialitate</span>
                 </div>
-                <FiChevronRight className="settings-chevron" aria-hidden />
               </div>
+              <FiChevronRight className="settings-chevron" aria-hidden />
+            </div>
 
-              <div className="list-item">
-                <div className="settings-leading">
-                  <span className="settings-icon-bubble">
-                    <FiDatabase />
-                  </span>
-                  <div className="settings-item-content">
-                    <span className="settings-item-title">Date si stocare</span>
-                  </div>
+            <div className="list-item">
+              <div className="settings-leading">
+                <span className="settings-icon-bubble">
+                  <FiDatabase />
+                </span>
+                <div className="settings-item-content">
+                  <span className="settings-item-title">Date si stocare</span>
                 </div>
-                <FiChevronRight className="settings-chevron" aria-hidden />
               </div>
+              <FiChevronRight className="settings-chevron" aria-hidden />
             </div>
           </div>
+        </div>
 
-          <div className="card">
-            <span className="section-title">Suport</span>
-            <div className="grid community-group-grid">
-              <div className="list-item">
-                <div className="settings-leading">
-                  <span className="settings-icon-bubble">
-                    <FiHelpCircle />
-                  </span>
-                  <div className="settings-item-content">
-                    <span className="settings-item-title">Centru de ajutor</span>
-                  </div>
+        <div className="card">
+          <span className="section-title">Suport</span>
+          <div className="grid community-group-grid">
+            <div className="list-item">
+              <div className="settings-leading">
+                <span className="settings-icon-bubble">
+                  <FiHelpCircle />
+                </span>
+                <div className="settings-item-content">
+                  <span className="settings-item-title">Centru de ajutor</span>
                 </div>
-                <FiChevronRight className="settings-chevron" aria-hidden />
               </div>
+              <FiChevronRight className="settings-chevron" aria-hidden />
+            </div>
 
-              <div className="list-item">
-                <div className="settings-leading">
-                  <span className="settings-icon-bubble">
-                    <FiFileText />
-                  </span>
-                  <div className="settings-item-content">
-                    <span className="settings-item-title">Termeni & Politici</span>
-                  </div>
+            <div className="list-item">
+              <div className="settings-leading">
+                <span className="settings-icon-bubble">
+                  <FiFileText />
+                </span>
+                <div className="settings-item-content">
+                  <span className="settings-item-title">Termeni &amp; Politici</span>
                 </div>
-                <FiChevronRight className="settings-chevron" aria-hidden />
               </div>
+              <FiChevronRight className="settings-chevron" aria-hidden />
             </div>
           </div>
+        </div>
 
         <div className="settings-version">Calming v1.0.0</div>
 
-
-        <div className="settings-card settings-signout-card">
-          <FiLogOut size={18} />
-          <span>Ieși din cont</span>
-        </div>
-
+        {isAuthenticated ? (
+          <div
+            className="settings-card settings-signout-card"
+            role="button"
+            tabIndex={0}
+            onClick={signOut}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                signOut();
+              }
+            }}
+          >
+            <FiLogOut size={18} />
+            <span>Iesi din cont</span>
+          </div>
+        ) : (
+          <div className="card u-mt-4">
+            <span className="section-title">Autentificare</span>
+            <p className="muted">Conecteaza-te pentru a sincroniza preferintele pe toate dispozitivele.</p>
+            <button className="btn primary u-mt-2" type="button" onClick={promptAuth}>
+              Intra in cont
+            </button>
+          </div>
+        )}
       </main>
     </>
-  );
-}
-
-function SettingsSection({ title, children }) {
-  return (
-    <section className="settings-section">
-      <span className="settings-heading">{title}</span>
-      {children}
-    </section>
   );
 }

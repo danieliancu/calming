@@ -1,94 +1,26 @@
-﻿import Head from "next/head";
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { FiZap, FiStar, FiUsers, FiHelpCircle } from "react-icons/fi";
-import { FaStar } from "react-icons/fa"
+import { query } from "@/lib/db";
+import { useAuth } from "@/contexts/AuthContext";
 
-const FAQS = [
-  {
-    q: "Cum incepe o conversatie cu Asistentul AI?",
-    a: (
-      <p>
-        Deschide <Link href="/assistant">Asistentul</Link> si scrie intrebarea sau subiectul tau. Asistentul este
-        disponibil permanent.
-      </p>
-    ),
-  },
-  {
-    q: "Cum adaug o intrare de jurnal?",
-    a: (
-      <p>
-        De pe orice pagina apasa &quot;Jurnalul tau&quot; sau deschide meniul jurnalului; se deschide o fereastra unde poti
-        completa starea, contextul si notele.
-      </p>
-    ),
-  },
-  {
-    q: "Pot deschide jurnalul din alte pagini?",
-    a: (
-      <p>
-        Da. Jurnalul se deschide ca modal peste orice pagina. Il poti inchide din X sau cu tasta Esc, revenind exact
-        unde erai.
-      </p>
-    ),
-  },
-  {
-    q: "Se salveaza datele jurnalului?",
-    a: (
-      <p>
-        In aceasta versiune demo, salvarea este locala (apare o confirmare). Nu trimitem date pe server.
-      </p>
-    ),
-  },
-  {
-    q: "Ce este Comunitatea?",
-    a: (
-      <p>
-        In <Link href="/community">Comunitate</Link> gasesti grupuri tematice (sprijin zilnic, mindfulness, gestionarea
-        stresului) unde poti urmari discutii.
-      </p>
-    ),
-  },
-  {
-    q: "Primesc notificari si remindere?",
-    a: (
-      <p>
-        Vezi <Link href="/notifications">Notificari</Link> pentru exemple de remindere (ex: &quot;Reminder jurnal&quot;).
-      </p>
-    ),
-  },
-  {
-    q: "Unde imi gestionez profilul si setarile?",
-    a: (
-      <p>
-        Din coltul de sus poti accesa <Link href="/profile">Profil</Link> si <Link href="/settings">Setari</Link> pentru
-        informatii personale si preferinte.
-      </p>
-    ),
-  },
-  {
-    q: "Cum folosesc rapid functiile cheie?",
-    a: (
-      <p>
-        In &quot;Actiuni rapide&quot; pe prima pagina ai scurtaturi catre Asistent, Programari si Jurnalul tau.
-      </p>
-    ),
-  },
-];
-
-const MOOD_OPTIONS = [
-  { label: "Minunat", emoji: "\u{1F60A}" },
-  { label: "Bine", emoji: "\u{1F642}" },
-  { label: "Ok", emoji: "\u{1F610}" },
-  { label: "Greu", emoji: "\u{1F614}" },
-];
-
-export default function Home() {
+export default function Home({ moodOptions, faqs, recommendedArticles, communityGroups }) {
   const router = useRouter();
   const [openFaqs, setOpenFaqs] = useState({});
+  const { isAuthenticated, promptAuth } = useAuth();
+  const [quickMoodId, setQuickMoodId] = useState(null);
+  const [quickNote, setQuickNote] = useState("");
+  const [quickSaving, setQuickSaving] = useState(false);
+  const [quickError, setQuickError] = useState(null);
+  const [quickSuccess, setQuickSuccess] = useState(null);
 
   const openJournal = () => {
+    if (!isAuthenticated) {
+      promptAuth();
+      return;
+    }
     router.push(
       { pathname: router.pathname, query: { ...router.query, journal: "new" } },
       undefined,
@@ -99,6 +31,77 @@ export default function Home() {
   const toggleFaq = (index) => {
     setOpenFaqs((current) => ({ ...current, [index]: !current[index] }));
   };
+
+  const handleMoodSelect = useCallback(
+    (moodId) => {
+      if (!isAuthenticated) {
+        promptAuth();
+        return;
+      }
+      setQuickMoodId(moodId);
+      setQuickError(null);
+      setQuickSuccess(null);
+    },
+    [isAuthenticated, promptAuth]
+  );
+
+  const handleQuickSave = useCallback(async () => {
+    if (!isAuthenticated) {
+      promptAuth();
+      return;
+    }
+    if (!quickMoodId) {
+      setQuickError("Selecteaza starea din lista inainte sa salvezi.");
+      return;
+    }
+    setQuickSaving(true);
+    setQuickError(null);
+    setQuickSuccess(null);
+    try {
+      const response = await fetch("/api/journal/quick", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ moodId: quickMoodId, notes: quickNote }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Nu am putut salva nota.");
+      }
+      setQuickSuccess(
+        <>
+          Nota rapidă a fost salvată. O poți vedea în contul tău, accesând{' '}
+          <Link
+            href="/journal"
+            style={{ color: 'var(--color-accent-content)', textDecoration: 'underline' }}
+          >
+            Jurnalul meu
+          </Link>.
+        </>
+      );
+      setQuickNote("");
+      setQuickMoodId(null);
+    } catch (error) {
+      setQuickError(error.message);
+    } finally {
+      setQuickSaving(false);
+    }
+  }, [isAuthenticated, promptAuth, quickMoodId, quickNote]);
+
+  const guardMoodCard = useCallback(
+    (event) => {
+      if (isAuthenticated) {
+        return;
+      }
+      if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      promptAuth();
+    },
+    [isAuthenticated, promptAuth]
+  );
 
   return (
     <>
@@ -112,8 +115,8 @@ export default function Home() {
       <section className="hero">
         <video autoPlay muted loop playsInline src="/video/calm.mp4" className="hero-video" />
         <div className="u-relative">
-          <div className="hero-badge">Psiholog AI</div>
-          <h1 className="hero-title">Îndrumare confidențială pentru echilibrul tău</h1>
+          <div className="hero-badge">Psihologul tău</div>
+          <h1 className="hero-title">Indrumare confidentiala pentru echilibrul tau</h1>
           <p className="hero-lead u-mt-2">
             Un spatiu sigur in care poti vorbi cu un asistent AI, poti tine un jurnal al starilor si poti gasi rapid
             specialisti si resurse de incredere.
@@ -129,41 +132,60 @@ export default function Home() {
         </div>
       </section>
 
-        <section className="card home-mood-card">
-          <div className="section-title">Cum te simti azi?</div>
-          <div className="row wrap u-mt-2">
-            {MOOD_OPTIONS.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className="mood-button"
-                title={item.label}
-                aria-label={`Ma simt ${item.label}`}
-              >
-                <span className="mood-emoji" aria-hidden="true">{item.emoji}</span>
-                <span className="mood-label">{item.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="row u-mt-3">
-            <input className="grow note-input" placeholder="Noteaza pe scurt ce simti." />
-            <button className="btn primary">Salveaza</button>
-          </div>
+      <section
+        className="card home-mood-card"
+        onClickCapture={guardMoodCard}
+        onKeyDownCapture={guardMoodCard}
+      >
+        <div className="section-title">Cum te simti azi?</div>
+        <div className="row wrap mood-row u-mt-2">
+          {moodOptions.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`mood-button ${quickMoodId === item.id ? "sel" : ""}`}
+              title={item.label}
+              aria-label={`Ma simt ${item.label}`}
+              aria-pressed={quickMoodId === item.id}
+              onClick={() => handleMoodSelect(item.id)}
+            >
+              <span className="mood-emoji" aria-hidden="true">
+                {item.emoji}
+              </span>
+              <span className="mood-label">{item.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="row u-mt-3">
+          <input
+            className="grow note-input"
+            placeholder="Noteaza pe scurt ce simti."
+            value={quickNote}
+            onChange={(event) => setQuickNote(event.target.value)}
+            maxLength={255}
+            disabled={quickSaving}
+          />
+          <button className="btn primary" type="button" onClick={handleQuickSave} disabled={quickSaving}>
+            {quickSaving ? "Se salveaza..." : "Salveaza"}
+          </button>
+        </div>
+        {quickError ? <div className="error u-mt-2">{quickError}</div> : null}
+        {quickSuccess ? <div className="info u-mt-2">{quickSuccess}</div> : null}
 
-          <div className="note-card note-card-spaced">
-            <div className="note-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </div>
-            <div>
-              <div className="u-text-semibold">Aminteste-ti sa ai grija de tine astazi.</div>
-              <div className="muted note-subtext">
-                Starea ta de bine conteaza, iar tu nu esti singur in aceasta calatorie.
-              </div>
+        <div className="note-card note-card-spaced">
+          <div className="note-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </div>
+          <div>
+            <div className="u-text-semibold">Aminteste-ti sa ai grija de tine astazi.</div>
+            <div className="muted note-subtext">
+              Starea ta de bine conteaza, iar tu nu esti singur in aceasta calatorie.
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
       <div className="grid cols-3">
         <section className="card">
@@ -195,15 +217,11 @@ export default function Home() {
             <FiStar className="section-icon" /> Recomandari pentru tine
           </div>
           <div className="grid u-gap-2-5">
-            <Link href="/article/exercitii-de-respiratie-pentru-calm" className="list-item">
-              Respiratie 4-7-8 - exercitiu ghidat (5 min)
-            </Link>
-            <Link href="/article/cum-sa-incepi-un-jurnal-al-emotiilor" className="list-item">
-              Jurnalul recunostintei - 3 idei rapide
-            </Link>
-            <Link href="/article/rutina-de-seara-in-4-pasi" className="list-item">
-              Cum sa-ti structurezi ziua pentru calm
-            </Link>
+            {recommendedArticles.map((item) => (
+              <Link key={item.slug} href={`/article/${item.slug}`} className="list-item">
+                {item.title}
+              </Link>
+            ))}
           </div>
         </section>
 
@@ -212,15 +230,11 @@ export default function Home() {
             <FiUsers className="section-icon" /> Grupuri de sprijin
           </div>
           <div className="grid u-gap-2-5">
-            <Link href="/community" className="list-item">
-              Cercul zilnic de sprijin
-            </Link>
-            <Link href="/community" className="list-item">
-              Mindfulness si autoingrijire
-            </Link>
-            <Link href="/community" className="list-item">
-              Gestionarea stresului
-            </Link>
+            {communityGroups.map((group) => (
+              <Link key={group.name} href="/community" className="list-item">
+                {group.name}
+              </Link>
+            ))}
           </div>
         </section>
       </div>
@@ -230,15 +244,27 @@ export default function Home() {
           <FiHelpCircle className="section-icon" /> Intrebari si raspunsuri
         </div>
         <div className="accordion">
-          {FAQS.map((item, index) => {
+          {faqs.map((item, index) => {
             const expanded = Boolean(openFaqs[index]);
             return (
-              <div key={item.q} className={`acc-item ${expanded ? "open" : ""}`}>
+              <div key={item.id} className={`acc-item ${expanded ? "open" : ""}`}>
                 <button type="button" className="acc-header" aria-expanded={expanded} onClick={() => toggleFaq(index)}>
-                  <span>{item.q}</span>
+                  <span style={{ textAlign:"left" }}>{item.question}</span>
                   <span className="chev">{expanded ? "-" : "+"}</span>
                 </button>
-                {expanded && <div className="acc-panel">{item.a}</div>}
+                {expanded && (
+                  <div className="acc-panel">
+                    <p>{item.answer}</p>
+                    {item.link_href ? (
+                      <div className="u-mt-2">
+                        <Link href={item.link_href} className="text-link">
+                          {item.link_text ?? "Vezi detalii"}
+                        </Link>
+                        {item.link_hint ? <span className="muted u-ml-2">{item.link_hint}</span> : null}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -246,4 +272,26 @@ export default function Home() {
       </section>
     </>
   );
+}
+
+export async function getServerSideProps() {
+  const [moodOptions, faqs, recommendedArticles, communityGroups] = await Promise.all([
+    query("SELECT id, label, emoji FROM mood_options ORDER BY id"),
+    query("SELECT id, question, answer, link_href, link_text, link_hint FROM faqs ORDER BY id"),
+    query(
+      "SELECT slug, title, minutes FROM articles WHERE is_recommended = 1 ORDER BY id LIMIT 3"
+    ),
+    query(
+      "SELECT name, members, last_active FROM community_groups ORDER BY members DESC LIMIT 3"
+    ),
+  ]);
+
+  return {
+    props: {
+      moodOptions,
+      faqs,
+      recommendedArticles,
+      communityGroups,
+    },
+  };
 }

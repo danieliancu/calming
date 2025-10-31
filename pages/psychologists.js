@@ -1,34 +1,21 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import {FiLock, FiSearch } from "react-icons/fi";
+import { FiLock, FiSearch } from "react-icons/fi";
 import { AiFillStar } from "react-icons/ai";
-const data = [
-  {
-    name: "Dr. Andreea Ionescu",
-    specialty: "Psihoterapie cognitiv-comportamentala",
-    rating: 5,
-    distance: "2.3 km",
-  },
-  {
-    name: "Mihai Popescu",
-    specialty: "Psiholog clinician",
-    rating: 5,
-    distance: "3.1 km",
-  },
-  {
-    name: "Ioana Radu",
-    specialty: "Consiliere anxietate & stres",
-    rating: 5,
-    distance: "3.8 km",
-  },
-];
+import { query } from "@/lib/db";
 
-export default function Psychologists() {
+export default function Psychologists({ psychologists }) {
   const [q, setQ] = useState("");
-  const list = data.filter((p) =>
-    normalize(`${p.name} ${p.specialty}`).includes(normalize(q))
-  );
+
+  const list = useMemo(() => {
+    const term = normalize(q);
+    if (!term) {
+      return psychologists;
+    }
+    return psychologists.filter((p) => normalize(`${p.full_name} ${p.specialty}`).includes(term));
+  }, [psychologists, q]);
+
   return (
     <>
       <Head>
@@ -36,15 +23,19 @@ export default function Psychologists() {
       </Head>
 
       <section className="card accent">
-        <div className="section-title"><FiLock className="section-icon" /> Parteneri verificati</div>
+        <div className="section-title">
+          <FiLock className="section-icon" /> Parteneri verificati
+        </div>
         <div className="muted">Toti specialistii sunt verificati de reteaua Calming.</div>
       </section>
 
       <section className="card u-mt-4">
-        <div className="section-title"><FiSearch className="section-icon" /> Cauta</div>
+        <div className="section-title">
+          <FiSearch className="section-icon" /> Cauta
+        </div>
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(event) => setQ(event.target.value)}
           placeholder="Cauta specialisti, servicii..."
           className="form-input"
         />
@@ -52,13 +43,13 @@ export default function Psychologists() {
 
       <div className="grid psychologists-grid">
         {list.map((p) => (
-          <div className="card" key={p.name}>
+          <div className="card" key={p.id}>
             <div className="row">
               <div className="grow">
-                <div className="u-text-semibold">{p.name}</div>
+                <div className="u-text-semibold">{p.full_name}</div>
                 <div className="muted psychologists-meta">{p.specialty}</div>
                 <div className="muted psychologists-meta">
-                  {p.distance} <AiFillStar /> {p.rating}
+                  {Number(p.distance_km).toFixed(1)} km <AiFillStar /> {Number(p.rating).toFixed(1)}
                 </div>
               </div>
               <Link className="btn primary" href="/appointments">
@@ -67,17 +58,31 @@ export default function Psychologists() {
             </div>
           </div>
         ))}
+        {list.length === 0 ? (
+          <div className="card">
+            <div className="muted">Nu am gasit specialisti care sa corespunda cautarii tale.</div>
+          </div>
+        ) : null}
       </div>
     </>
   );
 }
 
-function normalize(s) {
-  return (s || "")
+export async function getServerSideProps() {
+  const psychologists = await query(
+    "SELECT id, full_name, specialty, rating, distance_km FROM psychologists ORDER BY rating DESC, full_name ASC"
+  );
+  return {
+    props: {
+      psychologists,
+    },
+  };
+}
+
+function normalize(value) {
+  return (value || "")
     .toString()
     .normalize("NFD")
     .replace(/\p{Diacritic}+/gu, "")
     .toLowerCase();
 }
-
-
