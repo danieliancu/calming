@@ -114,10 +114,10 @@ export default function JournalPage({ entries }) {
                     <div className="journal-body">
                       <div className="journal-meta">
                         <div>
-                          <span className="journal-type">
-                            {entry.type === "quick" ? "Nota rapida" : "Nota completa"}
-                          </span>
                           <span className="journal-date">{formatDateTime(entry.created_at)}</span>
+                          <span className="journal-type">
+                            {entry.type === "quick" ? "Nota rapida" : ""}
+                          </span>
                         </div>
                         <div className="journal-actions">
                           <button

@@ -278,11 +278,13 @@ export default function Layout({ children }) {
         </div>
       </header>
 
-      <main className="container">{children}</main>
+      <main className="container" style={pathname === "/assistant" ? { height: "80vh" } : undefined}>
+        {children}
+      </main>
       {journalOpen && isAuthenticated && <JournalModal onClose={closeJournal} onSaved={handleJournalSaved} />}
       {showAuthModal && <AuthPromptModal onClose={handleCloseAuth} />}
 
-      <Footer />
+      {pathname !== "/assistant" && <Footer />}
       <BottomNav />
     </AuthContext.Provider>
   );
