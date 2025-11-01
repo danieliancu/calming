@@ -275,13 +275,14 @@ export async function getServerSideProps(context) {
   );
   const activeDays = Number(activeDaysRow?.active_days ?? 0);
 
-  const stats = [
+  const computedStats = [
     {
       metric_key: "journal_entries",
       label: "Intrari in jurnal",
       value: `${totalEntries}`,
       tone: "rose",
       icon: "FiActivity",
+      sort_order: 10,
     },
     {
       metric_key: "good_days",
@@ -289,6 +290,7 @@ export async function getServerSideProps(context) {
       value: `${goodDays} zile`,
       tone: "teal",
       icon: "FiHeart",
+      sort_order: 20,
     },
     {
       metric_key: "stress_level",
@@ -296,6 +298,7 @@ export async function getServerSideProps(context) {
       value: averageStress > 0 ? `${averageStress.toFixed(1)}/6` : "0/6",
       tone: "amber",
       icon: "FiTrendingUp",
+      sort_order: 30,
     },
     {
       metric_key: "active_days",
@@ -303,24 +306,65 @@ export async function getServerSideProps(context) {
       value: `${activeDays} zile`,
       tone: "indigo",
       icon: "FiCalendar",
+      sort_order: 40,
     },
   ];
 
-  const milestones = await query(
-    `SELECT id, title, description, achieved_at
-     FROM user_milestones
+  await Promise.all(
+    computedStats.map((item) =>
+      query(
+        `INSERT INTO user_stats (user_id, metric_key, label, value, tone, icon, sort_order)
+         VALUES (:userId, :metricKey, :label, :value, :tone, :icon, :sortOrder)
+         ON DUPLICATE KEY UPDATE
+           label = VALUES(label),
+           value = VALUES(value),
+           tone = VALUES(tone),
+           icon = VALUES(icon),
+           sort_order = VALUES(sort_order)`,
+        {
+          userId,
+          metricKey: item.metric_key,
+          label: item.label,
+          value: item.value,
+          tone: item.tone,
+          icon: item.icon,
+          sortOrder: item.sort_order,
+        }
+      )
+    )
+  );
+
+  const stats = await query(
+    `SELECT metric_key, label, value, tone, icon
+     FROM user_stats
      WHERE user_id = ?
-     ORDER BY achieved_at DESC`,
+     ORDER BY sort_order, id`,
     [userId]
   );
 
-  const infoLinks = await query(
-    `SELECT id, label
-     FROM user_info_links
-     WHERE user_id = ?
-     ORDER BY sort_order`,
+  const milestones = await query(
+    `SELECT
+       um.id,
+       mt.title AS title,
+       mt.description AS description,
+       um.achieved_at
+     FROM user_milestones um
+     JOIN milestone_templates mt ON mt.id = um.template_id
+     WHERE um.user_id = ?
+     ORDER BY um.achieved_at DESC, um.id DESC`,
     [userId]
   );
+
+  const resourceTemplates = await query(
+    `SELECT id, label
+     FROM resource_templates
+     ORDER BY sort_order, id`
+  );
+
+  const infoLinks = resourceTemplates.map((template) => ({
+    id: `template-${template.id}`,
+    label: template.label,
+  }));
 
   const journalEntries = await fetchJournalEntries(userId, { limit: 10 });
 

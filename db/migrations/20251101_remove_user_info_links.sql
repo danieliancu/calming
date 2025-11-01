@@ -1,0 +1,5 @@
+START TRANSACTION;
+
+DROP TABLE IF EXISTS user_info_links;
+
+COMMIT;

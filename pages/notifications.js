@@ -1,5 +1,6 @@
 import Head from "next/head";
 import {
+  FiActivity,
   FiCalendar,
   FiMessageCircle,
   FiUsers,
@@ -7,17 +8,24 @@ import {
   FiClock,
   FiHeart,
   FiBell,
+  FiStar,
+  FiUser,
+  FiTrendingUp,
 } from "react-icons/fi";
 import { query } from "@/lib/db";
 import { getCurrentUserId } from "@/lib/currentUser";
 
 const ICON_MAP = {
+  FiActivity,
   FiCalendar,
   FiMessageCircle,
   FiUsers,
   FiBookOpen,
   FiClock,
   FiHeart,
+  FiStar,
+  FiUser,
+  FiTrendingUp,
 };
 
 export default function Notifications({ notifications }) {
@@ -71,29 +79,64 @@ export default function Notifications({ notifications }) {
 
 export async function getServerSideProps(context) {
   const userId = getCurrentUserId(context.req);
+  const generalTemplatesPromise = query(
+    `SELECT id, title, message, icon, accent, published_at
+     FROM notification_templates
+     WHERE audience = 'general'
+     ORDER BY published_at DESC, sort_order ASC`
+  );
+
   if (!userId) {
+    const generalTemplates = await generalTemplatesPromise;
+    const notifications = generalTemplates.map((item) =>
+      mapTemplateToNotification(item, "general")
+    );
     return {
       props: {
-        notifications: [],
+        notifications: normalizeNotificationDates(notifications),
       },
     };
   }
 
-  const notifications = await query(
-    "SELECT id, title, message, icon, accent, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC",
-    [userId]
-  );
+  const [generalTemplates, userRows] = await Promise.all([
+    generalTemplatesPromise,
+    query(
+      `SELECT
+         un.id,
+         COALESCE(un.created_at, nt.published_at) AS created_at,
+         COALESCE(un.title, nt.title) AS title,
+         COALESCE(un.message, nt.message) AS message,
+         COALESCE(un.icon, nt.icon) AS icon,
+         COALESCE(un.accent, nt.accent) AS accent
+       FROM user_notifications un
+       LEFT JOIN notification_templates nt ON nt.id = un.template_id
+       WHERE un.user_id = ?
+       ORDER BY COALESCE(un.created_at, nt.published_at) DESC, un.id DESC`,
+      [userId]
+    ),
+  ]);
+
+  const combined = [
+    ...generalTemplates.map((item) => mapTemplateToNotification(item, "general")),
+    ...userRows.map((item) => ({
+      id: `user-${item.id}`,
+      title: item.title,
+      message: item.message,
+      icon: item.icon,
+      accent: item.accent,
+      created_at: item.created_at,
+    })),
+  ];
+
+  combined.sort((a, b) => {
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return bTime - aTime;
+  });
 
   return {
     props: {
-      notifications: notifications.map((item) => ({
-        ...item,
-        created_at: item.created_at
-          ? item.created_at.toISOString
-            ? item.created_at.toISOString()
-            : item.created_at
-          : null,
-      })),
+      notifications: normalizeNotificationDates(combined),
     },
   };
 }
@@ -164,4 +207,26 @@ function formatRelativeTime(date, now) {
   }
   const diffWeeks = Math.round(diffDays / 7);
   return `Acum ${diffWeeks} saptamani`;
+}
+
+function mapTemplateToNotification(item, audience) {
+  return {
+    id: `template-${audience}-${item.id}`,
+    title: item.title,
+    message: item.message,
+    icon: item.icon,
+    accent: item.accent,
+    created_at: item.published_at,
+  };
+}
+
+function normalizeNotificationDates(items) {
+  return items.map((item) => ({
+    ...item,
+    created_at: item.created_at
+      ? item.created_at.toISOString
+        ? item.created_at.toISOString()
+        : item.created_at
+      : null,
+  }));
 }

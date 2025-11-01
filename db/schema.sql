@@ -31,24 +31,25 @@ CREATE TABLE user_stats (
   value VARCHAR(60) NOT NULL,
   tone VARCHAR(20),
   icon VARCHAR(40),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  sort_order INT DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY user_stats_user_metric (user_id, metric_key)
 );
 
 CREATE TABLE user_milestones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
-  title VARCHAR(150) NOT NULL,
-  description VARCHAR(255),
+  template_id INT NOT NULL,
   achieved_at DATE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_user_milestones_template FOREIGN KEY (template_id) REFERENCES milestone_templates(id) ON DELETE SET NULL
 );
 
-CREATE TABLE user_info_links (
+CREATE TABLE resource_templates (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+  template_key VARCHAR(60) NOT NULL UNIQUE,
   label VARCHAR(150) NOT NULL,
-  sort_order INT DEFAULT 0,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  sort_order INT DEFAULT 0
 );
 
 CREATE TABLE mood_options (
@@ -119,15 +120,25 @@ CREATE TABLE appointment_time_slots (
   slot VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE notifications (
+CREATE TABLE milestone_templates (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+  template_key VARCHAR(60) NOT NULL UNIQUE,
+  title VARCHAR(150) NOT NULL,
+  description VARCHAR(255),
+  category VARCHAR(60) NOT NULL,
+  sort_order INT DEFAULT 0
+);
+
+CREATE TABLE notification_templates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  audience ENUM('general', 'authenticated') NOT NULL DEFAULT 'general',
   title VARCHAR(200) NOT NULL,
   message TEXT NOT NULL,
   icon VARCHAR(40),
   accent VARCHAR(40),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  published_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  sort_order INT DEFAULT 0,
+  UNIQUE KEY notification_templates_audience_title (audience, title)
 );
 
 CREATE TABLE journal_context_tags (
@@ -175,4 +186,17 @@ CREATE TABLE journal_quick_entries (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (mood_id) REFERENCES mood_options(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  template_id INT NOT NULL,
+  title VARCHAR(200),
+  message TEXT,
+  icon VARCHAR(40),
+  accent VARCHAR(40),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (template_id) REFERENCES notification_templates(id) ON DELETE SET NULL
 );
