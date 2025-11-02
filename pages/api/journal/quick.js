@@ -1,5 +1,6 @@
 import pool from "@/lib/db";
 import { getCurrentUserId } from "@/lib/currentUser";
+import { handleJournalMilestones } from "@/lib/milestones";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -34,6 +35,12 @@ export default async function handler(req, res) {
        WHERE qe.id = ?`,
       [insertedId]
     );
+
+    try {
+      await handleJournalMilestones(userId);
+    } catch (milestoneError) {
+      console.error("Quick journal milestone evaluation failed", milestoneError);
+    }
 
     return res.status(201).json({ entry: rows?.[0] ?? { id: insertedId } });
   } catch (error) {

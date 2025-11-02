@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FiZap, FiStar, FiUsers, FiHelpCircle } from "react-icons/fi";
 import { query } from "@/lib/db";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,12 +9,25 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function Home({ moodOptions, faqs, recommendedArticles, communityGroups }) {
   const router = useRouter();
   const [openFaqs, setOpenFaqs] = useState({});
-  const { isAuthenticated, promptAuth } = useAuth();
+  const { isAuthenticated, promptAuth, userName: authUserName, userFirstName } = useAuth();
   const [quickMoodId, setQuickMoodId] = useState(null);
   const [quickNote, setQuickNote] = useState("");
   const [quickSaving, setQuickSaving] = useState(false);
   const [quickError, setQuickError] = useState(null);
   const [quickSuccess, setQuickSuccess] = useState(null);
+
+  const greetingName = useMemo(() => {
+    const sourceName = userFirstName ?? authUserName;
+    if (!sourceName) {
+      return null;
+    }
+    const trimmed = String(sourceName).trim();
+    if (!trimmed) {
+      return null;
+    }
+    const [first] = trimmed.split(/\s+/);
+    return first || null;
+  }, [userFirstName, authUserName]);
 
   const openJournal = () => {
     if (!isAuthenticated) {
@@ -123,10 +136,10 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
           </p>
           <div className="row hello u-mt-3">
             <Link className="btn primary" href="/assistant">
-              Incepe conversatia
+              Incepe conversatia cu un asistent AI
             </Link>
             <Link className="btn" href="/psychologists">
-              Programeaza o sedinta
+              Programeaza o sedinta cu un psiholog
             </Link>
           </div>
         </div>
@@ -137,7 +150,9 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
         onClickCapture={guardMoodCard}
         onKeyDownCapture={guardMoodCard}
       >
-        <div className="section-title">Cum te simti azi?</div>
+        <div className="section-title">
+          {isAuthenticated && greetingName ? `Buna, ${greetingName}! Cum te simti azi?` : "Cum te simti azi?"}
+        </div>
         <div className="row wrap mood-row u-mt-2">
           {moodOptions.map((item) => (
             <button

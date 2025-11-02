@@ -1,5 +1,6 @@
 import pool from "@/lib/db";
 import { getCurrentUserId } from "@/lib/currentUser";
+import { handleJournalMilestones } from "@/lib/milestones";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -41,6 +42,13 @@ export default async function handler(req, res) {
     }
 
     await connection.commit();
+
+    try {
+      await handleJournalMilestones(currentUserId);
+    } catch (milestoneError) {
+      console.error("Post-journal milestone evaluation failed", milestoneError);
+    }
+
     return res.status(201).json({ id: entryId });
   } catch (error) {
     await connection.rollback();

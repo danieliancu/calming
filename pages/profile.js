@@ -101,12 +101,12 @@ export default function Profile({ profile, stats, milestones, infoLinks, journal
             >
               Adauga in jurnal
             </a>          
-          <Link href="/journal" className="profile-action primary">
+          <Link href="/journal" className="list-item profile-action primary">
             Jurnalul meu
           </Link>
           <button
             type="button"
-            className="settings-card settings-signout-card"
+            className="list-item settings-signout-card"
             onClick={signOut}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
@@ -259,6 +259,21 @@ export async function getServerSideProps(context) {
     { userId }
   );
   const averageStress = Number(stressAverageRow?.avg_stress ?? 0);
+  const stressMetric = (() => {
+    if (!Number.isFinite(averageStress) || averageStress <= 0) {
+      return { value: "?", label: "Nivel mediu stres: ?", icon: "FiTrendingUp" };
+    }
+    const scale = [
+      { max: 1.5, emoji: "😊", label: "Nivel mediu stres: Foarte bine" },
+      { max: 2.5, emoji: "🙂", label: "Nivel mediu stres: Bine" },
+      { max: 3.5, emoji: "😐", label: "Nivel mediu stres: OK" },
+      { max: 4.5, emoji: "😔", label: "Nivel mediu stres: Obosit" },
+      { max: 5.5, emoji: "😣", label: "Nivel mediu stres: Greu" },
+      { max: Infinity, emoji: "😞", label: "Nivel mediu stres: Foarte greu" },
+    ];
+    const match = scale.find((item) => averageStress <= item.max) ?? scale[scale.length - 1];
+    return { value: match.emoji, label: match.label, icon: "FiTrendingUp" };
+  })();
 
   const [activeDaysRow] = await query(
     `SELECT COUNT(*) AS active_days
@@ -294,10 +309,10 @@ export async function getServerSideProps(context) {
     },
     {
       metric_key: "stress_level",
-      label: "Nivel mediu stres",
-      value: averageStress > 0 ? `${averageStress.toFixed(1)}/6` : "0/6",
+      label: stressMetric.label,
+      value: stressMetric.value,
       tone: "amber",
-      icon: "FiTrendingUp",
+      icon: stressMetric.icon,
       sort_order: 30,
     },
     {

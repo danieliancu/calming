@@ -4,6 +4,8 @@ export const AuthContext = createContext({
   isAuthenticated: false,
   userId: null,
   userInitials: null,
+  userName: null,
+  userFirstName: null,
   newNotificationCount: 0,
   promptAuth: () => {},
   signOut: () => {},

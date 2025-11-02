@@ -36,6 +36,15 @@ CREATE TABLE user_stats (
   UNIQUE KEY user_stats_user_metric (user_id, metric_key)
 );
 
+CREATE TABLE milestone_templates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  template_key VARCHAR(60) NOT NULL UNIQUE,
+  title VARCHAR(150) NOT NULL,
+  description VARCHAR(255),
+  category VARCHAR(60) NOT NULL,
+  sort_order INT DEFAULT 0
+);
+
 CREATE TABLE user_milestones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -120,15 +129,6 @@ CREATE TABLE appointment_time_slots (
   slot VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE milestone_templates (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  template_key VARCHAR(60) NOT NULL UNIQUE,
-  title VARCHAR(150) NOT NULL,
-  description VARCHAR(255),
-  category VARCHAR(60) NOT NULL,
-  sort_order INT DEFAULT 0
-);
-
 CREATE TABLE notification_templates (
   id INT AUTO_INCREMENT PRIMARY KEY,
   audience ENUM('general', 'authenticated') NOT NULL DEFAULT 'general',
@@ -148,7 +148,16 @@ CREATE TABLE journal_context_tags (
 
 CREATE TABLE journal_symptom_tags (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  label VARCHAR(100) NOT NULL
+  label VARCHAR(100) NOT NULL,
+  UNIQUE KEY uq_journal_symptom_label (label)
+);
+
+CREATE TABLE mood_symptom_links (
+  mood_id INT NOT NULL,
+  symptom_id INT NOT NULL,
+  PRIMARY KEY (mood_id, symptom_id),
+  FOREIGN KEY (mood_id) REFERENCES mood_options(id) ON DELETE CASCADE,
+  FOREIGN KEY (symptom_id) REFERENCES journal_symptom_tags(id) ON DELETE CASCADE
 );
 
 CREATE TABLE journal_entries (

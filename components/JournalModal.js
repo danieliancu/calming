@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function JournalModal({ onClose, onSaved }) {
   const [moods, setMoods] = useState([]);
-  const [symptoms, setSymptoms] = useState([]);
+  const [allSymptoms, setAllSymptoms] = useState([]);
+  const [symptomGroups, setSymptomGroups] = useState({});
   const [contexts, setContexts] = useState([]);
   const [selectedMoodId, setSelectedMoodId] = useState(null);
-  const [level, setLevel] = useState(3);
+  const [level, setLevel] = useState(5);
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [selectedContexts, setSelectedContexts] = useState([]);
   const [notes, setNotes] = useState("");
@@ -35,7 +36,8 @@ export default function JournalModal({ onClose, onSaved }) {
         const data = await response.json();
         if (!cancelled) {
           setMoods(data.moods ?? []);
-          setSymptoms(data.symptoms ?? []);
+          setAllSymptoms(data.symptoms ?? []);
+          setSymptomGroups(data.moodSymptoms ?? {});
           setContexts(data.contexts ?? []);
           setLoading(false);
         }
@@ -65,6 +67,32 @@ export default function JournalModal({ onClose, onSaved }) {
   const toggleContext = toggleSelection(setSelectedContexts);
   const toggleSymptom = toggleSelection(setSelectedSymptoms);
 
+  const symptomOptions = useMemo(() => {
+    if (!selectedMoodId) {
+      return [];
+    }
+    const raw =
+      Array.isArray(symptomGroups?.[selectedMoodId]) && symptomGroups[selectedMoodId].length
+        ? symptomGroups[selectedMoodId]
+        : allSymptoms;
+    const map = new Map();
+    raw.forEach((item) => {
+      if (item?.id && !map.has(item.id)) {
+        map.set(item.id, item);
+      }
+    });
+    return Array.from(map.values());
+  }, [selectedMoodId, symptomGroups, allSymptoms]);
+
+  useEffect(() => {
+    if (!symptomOptions?.length) {
+      setSelectedSymptoms([]);
+      return;
+    }
+    const allowed = new Set(symptomOptions.map((item) => item.id));
+    setSelectedSymptoms((current) => current.filter((value) => allowed.has(value)));
+  }, [symptomOptions]);
+
   const saveEntry = async () => {
     if (!selectedMoodId) {
       setFormError("Selecteaza emoji-ul care descrie cel mai bine starea ta.");
@@ -90,20 +118,12 @@ export default function JournalModal({ onClose, onSaved }) {
         throw new Error("Failed to save entry");
       }
       setSaving(false);
-      const closeResult = onClose?.();
-      if (closeResult && typeof closeResult.then === "function") {
-        try {
-          await closeResult;
-        } catch (closeError) {
-          console.error("Journal modal close failed", closeError);
-        }
+      try {
+        await onSaved?.();
+      } catch (refreshError) {
+        console.error("Journal refresh failed", refreshError);
       }
-      const refreshResult = onSaved?.();
-      if (refreshResult && typeof refreshResult.then === "function") {
-        refreshResult.catch((err) => {
-          console.error("Journal refresh failed", err);
-        });
-      }
+      onClose?.();
     } catch (err) {
       console.error(err);
       setFormError("Nu am putut salva nota. Incearca din nou.");
@@ -158,7 +178,7 @@ export default function JournalModal({ onClose, onSaved }) {
 
               <div className="range-section">
                 <div className="muted">Nivel intensitate</div>
-                <div className="row u-mt-2">
+                <div className="row u-mt-2" style={{ alignItems:"flex-start" }}>
                   <div className="range-wrap grow">
                     <input
                       className="range"
@@ -168,9 +188,10 @@ export default function JournalModal({ onClose, onSaved }) {
                       value={level}
                       onChange={(event) => setLevel(Number(event.target.value))}
                     />
-                    <div className="scale">
-                      <span>Mic</span>
-                      <span>Sever</span>
+                <div className="scale">
+                  <span>Mica</span>
+                  <span>Normal</span>
+                  <span>Maxima</span>
                     </div>
                   </div>
                   <div className="bubble">{level}/10</div>
@@ -193,24 +214,26 @@ export default function JournalModal({ onClose, onSaved }) {
                 </div>
               </div>
 
-              <div className="u-mt-4">
-                <div className="muted">Simptome (selecteaza tot ce se aplica)</div>
-                <div className="tags u-mt-2">
-                  {symptoms.map((tag) => (
-                    <button
-                      type="button"
-                      key={tag.id}
-                      className={`tag ${selectedSymptoms.includes(tag.id) ? "sel" : ""}`}
-                      onClick={() => toggleSymptom(tag.id)}
-                    >
-                      {tag.label}
-                    </button>
-                  ))}
+              {selectedMoodId ? (
+                <div className="u-mt-4">
+                  <div className="muted">Simptome (selecteaza tot ce se aplica)</div>
+                  <div className="tags u-mt-2">
+                    {symptomOptions.map((tag) => (
+                      <button
+                        type="button"
+                        key={tag.id}
+                        className={`tag ${selectedSymptoms.includes(tag.id) ? "sel" : ""}`}
+                        onClick={() => toggleSymptom(tag.id)}
+                      >
+                        {tag.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <div className="u-mt-4">
-                <div className="muted">Note (optional)</div>
+                <div className="muted">Scrie în jurnal</div>
               <textarea
                 className="journal-notes u-mt-2"
                 rows={5}
@@ -218,7 +241,7 @@ export default function JournalModal({ onClose, onSaved }) {
                 onChange={(event) => {
                   setNotes(event.target.value);
                 }}
-                placeholder="Adauga detalii despre cum te simti astazi."
+                placeholder="Spune despre cum te simti, ce ai facut, ce planuri ai..."
               />
             </div>
 

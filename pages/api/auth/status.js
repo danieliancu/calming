@@ -22,7 +22,13 @@ export default async function handler(req, res) {
     }
 
     const [[profileRow], [recentUserRow]] = await Promise.all([
-      query("SELECT display_name, avatar_initials FROM user_profiles WHERE user_id = ?", [userId]),
+      query(
+        `SELECT p.display_name, p.avatar_initials, u.first_name
+         FROM users u
+         LEFT JOIN user_profiles p ON p.user_id = u.id
+         WHERE u.id = ?`,
+        [userId]
+      ),
       query(
         `SELECT COUNT(*) AS count
          FROM user_notifications
@@ -39,6 +45,7 @@ export default async function handler(req, res) {
       userId,
       initials: profile?.avatar_initials ?? null,
       name: profile?.display_name ?? null,
+      firstName: profile?.first_name ?? null,
       newNotifications,
     });
   } catch (error) {
@@ -47,6 +54,7 @@ export default async function handler(req, res) {
       userId,
       initials: null,
       name: null,
+      firstName: null,
       newNotifications: 0,
     });
   }

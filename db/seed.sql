@@ -19,12 +19,6 @@ VALUES
   (1, 'stress_level', 'Nivel mediu stres', '2.3/10', 'amber', 'FiTrendingUp', 30),
   (1, 'active_days', 'Zile active', '87', 'indigo', 'FiCalendar', 40);
 
-INSERT INTO user_milestones (user_id, template_id, achieved_at)
-VALUES
-  (1, (SELECT id FROM milestone_templates WHERE template_key = 'streak_30'), '2025-10-15'),
-  (1, (SELECT id FROM milestone_templates WHERE template_key = 'first_assessment'), '2025-09-20'),
-  (1, (SELECT id FROM milestone_templates WHERE template_key = 'community_post'), '2025-09-01');
-
 INSERT INTO resource_templates (template_key, label, sort_order)
 VALUES
   ('about_you', 'Despre tine', 10),
@@ -49,6 +43,12 @@ VALUES
   ('resource_first_article', 'Primul articol citit', 'Ai parcurs primul articol recomandat.', 'resources', 130),
   ('resource_three_articles', 'Trei articole finalizate', 'Ai citit trei articole recomandate.', 'resources', 140),
   ('resource_guided_exercise', 'Primul exercitiu ghidat', 'Ai finalizat primul exercitiu ghidat.', 'resources', 150);
+
+INSERT INTO user_milestones (user_id, template_id, achieved_at)
+VALUES
+  (1, (SELECT id FROM milestone_templates WHERE template_key = 'streak_30'), '2025-10-15'),
+  (1, (SELECT id FROM milestone_templates WHERE template_key = 'first_assessment'), '2025-09-20'),
+  (1, (SELECT id FROM milestone_templates WHERE template_key = 'community_post'), '2025-09-01');
 
 INSERT INTO mood_options (label, emoji)
 VALUES
@@ -175,7 +175,10 @@ VALUES
   ('Somn insuficient'),
   ('Eveniment social'),
   ('Relatii'),
-  ('Autoingrijire');
+  ('Autoingrijire'),
+  ('Studii'),
+  ('Activitate fizica'),
+  ('Calatorie');
 
 INSERT INTO journal_symptom_tags (label)
 VALUES
@@ -188,7 +191,67 @@ VALUES
   ('Ganduri intruzive'),
   ('Dificultati de concentrare'),
   ('Lipsa de energie'),
-  ('Retragere sociala');
+  ('Retragere sociala'),
+  ('Energie ridicata'),
+  ('Recunostinta'),
+  ('Calm interior'),
+  ('Motivatie'),
+  ('Conectat cu ceilalti'),
+  ('Optimism'),
+  ('Neutralitate'),
+  ('Atentie'),
+  ('Focalizare');
+
+INSERT INTO mood_symptom_links (mood_id, symptom_id)
+VALUES
+  ((SELECT id FROM mood_options WHERE label = 'Minunat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Energie ridicata')),
+  ((SELECT id FROM mood_options WHERE label = 'Minunat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Recunostinta')),
+  ((SELECT id FROM mood_options WHERE label = 'Minunat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Calm interior')),
+  ((SELECT id FROM mood_options WHERE label = 'Minunat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Motivatie')),
+  ((SELECT id FROM mood_options WHERE label = 'Minunat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Conectat cu ceilalti')),
+  ((SELECT id FROM mood_options WHERE label = 'Minunat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Optimism')),
+  ((SELECT id FROM mood_options WHERE label = 'Bine'), (SELECT id FROM journal_symptom_tags WHERE label = 'Motivatie')),
+  ((SELECT id FROM mood_options WHERE label = 'Bine'), (SELECT id FROM journal_symptom_tags WHERE label = 'Conectat cu ceilalti')),
+  ((SELECT id FROM mood_options WHERE label = 'Bine'), (SELECT id FROM journal_symptom_tags WHERE label = 'Optimism')),
+  ((SELECT id FROM mood_options WHERE label = 'Bine'), (SELECT id FROM journal_symptom_tags WHERE label = 'Recunostinta')),
+  ((SELECT id FROM mood_options WHERE label = 'Bine'), (SELECT id FROM journal_symptom_tags WHERE label = 'Atentie')),
+  ((SELECT id FROM mood_options WHERE label = 'Bine'), (SELECT id FROM journal_symptom_tags WHERE label = 'Calm interior')),
+  ((SELECT id FROM mood_options WHERE label = 'Ok'), (SELECT id FROM journal_symptom_tags WHERE label = 'Neutralitate')),
+  ((SELECT id FROM mood_options WHERE label = 'Ok'), (SELECT id FROM journal_symptom_tags WHERE label = 'Focalizare')),
+  ((SELECT id FROM mood_options WHERE label = 'Ok'), (SELECT id FROM journal_symptom_tags WHERE label = 'Atentie')),
+  ((SELECT id FROM mood_options WHERE label = 'Ok'), (SELECT id FROM journal_symptom_tags WHERE label = 'Optimism')),
+  ((SELECT id FROM mood_options WHERE label = 'Ok'), (SELECT id FROM journal_symptom_tags WHERE label = 'Motivatie')),
+  ((SELECT id FROM mood_options WHERE label = 'Ok'), (SELECT id FROM journal_symptom_tags WHERE label = 'Conectat cu ceilalti')),
+  ((SELECT id FROM mood_options WHERE label = 'In regula'), (SELECT id FROM journal_symptom_tags WHERE label = 'Neutralitate')),
+  ((SELECT id FROM mood_options WHERE label = 'In regula'), (SELECT id FROM journal_symptom_tags WHERE label = 'Focalizare')),
+  ((SELECT id FROM mood_options WHERE label = 'In regula'), (SELECT id FROM journal_symptom_tags WHERE label = 'Atentie')),
+  ((SELECT id FROM mood_options WHERE label = 'In regula'), (SELECT id FROM journal_symptom_tags WHERE label = 'Calm interior')),
+  ((SELECT id FROM mood_options WHERE label = 'In regula'), (SELECT id FROM journal_symptom_tags WHERE label = 'Motivatie')),
+  ((SELECT id FROM mood_options WHERE label = 'In regula'), (SELECT id FROM journal_symptom_tags WHERE label = 'Optimism')),
+  ((SELECT id FROM mood_options WHERE label = 'Obosit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Oboseala')),
+  ((SELECT id FROM mood_options WHERE label = 'Obosit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Probleme de somn')),
+  ((SELECT id FROM mood_options WHERE label = 'Obosit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Lipsa de energie')),
+  ((SELECT id FROM mood_options WHERE label = 'Obosit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Dificultati de concentrare')),
+  ((SELECT id FROM mood_options WHERE label = 'Obosit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Tristete')),
+  ((SELECT id FROM mood_options WHERE label = 'Obosit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Anxietate')),
+  ((SELECT id FROM mood_options WHERE label = 'Suparat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Tristete')),
+  ((SELECT id FROM mood_options WHERE label = 'Suparat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Iritabilitate')),
+  ((SELECT id FROM mood_options WHERE label = 'Suparat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Retragere sociala')),
+  ((SELECT id FROM mood_options WHERE label = 'Suparat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Anxietate')),
+  ((SELECT id FROM mood_options WHERE label = 'Suparat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Ganduri intruzive')),
+  ((SELECT id FROM mood_options WHERE label = 'Suparat'), (SELECT id FROM journal_symptom_tags WHERE label = 'Probleme de somn')),
+  ((SELECT id FROM mood_options WHERE label = 'Dezamagit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Tristete')),
+  ((SELECT id FROM mood_options WHERE label = 'Dezamagit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Lipsa de energie')),
+  ((SELECT id FROM mood_options WHERE label = 'Dezamagit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Ganduri intruzive')),
+  ((SELECT id FROM mood_options WHERE label = 'Dezamagit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Retragere sociala')),
+  ((SELECT id FROM mood_options WHERE label = 'Dezamagit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Anxietate')),
+  ((SELECT id FROM mood_options WHERE label = 'Dezamagit'), (SELECT id FROM journal_symptom_tags WHERE label = 'Dificultati de concentrare')),
+  ((SELECT id FROM mood_options WHERE label = 'Greu'), (SELECT id FROM journal_symptom_tags WHERE label = 'Atac de panica')),
+  ((SELECT id FROM mood_options WHERE label = 'Greu'), (SELECT id FROM journal_symptom_tags WHERE label = 'Ganduri intruzive')),
+  ((SELECT id FROM mood_options WHERE label = 'Greu'), (SELECT id FROM journal_symptom_tags WHERE label = 'Anxietate')),
+  ((SELECT id FROM mood_options WHERE label = 'Greu'), (SELECT id FROM journal_symptom_tags WHERE label = 'Dificultati de concentrare')),
+  ((SELECT id FROM mood_options WHERE label = 'Greu'), (SELECT id FROM journal_symptom_tags WHERE label = 'Lipsa de energie')),
+  ((SELECT id FROM mood_options WHERE label = 'Greu'), (SELECT id FROM journal_symptom_tags WHERE label = 'Probleme de somn'));
 
 INSERT INTO journal_entries (user_id, mood_id, intensity, notes, created_at)
 VALUES

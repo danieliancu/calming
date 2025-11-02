@@ -3,9 +3,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCurrentUserId } from "@/lib/currentUser";
+import { query } from "@/lib/db";
 import { fetchJournalEntries } from "@/lib/journal";
 
-export default function JournalPage({ entries }) {
+export default function JournalPage({ entries, startDate }) {
   const { isAuthenticated, promptAuth } = useAuth();
   const [items, setItems] = useState(entries ?? []);
   const [deleteError, setDeleteError] = useState(null);
@@ -83,7 +84,10 @@ export default function JournalPage({ entries }) {
           <div>
             <h1 className="section-title">Jurnalul meu</h1>
             <p className="muted">
-              Revizuieste notele rapide si intrarile complete inregistrate recent. Pentru a adauga o nota noua, apasa{" "}
+              {startDate
+                ? `Ai inceput acest jurnal in data de ${formatDate(startDate)}.`
+                : "Inca nu ai intrari in jurnal."}{" "}
+              Pentru a adauga o nota noua, apasa{" "}
               <Link style={{ textDecoration:"underline" }} className="text-link" href={{ pathname: "/journal", query: { journal: "new" } }}>
                 aici
               </Link>
@@ -166,16 +170,43 @@ export async function getServerSideProps(context) {
     return {
       props: {
         entries: [],
+        startDate: null,
       },
     };
   }
 
   const entries = await fetchJournalEntries(userId, { limit: 50 });
+  const [startRow] = await query(
+    `SELECT MIN(created_at) AS first_entry
+     FROM (
+       SELECT created_at FROM journal_entries WHERE user_id = ?
+       UNION ALL
+       SELECT created_at FROM journal_quick_entries WHERE user_id = ?
+     ) AS combined`,
+    [userId, userId]
+  );
+
   return {
     props: {
       entries,
+      startDate:
+        startRow?.first_entry && typeof startRow.first_entry.toISOString === "function"
+          ? startRow.first_entry.toISOString()
+          : startRow?.first_entry ?? null,
     },
   };
+}
+
+function formatDate(dateString) {
+  if (!dateString) {
+    return "";
+  }
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ro-RO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function formatDateTime(dateString) {

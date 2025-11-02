@@ -14,7 +14,7 @@ export default function AuthPromptModal({ onClose }) {
           </div>
 
           <div className="u-mt-2 muted">
-            Pentru a salva progresul, programarile si notificarile, sau pentru a discuta cu psihologul AI este necesar sa fie conectat un cont Calming.
+            Nu ai cont? Completeaza inregistrarea pentru a accesa jurnalul, statisticile si recomandarile personalizate.
           </div>
 
           <div className="grid u-gap-3 u-mt-4">
@@ -27,7 +27,7 @@ export default function AuthPromptModal({ onClose }) {
           </div>
 
           <div className="muted u-mt-4">
-            Nu ai cont? Completeaza inregistrarea pentru a accesa jurnalul, statisticile si recomandarile personalizate.
+            Pentru a salva progresul, programarile si notificarile, sau pentru a discuta cu psihologul AI este necesar sa fie conectat un cont Calming.
           </div>
         </section>
       </div>

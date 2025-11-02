@@ -21,7 +21,7 @@ export default function Layout({ children }) {
     const cookieId =
       typeof window !== "undefined" ? getUserIdForClient(document.cookie) : null;
     const effectiveId = cookieId ?? fallbackUserId;
-    return { id: effectiveId, initials: null, name: null, newNotifications: 0 };
+    return { id: effectiveId, initials: null, name: null, firstName: null, newNotifications: 0 };
   }, [fallbackUserId]);
 
   const [authUser, setAuthUser] = useState(resolveInitialUser);
@@ -92,10 +92,12 @@ export default function Layout({ children }) {
       const data = await response.json();
       const id = typeof data.userId === "number" ? data.userId : null;
       const newCount = Number(data.newNotifications ?? 0) || 0;
+      const firstName = data.firstName ?? null;
       return {
         id,
         initials: data.initials ?? null,
         name: data.name ?? null,
+        firstName,
         newNotifications: newCount,
       };
     } catch (error) {
@@ -139,16 +141,20 @@ export default function Layout({ children }) {
     }
   }, [refreshAuthStatus]);
 
-  const handleJournalSaved = useCallback(() => {
-    if (router.pathname === "/journal") {
-      return router.replace(router.pathname, undefined, { scroll: false });
+  const handleJournalSaved = useCallback(async () => {
+    try {
+      await refreshAuthStatus();
+      await router.replace(router.asPath, undefined, { scroll: false });
+    } catch (error) {
+      console.error("Failed to refresh after journal save", error);
     }
-    return undefined;
-  }, [router]);
+  }, [refreshAuthStatus, router]);
 
   const {
     id: currentUserId,
     initials: currentUserInitials,
+    name: currentUserName,
+    firstName: currentUserFirstName,
     newNotifications: currentNewNotifications,
   } = authUser;
 
@@ -157,6 +163,8 @@ export default function Layout({ children }) {
       isAuthenticated,
       userId: currentUserId,
       userInitials: currentUserInitials,
+      userName: currentUserName,
+      userFirstName: currentUserFirstName,
       newNotificationCount: currentNewNotifications,
       promptAuth,
       signOut,
@@ -166,6 +174,8 @@ export default function Layout({ children }) {
       isAuthenticated,
       currentUserId,
       currentUserInitials,
+      currentUserName,
+      currentUserFirstName,
       currentNewNotifications,
       promptAuth,
       signOut,
