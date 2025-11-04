@@ -1,7 +1,8 @@
 import Head from "next/head";
 import Link from "next/link";
-import { FiSearch, FiGrid, FiStar, FiArrowRight } from "react-icons/fi";
+import { FiAward, FiGrid, FiStar, FiArrowRight } from "react-icons/fi";
 import { query } from "@/lib/db";
+import { fetchArticleTopicsWithCounts } from "@/lib/articles/categories";
 
 export default function Learn({ topics, articles }) {
   return (
@@ -10,11 +11,14 @@ export default function Learn({ topics, articles }) {
         <title>Articole - Calming</title>
       </Head>
 
-      <section className="card">
+      <section className="card accent">
         <div className="section-title">
-          <FiSearch className="section-icon" /> Cauta
+          <FiAward className="section-icon" /> Profesionalism si incredere
         </div>
-        <input className="form-input" placeholder="Cauta articole, videoclipuri..." />
+        <div className="muted">
+          Toate articolele sunt redactate de specialisti acreditati din reteaua Calming si sunt revizuite constant de
+          echipa editoriala pentru acuratete.
+        </div>
       </section>
 
       <section className="card u-mt-4">
@@ -23,10 +27,10 @@ export default function Learn({ topics, articles }) {
         </div>
         <div className="grid cols-2">
           {topics.map((topic) => (
-            <div key={topic.id} className="list-item">
+            <Link href={`/learn/${topic.slug}`} key={topic.id} className="list-item">
               <span>{topic.title}</span>
-              <span className="chip">{topic.article_count} articole</span>
-            </div>
+              <span className="chip">{topic.articleCount} articole</span>
+            </Link>
           ))}
           {topics.length === 0 ? <div className="muted">Nu exista categorii configurate.</div> : null}
         </div>
@@ -63,7 +67,7 @@ export default function Learn({ topics, articles }) {
 
 export async function getServerSideProps() {
   const [topics, articles] = await Promise.all([
-    query("SELECT id, title, article_count FROM article_topics ORDER BY title"),
+    fetchArticleTopicsWithCounts(),
     query(
       "SELECT slug, title, tag, minutes, hero_image FROM articles WHERE is_recommended = 1 ORDER BY id"
     ),

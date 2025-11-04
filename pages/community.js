@@ -71,7 +71,7 @@ export default function Community({ groups }) {
         <div className="section-title">
           <FiShield className="section-icon" /> Siguranta
         </div>
-        <div className="muted">Toate conversatiile sunt private si moderate.</div>
+        <div className="muted">Toate conversatiile sunt moderate. Cele private nu permit accesul decat pe baza de invitatie.</div>
       </section>
 
       <section className="card u-mt-4">

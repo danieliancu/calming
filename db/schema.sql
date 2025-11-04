@@ -92,6 +92,11 @@ CREATE TABLE faqs (
   link_hint VARCHAR(255)
 );
 
+CREATE TABLE article_topics (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(200) NOT NULL
+);
+
 CREATE TABLE articles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   slug VARCHAR(160) NOT NULL UNIQUE,
@@ -101,13 +106,11 @@ CREATE TABLE articles (
   hero_image VARCHAR(255),
   author VARCHAR(120),
   body LONGTEXT,
-  is_recommended TINYINT(1) DEFAULT 0
-);
-
-CREATE TABLE article_topics (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(200) NOT NULL,
-  article_count INT DEFAULT 0
+  is_recommended TINYINT(1) DEFAULT 0,
+  topic_id INT NOT NULL,
+  CONSTRAINT fk_articles_topic
+    FOREIGN KEY (topic_id) REFERENCES article_topics(id)
+    ON DELETE RESTRICT
 );
 
 CREATE TABLE related_articles (
