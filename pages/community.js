@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import { query } from "@/lib/db";
 import { useAuth } from "@/contexts/AuthContext";
+import { getCommunityGroupSlugByName } from "@/lib/community/communityData";
 
 export default function Community({ groups }) {
   const router = useRouter();
@@ -13,9 +14,12 @@ export default function Community({ groups }) {
 
   const handleGroupAccess = useCallback(
     (group) => {
-      const isDemoGroup = String(group.name).toLowerCase() === "cercul zilnic de sprijin";
-      if (isDemoGroup) {
-        router.push("/community/cercul-zilnic-de-sprijin");
+      if (group.slug) {
+        if (group.is_private && !isAuthenticated) {
+          promptAuth();
+          return;
+        }
+        router.push(`/community/${group.slug}`);
         return;
       }
       if (!isAuthenticated) {
@@ -97,9 +101,13 @@ export default function Community({ groups }) {
 }
 
 export async function getServerSideProps() {
-  const groups = await query(
+  const groupsRaw = await query(
     "SELECT id, name, members, last_active, is_private FROM community_groups ORDER BY members DESC"
   );
+  const groups = groupsRaw.map((group) => ({
+    ...group,
+    slug: getCommunityGroupSlugByName(group.name),
+  }));
   return {
     props: {
       groups,

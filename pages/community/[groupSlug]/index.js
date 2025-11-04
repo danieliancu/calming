@@ -1,12 +1,16 @@
 import Head from "next/head";
 import Link from "next/link";
-import { FiArrowLeft, FiArrowRight, FiChevronRight, FiCalendar, FiUsers, FiShield } from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight, FiCalendar, FiUsers, FiShield, FiLock, FiUserCheck, FiClock  } from "react-icons/fi";
 import { useCallback } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
-import { groupInfo } from "@/lib/community/dailyCircleData";
+import {
+  getCommunityGroupBySlug,
+  getCommunityGroupSlugs,
+  getCommunityGroupSlugByName,
+} from "@/lib/community/communityData";
 
-export default function DailyCircleOverview() {
+export default function CommunityGroupOverview({ group }) {
   const router = useRouter();
   const { isAuthenticated, promptAuth } = useAuth();
 
@@ -17,45 +21,49 @@ export default function DailyCircleOverview() {
         promptAuth();
         return;
       }
-      router.push("/community/cercul-zilnic-de-sprijin/conversatii");
+      router.push(`/community/${group.slug}/conversatii`);
     },
-    [isAuthenticated, promptAuth, router]
+    [group.slug, isAuthenticated, promptAuth, router]
   );
 
   return (
     <>
       <Head>
-        <title>{groupInfo.name} - Comunitate Calming</title>
+        <title>{group.name} - Comunitate Calming</title>
       </Head>
 
       <div className="group-hero card">
         <div className="group-nav-bar">
           <Link href="/community" className="group-back-link">
             <FiArrowLeft aria-hidden /> Inapoi la comunitate
-          </Link>          
-          <Link 
-            href="/community/cercul-zilnic-de-sprijin/conversatii"
-            onClick={handleConversationsNav}
-            className="group-back-link">
+          </Link>
+          <Link href={`/community/${group.slug}/conversatii`} onClick={handleConversationsNav} className="group-back-link">
             Mergi la conversatii <FiArrowRight aria-hidden />
-          </Link>                    
-
+          </Link>
         </div>
 
-        <h1 className="group-title">{groupInfo.name}</h1>
-        <p className="group-description">{groupInfo.description}</p>
+        <h1 className="group-title">
+          {group.name} {group.isPrivate ? <FiLock style={{ fontSize:"24px" }} aria-hidden /> : null}
+        </h1>
+        <p className="group-description">{group.description}</p>
 
         <div className="group-meta">
           <div className="group-meta-item">
-            <FiCalendar aria-hidden /> {groupInfo.schedule}
+            <FiCalendar aria-hidden /> {group.schedule}
           </div>
           <div className="group-meta-item">
-            <FiUsers aria-hidden /> Moderator: {groupInfo.facilitator}
+            <FiUserCheck aria-hidden /> Moderator: {group.facilitator}
           </div>
+          <div className="group-meta-item">
+            <FiUsers aria-hidden /> {group.members} membri
+          </div>
+          <div className="group-meta-item">
+            <FiClock aria-hidden /> activ {group.lastActive} in urma
+          </div>          
         </div>
 
         <div className="group-tags">
-          {groupInfo.focusAreas.map((area) => (
+          {group.focusAreas.map((area) => (
             <span key={area} className="chip">
               {area}
             </span>
@@ -67,13 +75,22 @@ export default function DailyCircleOverview() {
         <div className="section-title">
           <FiShield className="section-icon" aria-hidden /> Cadru de siguranta
         </div>
-        <p className="muted">{groupInfo.safetyNote}</p>
+        <p className="muted">{group.safetyNote}</p>
       </section>
 
-      <footer
-        className="site-footer u-mt-8"
-        style={{ marginInline: "calc(50% - 50vw)", width: "100vw" }}
-      >
+      
+          <section className="card group-thread-guidelines u-mt-4">
+            <div className="section-title">
+              <FiShield aria-hidden /> Guideline-uri rapide
+            </div>
+            <ul className="group-guidelines-list muted">
+              <li>Respecta confidentialitatea si evita detalii identificabile.</li>
+              <li>Scrie la persoana intai si descrie ce ai nevoie, nu ce astepti de la ceilalti.</li>
+              <li>Daca simti ca un subiect devine dificil, ia o pauza si revino cand esti pregatit.</li>
+            </ul>
+          </section>
+
+      <footer className="site-footer u-mt-8" style={{ marginInline: "calc(50% - 50vw)", width: "100vw" }}>
         <div className="container footer-grid">
           <div>
             <div className="brand footer-brand">
@@ -114,3 +131,26 @@ export default function DailyCircleOverview() {
     </>
   );
 }
+
+export async function getStaticPaths() {
+  const slugs = getCommunityGroupSlugs();
+  return {
+    paths: slugs.map((slug) => ({ params: { groupSlug: slug } })),
+    fallback: false,
+  };
+}
+
+export async function getStaticProps({ params }) {
+  const group = getCommunityGroupBySlug(params.groupSlug);
+  if (!group) {
+    return { notFound: true };
+  }
+
+  return {
+    props: {
+      group,
+    },
+  };
+}
+
+export { getCommunityGroupSlugByName as resolveGroupSlugByName };

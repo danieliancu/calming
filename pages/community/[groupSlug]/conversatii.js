@@ -1,24 +1,22 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useMemo, useState, useCallback, useEffect } from "react";
-import {
-  FiArrowLeft,
-  FiUsers,
-  FiCalendar,
-  FiMessageSquare,
-  FiShield,
-  FiLock,
-} from "react-icons/fi";
+import { FiArrowLeft, FiUsers, FiCalendar, FiMessageSquare, FiShield, FiLock } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
-import { groupInfo, rawDialogues, roleLabels } from "@/lib/community/dailyCircleData";
+import {
+  getCommunityGroupBySlug,
+  getCommunityGroupSlugs,
+  roleLabels,
+} from "@/lib/community/communityData";
 
-export default function DailyCircleConversations() {
+export default function CommunityGroupConversations({ group }) {
   const { isAuthenticated, promptAuth } = useAuth();
   const [speakerFilter, setSpeakerFilter] = useState(null);
   const [replyTarget, setReplyTarget] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [submittedReplies, setSubmittedReplies] = useState({});
   const [postedMessages, setPostedMessages] = useState([]);
+  const [messageDraft, setMessageDraft] = useState("");
 
   useEffect(() => {
     document.body.classList.add("group-thread-page");
@@ -39,7 +37,7 @@ export default function DailyCircleConversations() {
 
   const groupedDialogues = useMemo(() => {
     const groups = {};
-    rawDialogues.forEach((dialogue) => {
+    group.dialogues.forEach((dialogue) => {
       const dateLabel = dialogue.stamp;
       if (!groups[dateLabel]) {
         groups[dateLabel] = { dateLabel, entries: [] };
@@ -47,21 +45,21 @@ export default function DailyCircleConversations() {
       groups[dateLabel].entries.push(dialogue);
     });
     return Object.values(groups);
-  }, []);
+  }, [group.dialogues]);
 
   const filteredDialogues = useMemo(() => {
     if (!speakerFilter) {
       return groupedDialogues;
     }
     return groupedDialogues
-      .map((group) => {
-        const filteredEntries = group.entries
+      .map((groupEntry) => {
+        const filteredEntries = groupEntry.entries
           .map((dialogue) => {
             const messages = dialogue.messages.filter((message) => message.sender === speakerFilter);
             return messages.length ? { ...dialogue, messages } : null;
           })
           .filter(Boolean);
-        return filteredEntries.length ? { ...group, entries: filteredEntries } : null;
+        return filteredEntries.length ? { ...groupEntry, entries: filteredEntries } : null;
       })
       .filter(Boolean);
   }, [groupedDialogues, speakerFilter]);
@@ -78,16 +76,16 @@ export default function DailyCircleConversations() {
         ? postedMessages.filter((message) => message.sender === speakerFilter)
         : postedMessages;
 
-    const summaries = filteredDialogues.map((group) => {
-      const messages = group.entries.flatMap((dialogue, dialogueIndex) =>
+    const summaries = filteredDialogues.map((groupEntry) => {
+      const messages = groupEntry.entries.flatMap((dialogue, dialogueIndex) =>
         dialogue.messages.map((message, messageIndex) => ({
           ...message,
-          __key: `${group.dateLabel}-${dialogue.id}-${messageIndex}`,
+          __key: `${groupEntry.dateLabel}-${dialogue.id}-${messageIndex}`,
           __order: `${dialogueIndex}-${messageIndex}`,
         }))
       );
       return {
-        dateLabel: group.dateLabel,
+        dateLabel: groupEntry.dateLabel,
         messages,
       };
     });
@@ -126,107 +124,78 @@ export default function DailyCircleConversations() {
       if (!replyTarget) {
         return;
       }
-      if (!isAuthenticated) {
-        promptAuth();
-        return;
-      }
       if (!replyText.trim()) {
         return;
       }
-      const replyPayload = {
-        id: `reply-${Date.now()}`,
-        sender: "Tu",
-        time: formatTime(new Date()),
-        text: replyText.trim(),
-      };
       setSubmittedReplies((current) => {
         const existing = current[replyTarget.key] ?? [];
+        const nextReply = {
+          id: `${replyTarget.key}-${existing.length + 1}`,
+          text: replyText.trim(),
+          time: formatTime(new Date()),
+        };
         return {
           ...current,
-          [replyTarget.key]: [...existing, replyPayload],
+          [replyTarget.key]: [...existing, nextReply],
         };
       });
-      setReplyText("");
       setReplyTarget(null);
+      setReplyText("");
     },
-    [formatTime, isAuthenticated, promptAuth, replyTarget, replyText]
+    [formatTime, replyTarget, replyText]
   );
-
-  const [messageDraft, setMessageDraft] = useState("");
 
   const handleMessageSubmit = useCallback(
     (event) => {
       event.preventDefault();
-      if (!isAuthenticated) {
-        promptAuth();
-        return;
-      }
       if (!messageDraft.trim()) {
         return;
       }
-      const now = new Date();
-      const payload = {
-        __key: `demo-message-${now.getTime()}`,
+      const timestamp = new Date();
+      const message = {
+        __key: `demo-${timestamp.getTime()}`,
         sender: "Tu",
         role: "participant",
-        time: formatTime(now),
+        time: formatTime(timestamp),
         text: messageDraft.trim(),
         isDemo: true,
       };
-      setPostedMessages((previous) => [...previous, payload]);
+      setPostedMessages((current) => [...current, message]);
       setMessageDraft("");
     },
-    [formatTime, isAuthenticated, messageDraft, promptAuth]
+    [formatTime, messageDraft]
   );
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        <Head>
-          <title>{groupInfo.name} - Conversatii</title>
-        </Head>
-        <section className="card accent auth-required-card">
-          <div className="section-title">
-            <FiLock className="section-icon" aria-hidden /> Acces restricționat
-          </div>
-          <p>
-            Pentru a parcurge conversatiile din <strong>{groupInfo.name}</strong> trebuie sa fii conectat in cont.
-            Autentificarea protejeaza confidentialitatea grupului.
-          </p>
-          <button type="button" className="btn primary u-mt-4" onClick={promptAuth}>
-            Conectează-te
-          </button>
-        </section>
-      </>
-    );
+  if (!group) {
+    return null;
   }
 
   return (
     <>
       <Head>
-        <title>{groupInfo.name} - Conversatii</title>
+        <title>{group.name} - Conversatii</title>
       </Head>
       <div className="assistant-wrapper group-thread-wrapper">
         <header className="assistant-header">
           <div className="group-convo-nav">
-            <Link href="/community/cercul-zilnic-de-sprijin" className="group-back-link">
+            <Link href={`/community/${group.slug}`} className="group-back-link">
               <FiArrowLeft aria-hidden /> Inapoi
             </Link>
           </div>
         </header>
 
         <div className="assistant-body" style={{ gap: "var(--space-4)" }}>
-          <section className="card u-mt-4 group-dialog-shell" style={{ flex: 1 }}>
 
+          <section className="card group-dialog-shell" style={{ flex: 1 }}>
             <div className="group-dialog-list" style={{ flex: 1, overflowY: "auto" }}>
               {daySummaries.length > 0 ? (
-                daySummaries.map((group) => (
-                  <article key={group.dateLabel} className="group-dialog-card">
+                daySummaries.map((groupEntry) => (
+                  <article key={groupEntry.dateLabel} className="group-dialog-card">
                     <header className="group-dialog-header">
-                      <span className="group-dialog-date">{group.dateLabel}</span>
+                      <span className="group-dialog-date">{groupEntry.dateLabel}</span>
                     </header>
                     <div className="group-dialog-thread">
-                      {group.messages.map((message) => (
+                      {groupEntry.messages.map((message) => (
                         <div
                           key={message.__key}
                           className={`group-dialog-message ${message.isDemo ? "group-dialog-message--self" : ""}`}
@@ -239,7 +208,7 @@ export default function DailyCircleConversations() {
                             >
                               {message.sender}
                             </button>
-                            {message.role ? (
+                            {message.role && roleLabels[message.role] ? (
                               <span className="chip chip--subtle">{roleLabels[message.role]}</span>
                             ) : null}
                             <span className="muted group-dialog-time">{message.time}</span>
@@ -308,19 +277,41 @@ export default function DailyCircleConversations() {
             </div>
           </section>
 
-          <form className="assistant-form row u-mt-4 group-message-compose" onSubmit={handleMessageSubmit}>
-            <input
-              className="form-input grow"
-              placeholder="Scrie un mesaj..."
-              value={messageDraft}
-              onChange={(event) => setMessageDraft(event.target.value)}
-            />
-            <button className="btn primary" type="submit">
-              Trimite
-            </button>
-          </form>
         </div>
+
+        <form className="assistant-form row u-mt-4 group-message-compose" onSubmit={handleMessageSubmit}>
+          <input
+            className="form-input grow"
+            placeholder="Scrie un mesaj..."
+            value={messageDraft}
+            onChange={(event) => setMessageDraft(event.target.value)}
+          />
+          <button className="btn primary" type="submit">
+            Trimite
+          </button>
+        </form>
       </div>
     </>
   );
+}
+
+export async function getStaticPaths() {
+  const slugs = getCommunityGroupSlugs();
+  return {
+    paths: slugs.map((slug) => ({ params: { groupSlug: slug } })),
+    fallback: false,
+  };
+}
+
+export async function getStaticProps({ params }) {
+  const group = getCommunityGroupBySlug(params.groupSlug);
+  if (!group) {
+    return { notFound: true };
+  }
+
+  return {
+    props: {
+      group,
+    },
+  };
 }

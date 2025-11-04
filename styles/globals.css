@@ -874,8 +874,10 @@ body.group-thread-page main.container > .group-thread-wrapper {
 }
 
 main.community-container {
-  height: 100vh;
+  height: 92vh;
 }
+
+
 
 @media (max-width: 900px) {
   body.group-thread-page {
@@ -1370,9 +1372,9 @@ main.community-container {
 }
 
 .group-meta {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   margin-top: var(--space-4);
 }
 
@@ -1465,10 +1467,11 @@ main.community-container {
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
+  margin-bottom:16px;
 }
 
 .group-message-compose {
-  margin-top: auto;
+  margin-top: 20px;
 }
 
 @media (max-width: 720px) {
