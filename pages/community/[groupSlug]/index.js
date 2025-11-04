@@ -1,21 +1,28 @@
 import Head from "next/head";
 import Link from "next/link";
-import { FiArrowLeft, FiArrowRight, FiCalendar, FiUsers, FiShield, FiLock, FiUserCheck, FiClock  } from "react-icons/fi";
-import { useCallback } from "react";
+import { FiArrowLeft, FiArrowRight, FiCalendar, FiUsers, FiShield, FiLock, FiUserCheck, FiClock } from "react-icons/fi";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getCommunityGroupBySlug,
   getCommunityGroupSlugs,
-  getCommunityGroupSlugByName,
+  prepareGroupForClient,
 } from "@/lib/community/communityData";
+import PrivateGroupModal from "@/components/PrivateGroupModal";
 
 export default function CommunityGroupOverview({ group }) {
   const router = useRouter();
   const { isAuthenticated, promptAuth } = useAuth();
+  const [showPrivateNotice, setShowPrivateNotice] = useState(false);
 
   const handleConversationsNav = useCallback(
     (event) => {
+      if (group.isPrivate) {
+        event.preventDefault();
+        setShowPrivateNotice(true);
+        return;
+      }
       if (!isAuthenticated) {
         event.preventDefault();
         promptAuth();
@@ -31,6 +38,9 @@ export default function CommunityGroupOverview({ group }) {
       <Head>
         <title>{group.name} - Comunitate Calming</title>
       </Head>
+      {showPrivateNotice ? (
+        <PrivateGroupModal groupName={group.name} onClose={() => setShowPrivateNotice(false)} />
+      ) : null}
 
       <div className="group-hero card">
         <div className="group-nav-bar">
@@ -43,7 +53,7 @@ export default function CommunityGroupOverview({ group }) {
         </div>
 
         <h1 className="group-title">
-          {group.name} {group.isPrivate ? <FiLock style={{ fontSize:"24px" }} aria-hidden /> : null}
+          {group.name} {group.isPrivate ? <FiLock style={{ fontSize: "24px" }} aria-hidden /> : null}
         </h1>
         <p className="group-description">{group.description}</p>
 
@@ -148,9 +158,7 @@ export async function getStaticProps({ params }) {
 
   return {
     props: {
-      group,
+      group: prepareGroupForClient(group),
     },
   };
 }
-
-export { getCommunityGroupSlugByName as resolveGroupSlugByName };

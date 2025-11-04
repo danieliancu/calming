@@ -7,6 +7,7 @@ import {
   getCommunityGroupBySlug,
   getCommunityGroupSlugs,
   roleLabels,
+  prepareGroupForClient,
 } from "@/lib/community/communityData";
 
 export default function CommunityGroupConversations({ group }) {
@@ -26,16 +27,19 @@ export default function CommunityGroupConversations({ group }) {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!group.isPrivate && !isAuthenticated) {
       promptAuth();
     }
-  }, [isAuthenticated, promptAuth]);
+  }, [group.isPrivate, isAuthenticated, promptAuth]);
 
   const toggleSpeaker = useCallback((speaker) => {
     setSpeakerFilter((current) => (current === speaker ? null : speaker));
   }, []);
 
   const groupedDialogues = useMemo(() => {
+    if (!group.dialogues) {
+      return [];
+    }
     const groups = {};
     group.dialogues.forEach((dialogue) => {
       const dateLabel = dialogue.stamp;
@@ -70,6 +74,17 @@ export default function CommunityGroupConversations({ group }) {
     return `${hours}:${minutes}`;
   }, []);
 
+  const formatDateLabel = useCallback((date) => {
+    const formatter = new Intl.DateTimeFormat("ro-RO", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const raw = formatter.format(date);
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }, []);
+
   const daySummaries = useMemo(() => {
     const filteredPosted =
       speakerFilter && speakerFilter !== "Tu"
@@ -91,13 +106,19 @@ export default function CommunityGroupConversations({ group }) {
     });
 
     if (filteredPosted.length > 0) {
-      summaries.push({
-        dateLabel: "Astazi (demo)",
-        messages: filteredPosted.map((message) => ({
-          ...message,
-          __key: message.__key,
-        })),
+      const postedGroups = [];
+      const groupIndex = new Map();
+      filteredPosted.forEach((message) => {
+        let bucket = groupIndex.get(message.dateLabel);
+        if (!bucket) {
+          bucket = { dateLabel: message.dateLabel, messages: [] };
+          groupIndex.set(message.dateLabel, bucket);
+          postedGroups.push(bucket);
+        }
+        bucket.messages.push(message);
       });
+
+      return [...postedGroups, ...summaries];
     }
 
     return summaries;
@@ -152,6 +173,7 @@ export default function CommunityGroupConversations({ group }) {
         return;
       }
       const timestamp = new Date();
+      const dateLabel = formatDateLabel(timestamp);
       const message = {
         __key: `demo-${timestamp.getTime()}`,
         sender: "Tu",
@@ -159,15 +181,51 @@ export default function CommunityGroupConversations({ group }) {
         time: formatTime(timestamp),
         text: messageDraft.trim(),
         isDemo: true,
+        dateLabel,
       };
-      setPostedMessages((current) => [...current, message]);
+      setPostedMessages((current) => [message, ...current]);
       setMessageDraft("");
     },
-    [formatTime, messageDraft]
+    [formatDateLabel, formatTime, messageDraft]
   );
 
   if (!group) {
     return null;
+  }
+
+  if (group.isPrivate) {
+    return (
+      <>
+        <Head>
+          <title>{group.name} - Acces privat</title>
+        </Head>
+        <div className="assistant-wrapper group-thread-wrapper">
+          <header className="assistant-header">
+            <div className="group-convo-nav">
+              <Link href="/community" className="group-back-link">
+                <FiArrowLeft aria-hidden /> Inapoi la comunitate
+              </Link>
+            </div>
+            <div className="group-convo-meta muted">
+              <FiUsers aria-hidden /> {group.members} membri &middot; <FiCalendar aria-hidden /> activ {group.lastActive} in urma
+            </div>
+          </header>
+          <section className="card u-mt-4">
+            <div className="section-title">
+              <FiLock aria-hidden /> Acces restrictionat
+            </div>
+            <p className="muted">
+              Acest grup este privat. Pentru a accesa conversatiile este necesara o invitatie din partea moderatorilor.
+            </p>
+            <div className="u-mt-4">
+              <Link href="/community" className="btn">
+                Inapoi la comunitate
+              </Link>
+            </div>
+          </section>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -311,7 +369,7 @@ export async function getStaticProps({ params }) {
 
   return {
     props: {
-      group,
+      group: prepareGroupForClient(group),
     },
   };
 }

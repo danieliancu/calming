@@ -13,6 +13,7 @@ export default function Layout({ children }) {
   const { pathname, query } = router;
   const isCommunityRoot = pathname === "/community";
   const isCommunityInner = pathname.startsWith("/community/"); // excludes root
+  const isCommunityConversation = isCommunityInner && pathname.endsWith("/conversatii");
   const [theme, setTheme] = useState("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -344,7 +345,7 @@ export default function Layout({ children }) {
         style={
           pathname === "/assistant"
             ? { height: "80vh" }
-            : pathname === "/community/cercul-zilnic-de-sprijin/conversatii"
+            : isCommunityConversation
             ? { height: "100vh" }
             : undefined
         }

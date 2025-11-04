@@ -1476,7 +1476,6 @@ main.community-container {
 
 @media (max-width: 720px) {
   .group-nav-bar {
-    flex-direction: column-reverse;
     align-items: stretch;
   }
 
