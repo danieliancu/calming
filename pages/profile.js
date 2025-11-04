@@ -1,12 +1,13 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiActivity, FiAward, FiCalendar, FiChevronRight, FiHeart, FiTrendingUp, FiLogOut } from "react-icons/fi";
 import { query } from "@/lib/db";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchJournalEntries } from "@/lib/journal";
+import ProfileEditModal from "@/components/ProfileEditModal";
 
 const ICON_MAP = {
   FiActivity,
@@ -15,11 +16,14 @@ const ICON_MAP = {
   FiCalendar,
 };
 
-export default function Profile({ profile, stats, milestones, infoLinks, journalEntries }) {
+export default function Profile({ profile, profileDetails, stats, milestones, infoLinks, journalEntries }) {
   const router = useRouter();
   const { isAuthenticated, promptAuth, signOut } = useAuth();
   const safeJournalEntries = journalEntries ?? [];
   const previewEntries = safeJournalEntries.slice(0, 5);
+  const [profileData, setProfileData] = useState(profile ?? null);
+  const [profileExtra, setProfileExtra] = useState(profileDetails ?? null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const openJournal = () => {
     if (!isAuthenticated) {
@@ -33,11 +37,48 @@ export default function Profile({ profile, stats, milestones, infoLinks, journal
     );
   };  
 
+  const handleEditOpen = useCallback(() => {
+    setEditOpen(true);
+  }, []);
+
+  const handleEditClose = useCallback(() => {
+    setEditOpen(false);
+  }, []);
+
+  const handleProfileSaved = useCallback((payload) => {
+    if (payload?.profile) {
+      setProfileData(payload.profile);
+    }
+    if (payload?.details) {
+      setProfileExtra(payload.details);
+    }
+    setEditOpen(false);
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) {
       promptAuth();
     }
   }, [isAuthenticated, promptAuth]);
+
+  useEffect(() => {
+    setProfileData(profile ?? null);
+  }, [profile]);
+
+  useEffect(() => {
+    setProfileExtra(profileDetails ?? null);
+  }, [profileDetails]);
+
+  const completionValue = Math.min(profileData?.profile_completion ?? 0, 100);
+  const completionTone = useMemo(() => {
+    if (completionValue >= 80) {
+      return "progress-good";
+    }
+    if (completionValue >= 50) {
+      return "progress-mid";
+    }
+    return "progress-low";
+  }, [completionValue]);
 
   if (!isAuthenticated) {
     return (
@@ -67,24 +108,34 @@ export default function Profile({ profile, stats, milestones, infoLinks, journal
       <main className="profile-layout">
         <section className="card accent profile-card">
           <div className="profile-header">
-            <div className="avatar">{profile?.avatar_initials ?? "NA"}</div>
-            <div>
-              <div className="profile-name">{profile?.display_name ?? "Utilizator"}</div>
-              <div className="muted">
-                {profile?.member_since ? `Membru din ${formatMemberSince(profile.member_since)}` : "Membru Calming"}
+            <div className="profile-ident">
+              <div className="avatar">{profileData?.avatar_initials ?? "NA"}</div>
+              <div>
+                <div className="profile-name">
+                  {profileData?.display_name ?? "Utilizator"}
+                  {profileData?.community_alias ? ` (${profileData.community_alias})` : ""}
+                </div>
+                <div className="muted">
+                  {profileData?.member_since
+                    ? `Membru din ${formatMemberSince(profileData.member_since)}`
+                    : "Membru Calming"}
+                </div>
               </div>
             </div>
+            <button type="button" className="btn profile-edit" onClick={handleEditOpen}>
+              Editeaza
+            </button>
           </div>
 
           <div className="profile-progress">
             <div className="progress-label">
               <span>Completare profil</span>
-              <span className="progress-value">{profile?.profile_completion ?? 0}%</span>
+              <span className={`progress-value ${completionTone}`}>{completionValue}%</span>
             </div>
             <div className="progress-bar">
               <span
-                className="progress-fill"
-                style={{ width: `${Math.min(profile?.profile_completion ?? 0, 100)}%` }}
+                className={`progress-fill ${completionTone}`}
+                style={{ width: `${completionValue}%` }}
               />
             </div>
           </div>
@@ -173,6 +224,15 @@ export default function Profile({ profile, stats, milestones, infoLinks, journal
           </div>
         </section>
       </main>
+
+      {editOpen ? (
+        <ProfileEditModal
+          initialProfile={profileData}
+          initialDetails={profileExtra}
+          onClose={handleEditClose}
+          onSaved={handleProfileSaved}
+        />
+      ) : null}
     </>
   );
 }
@@ -192,9 +252,17 @@ export async function getServerSideProps(context) {
   }
 
   const [profile] = await query(
-    `SELECT up.display_name, up.avatar_initials, up.member_since, up.profile_completion
+    `SELECT up.display_name, up.avatar_initials, up.member_since, up.profile_completion, up.community_alias
      FROM user_profiles up
      WHERE up.user_id = ?`,
+    [userId]
+  );
+
+  const [profileDetails] = await query(
+    `SELECT age_range, focus_topics, primary_goal, stress_triggers, coping_strategies,
+            guidance_style, check_in_preference, therapy_status, notification_frequency
+     FROM user_profile_details
+     WHERE user_id = ?`,
     [userId]
   );
 
@@ -393,6 +461,13 @@ export async function getServerSideProps(context) {
       }
     : null;
 
+  const profileDetailsData = profileDetails
+    ? {
+        ...profileDetails,
+        focus_topics: parseFocusTopics(profileDetails.focus_topics),
+      }
+    : null;
+
   const milestonesData = milestones.map((item) => ({
     ...item,
     achieved_at:
@@ -404,12 +479,28 @@ export async function getServerSideProps(context) {
   return {
     props: {
       profile: profileData,
+      profileDetails: profileDetailsData,
       stats,
       milestones: milestonesData,
       infoLinks,
       journalEntries,
     },
   };
+}
+
+function parseFocusTopics(rawValue) {
+  if (!rawValue) {
+    return [];
+  }
+  if (Array.isArray(rawValue)) {
+    return rawValue;
+  }
+  try {
+    const parsed = JSON.parse(rawValue);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 function formatMemberSince(dateString) {

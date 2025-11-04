@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 export default function AuthPromptModal({ onClose }) {
+  const router = useRouter();
+  const redirectTo = router?.asPath || "/";
+
   return (
     <div className="modal-root" role="dialog" aria-modal="true" aria-label="Acces cont">
       <div className="modal-backdrop" onClick={onClose} />
@@ -21,7 +25,11 @@ export default function AuthPromptModal({ onClose }) {
             <Link className="btn primary" href="/signup" onClick={onClose}>
               Creeaza un cont
             </Link>
-            <Link className="btn" href="/login" onClick={onClose}>
+            <Link
+              className="btn"
+              href={{ pathname: "/login", query: { redirectTo } }}
+              onClick={onClose}
+            >
               Conecteaza-te
             </Link>
           </div>

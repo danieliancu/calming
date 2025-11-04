@@ -93,9 +93,25 @@ export default function JournalModal({ onClose, onSaved }) {
     setSelectedSymptoms((current) => current.filter((value) => allowed.has(value)));
   }, [symptomOptions]);
 
+  const intensityPercent = useMemo(() => Math.round((level / 10) * 100), [level]);
+  const intensityTone = useMemo(() => {
+    if (intensityPercent >= 80) {
+      return "progress-good";
+    }
+    if (intensityPercent >= 50) {
+      return "progress-mid";
+    }
+    return "progress-low";
+  }, [intensityPercent]);
+
   const saveEntry = async () => {
     if (!selectedMoodId) {
       setFormError("Selecteaza emoji-ul care descrie cel mai bine starea ta.");
+      return;
+    }
+
+    if (!notes.trim()) {
+      setFormError("Scrie in jurnal cateva ganduri inainte sa salvezi.");
       return;
     }
 
@@ -178,20 +194,30 @@ export default function JournalModal({ onClose, onSaved }) {
 
               <div className="range-section">
                 <div className="muted">Nivel intensitate</div>
-                <div className="row u-mt-2" style={{ alignItems:"flex-start" }}>
+                <div className="row u-mt-2 range-row">
                   <div className="range-wrap grow">
-                    <input
-                      className="range"
-                      type="range"
-                      min="0"
-                      max="10"
-                      value={level}
-                      onChange={(event) => setLevel(Number(event.target.value))}
-                    />
-                <div className="scale">
-                  <span>Mica</span>
-                  <span>Normal</span>
-                  <span>Maxima</span>
+                    <div className="range-slider">
+                      <div className="range-visual">
+                        <div className="progress-bar intensity-track">
+                          <span
+                            className={`progress-fill ${intensityTone}`}
+                            style={{ width: `${intensityPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                      <input
+                        className="range"
+                        type="range"
+                        min="0"
+                        max="10"
+                        value={level}
+                        onChange={(event) => setLevel(Number(event.target.value))}
+                      />
+                    </div>
+                    <div className="scale">
+                      <span>Mica</span>
+                      <span>Normal</span>
+                      <span>Maxima</span>
                     </div>
                   </div>
                   <div className="bubble">{level}/10</div>

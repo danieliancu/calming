@@ -20,6 +20,22 @@ CREATE TABLE user_profiles (
   member_since DATE,
   avatar_initials VARCHAR(5),
   profile_completion TINYINT,
+  community_alias VARCHAR(80),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_profile_details (
+  user_id INT PRIMARY KEY,
+  age_range VARCHAR(32),
+  focus_topics TEXT,
+  primary_goal TEXT,
+  stress_triggers TEXT,
+  coping_strategies TEXT,
+  guidance_style VARCHAR(40),
+  check_in_preference VARCHAR(40),
+  therapy_status VARCHAR(40),
+  notification_frequency VARCHAR(40),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

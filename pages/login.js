@@ -13,6 +13,14 @@ export default function Login() {
   const [error, setError] = useState(null);
   const { refreshAuth } = useAuth();
 
+  const getRedirectTarget = () => {
+    const target = router.query?.redirectTo;
+    if (typeof target === "string" && target.startsWith("/")) {
+      return target;
+    }
+    return "/profile";
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
@@ -30,7 +38,7 @@ export default function Login() {
         throw new Error(data?.error || "Nu am putut autentifica utilizatorul.");
       }
       await refreshAuth();
-      await router.push("/profile");
+      await router.push(getRedirectTarget());
     } catch (err) {
       setError(err.message);
     } finally {

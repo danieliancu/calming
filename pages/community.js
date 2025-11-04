@@ -1,21 +1,30 @@
 import Head from "next/head";
-import { FiLock, FiUsers, FiChevronRight } from "react-icons/fi";
-import { useCallback } from "react";
+import { FiLock, FiUsers, FiChevronRight, FiSearch, FiShield } from "react-icons/fi";
+import { useRouter } from "next/router";
+import { useCallback, useState } from "react";
 import { query } from "@/lib/db";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Community({ groups }) {
+  const router = useRouter();
   const { isAuthenticated, promptAuth } = useAuth();
+  const [q, setQ] = useState("");
+
 
   const handleGroupAccess = useCallback(
     (group) => {
+      const isDemoGroup = String(group.name).toLowerCase() === "cercul zilnic de sprijin";
+      if (isDemoGroup) {
+        router.push("/community/cercul-zilnic-de-sprijin");
+        return;
+      }
       if (!isAuthenticated) {
         promptAuth();
         return;
       }
       alert(`Accesezi grupul "${group.name}" (demo).`);
     },
-    [isAuthenticated, promptAuth]
+    [isAuthenticated, promptAuth, router]
   );
 
   const handleKeyDown = useCallback(
@@ -36,10 +45,22 @@ export default function Community({ groups }) {
       </Head>
       <section className="card accent">
         <div className="section-title">
-          <FiLock className="section-icon" /> Siguranta
+          <FiShield className="section-icon" /> Siguranta
         </div>
         <div className="muted">Toate conversatiile sunt private si moderate.</div>
       </section>
+
+      <section className="card u-mt-4">
+        <div className="section-title">
+          <FiSearch className="section-icon" /> Cauta
+        </div>
+        <input
+          value={q}
+          onChange={(event) => setQ(event.target.value)}
+          placeholder="Cauta grupuri, moderatori, participanti..."
+          className="form-input"
+        />
+      </section>      
 
       <section className="card u-mt-4">
         <div className="section-title">

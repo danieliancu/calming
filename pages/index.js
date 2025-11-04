@@ -174,7 +174,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
         <div className="row u-mt-3">
           <input
             className="grow note-input"
-            placeholder="Noteaza pe scurt ce simti."
+            placeholder="Adaugă un gând dacă simți nevoia."
             value={quickNote}
             onChange={(event) => setQuickNote(event.target.value)}
             maxLength={255}

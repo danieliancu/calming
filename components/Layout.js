@@ -1,18 +1,22 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import JournalModal from "@/components/JournalModal";
 import AuthPromptModal from "@/components/AuthPromptModal";
 import { AuthContext } from "@/contexts/AuthContext";
+import { ToastContext } from "@/contexts/ToastContext";
 import { getUserIdForClient } from "@/lib/currentUser";
 import { FiHome, FiMessageSquare, FiCalendar, FiBookOpen, FiUsers } from "react-icons/fi";
 
 export default function Layout({ children }) {
   const router = useRouter();
   const { pathname, query } = router;
+  const isCommunityRoot = pathname === "/community";
+  const isCommunityInner = pathname.startsWith("/community/"); // excludes root
   const [theme, setTheme] = useState("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [toastState, setToastState] = useState(null);
   const fallbackUserId = (() => {
     const envValue = Number(process.env.NEXT_PUBLIC_DEFAULT_USER_ID ?? 0);
     return Number.isFinite(envValue) && envValue > 0 ? envValue : null;
@@ -42,6 +46,8 @@ export default function Layout({ children }) {
     { href: "/settings", label: "Setari", icon: SettingsIcon },
   ];
 
+  const hideFooter = pathname === "/assistant" || isCommunityInner;
+
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
     const next = saved || "light";
@@ -51,6 +57,13 @@ export default function Layout({ children }) {
       document.body?.style.removeProperty("padding-top");
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    document.body.classList.toggle("community-page", isCommunityInner);
+  }, [isCommunityInner]);
 
   const closeJournal = useCallback(() => {
     const nextQuery = { ...query };
@@ -78,6 +91,29 @@ export default function Layout({ children }) {
   const promptAuth = useCallback(() => {
     setShowAuthModal(true);
   }, []);
+
+  const hideToast = useCallback(() => {
+    setToastState(null);
+  }, []);
+
+  const showToast = useCallback((payload = {}) => {
+    const duration = Math.max(2000, Math.min(payload.duration ?? 6000, 15000));
+    setToastState({
+      id: Date.now(),
+      message: payload.message ?? "",
+      actionLabel: payload.actionLabel ?? null,
+      actionHref: payload.actionHref ?? null,
+      duration,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!toastState) {
+      return undefined;
+    }
+    const timer = setTimeout(hideToast, toastState.duration);
+    return () => clearTimeout(timer);
+  }, [toastState, hideToast]);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -145,10 +181,17 @@ export default function Layout({ children }) {
     try {
       await refreshAuthStatus();
       await router.replace(router.asPath, undefined, { scroll: false });
+      if (router.pathname !== "/journal") {
+        showToast({
+          message: "Nota a fost salvata.",
+          actionHref: "/journal",
+          actionLabel: "Vezi jurnalul",
+        });
+      }
     } catch (error) {
       console.error("Failed to refresh after journal save", error);
     }
-  }, [refreshAuthStatus, router]);
+  }, [refreshAuthStatus, router, showToast]);
 
   const {
     id: currentUserId,
@@ -183,8 +226,16 @@ export default function Layout({ children }) {
     ]
   );
 
+  const toastContextValue = useMemo(
+    () => ({
+      showToast,
+    }),
+    [showToast]
+  );
+
   return (
-    <AuthContext.Provider value={authContextValue}>
+    <ToastContext.Provider value={toastContextValue}>
+      <AuthContext.Provider value={authContextValue}>
       <header className="site-header">
         <div className="container bar">
           <Link href="/" className="brand">
@@ -288,15 +339,42 @@ export default function Layout({ children }) {
         </div>
       </header>
 
-      <main className="container" style={pathname === "/assistant" ? { height: "80vh" } : undefined}>
+      <main
+        className={`container${isCommunityInner ? " community-container" : ""}`}
+        style={
+          pathname === "/assistant"
+            ? { height: "80vh" }
+            : pathname === "/community/cercul-zilnic-de-sprijin/conversatii"
+            ? { height: "100vh" }
+            : undefined
+        }
+      >
         {children}
       </main>
       {journalOpen && isAuthenticated && <JournalModal onClose={closeJournal} onSaved={handleJournalSaved} />}
       {showAuthModal && <AuthPromptModal onClose={handleCloseAuth} />}
 
-      {pathname !== "/assistant" && <Footer />}
+      {!hideFooter && <Footer />}
       <BottomNav />
-    </AuthContext.Provider>
+      {toastState && toastState.message ? (
+        <div className="toast-container" role="status" aria-live="polite">
+          <div className="toast-shell">
+            <span className="toast-message">{toastState.message}</span>
+            <div className="toast-actions">
+              {toastState.actionHref ? (
+                <Link href={toastState.actionHref} className="toast-link" onClick={hideToast}>
+                  {toastState.actionLabel ?? "Vezi jurnalul"}
+                </Link>
+              ) : null}
+              <button type="button" className="toast-close" aria-label="Inchide notificarea" onClick={hideToast}>
+                x
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      </AuthContext.Provider>
+    </ToastContext.Provider>
   );
 }
 
@@ -394,3 +472,4 @@ function Footer() {
     </footer>
   );
 }
+

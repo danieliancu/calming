@@ -58,9 +58,13 @@ export default async function handler(req, res) {
     const initials = `${firstName.charAt(0) || ""}${lastName.charAt(0) || ""}`.toUpperCase().slice(0, 2) || "NA";
     const memberSince = new Date().toISOString().slice(0, 10);
 
+    const communityAlias =
+      lastName ? `${firstName} ${lastName.charAt(0).toUpperCase()}.` : firstName || displayName || "Utilizator";
+
     await connection.execute(
-      "INSERT INTO user_profiles (user_id, display_name, member_since, avatar_initials, profile_completion) VALUES (?, ?, ?, ?, ?)",
-      [userId, displayName || email, memberSince, initials, 40]
+      `INSERT INTO user_profiles (user_id, display_name, member_since, avatar_initials, profile_completion, community_alias)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId, displayName || email, memberSince, initials, 20, communityAlias]
     );
 
     await connection.commit();

@@ -8,9 +8,33 @@ VALUES
   ('Mihai', 'Popescu', 'mihai.popescu@example.com', '$2b$10$8i3KpH06unBGWT04d4nkA.E1/tHd1WAtwFUVBVnE7YBz6.yZTK4h.', '+40 721 400 222', 'Brasov', 'Romania'),
   ('Ioana', 'Radu', 'ioana.radu@example.com', '$2b$10$8i3KpH06unBGWT04d4nkA.E1/tHd1WAtwFUVBVnE7YBz6.yZTK4h.', '+40 723 888 333', 'Timisoara', 'Romania');
 
-INSERT INTO user_profiles (user_id, display_name, member_since, avatar_initials, profile_completion)
+INSERT INTO user_profiles (user_id, display_name, member_since, avatar_initials, profile_completion, community_alias)
 VALUES
-  (1, 'Sarah Mitchell', '2025-09-03', 'SM', 85);
+  (1, 'Sarah Mitchell', '2025-09-03', 'SM', 85, 'Sarah M.');
+
+INSERT INTO user_profile_details (
+  user_id,
+  age_range,
+  focus_topics,
+  primary_goal,
+  stress_triggers,
+  coping_strategies,
+  guidance_style,
+  check_in_preference,
+  therapy_status,
+  notification_frequency
+) VALUES (
+  1,
+  '35-44',
+  '["Gestionarea stresului","Echilibru munca-viata","Stima de sine si auto-compasiune"]',
+  'Sa gestionez mai bine presiunea de la job si sa fiu mai blanda cu mine cand nu reusesc tot ce imi propun.',
+  'Termenele stranse, sedintele conflictuale si lipsa somnului.',
+  'Plimbari scurte, jurnal zilnic si discutii cu o persoana de incredere.',
+  'calm-empathetic',
+  'evening',
+  'active',
+  'daily'
+);
 
 INSERT INTO user_stats (user_id, metric_key, label, value, tone, icon, sort_order)
 VALUES

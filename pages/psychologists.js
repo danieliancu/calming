@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { FiLock, FiSearch } from "react-icons/fi";
+import { FiLock, FiCheck, FiSearch } from "react-icons/fi";
 import { AiFillStar } from "react-icons/ai";
 import { query } from "@/lib/db";
 
@@ -24,7 +24,7 @@ export default function Psychologists({ psychologists }) {
 
       <section className="card accent">
         <div className="section-title">
-          <FiLock className="section-icon" /> Parteneri verificati
+          <FiCheck className="section-icon" /> Parteneri verificati
         </div>
         <div className="muted">Toti specialistii sunt verificati de reteaua Calming.</div>
       </section>
