@@ -11,12 +11,12 @@ export default function PrivateGroupModal({ groupName, onClose }) {
             </button>
           </div>
 
-          <div className="u-mt-3">
+          <div className="u-mt-3 muted">
             Acest grup este privat. Pentru a accesa acest grup ai nevoie de o invitatie din partea moderatorilor.
           </div>
 
           <div className="u-mt-4" style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button type="button" className="btn primary" onClick={onClose}>
+            <button type="button" className="btn primary" onClick={onClose} style={{ width:"100%" }}>
               OK
             </button>
           </div>
