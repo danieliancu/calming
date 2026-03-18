@@ -1,0 +1,93 @@
+<?php
+
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\CalmPageController;
+use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\PreferenceController;
+use App\Http\Controllers\PsychologistController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SuperadminController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', [CalmPageController::class, 'home'])->name('home');
+Route::get('/learn', [CalmPageController::class, 'learn'])->name('learn');
+Route::get('/learn/{slug}', [CalmPageController::class, 'learnCategory'])->name('learn.category');
+Route::get('/community', [CalmPageController::class, 'community'])->name('community');
+Route::get('/community/{groupSlug}', [CalmPageController::class, 'communityGroup'])->name('community.group');
+Route::get('/community/{groupSlug}/conversatii', [CalmPageController::class, 'communityConversations'])->name('community.group.conversations');
+Route::get('/notifications', [CalmPageController::class, 'notifications'])->name('notifications');
+Route::get('/profile', [CalmPageController::class, 'profile'])->name('product.profile');
+Route::get('/settings', [CalmPageController::class, 'settings'])->name('settings');
+Route::get('/assistant', [CalmPageController::class, 'assistant'])->name('assistant');
+Route::get('/journal', [CalmPageController::class, 'journal'])->name('journal');
+Route::get('/psychologists', [CalmPageController::class, 'psychologists'])->name('psychologists');
+Route::get('/psychologists/signup', [PsychologistController::class, 'signupPage'])->name('psychologists.signup');
+Route::post('/psychologists/signup', [PsychologistController::class, 'signup'])->name('psychologists.signup.store');
+Route::get('/psychologists/signin', [PsychologistController::class, 'signinPage'])->name('psychologists.signin');
+Route::post('/psychologists/signin', [PsychologistController::class, 'signin'])->name('psychologists.signin.store');
+Route::get('/psychologists/verify-email/{verificationId}/{token}', [PsychologistController::class, 'verifyEmail'])->name('psychologists.verify-email');
+Route::post('/psychologists/verify-email/resend', [PsychologistController::class, 'resendVerification'])->name('psychologists.verification.send');
+Route::get('/psychologists/mfa', [PsychologistController::class, 'mfaChallengePage'])->name('psychologists.mfa.challenge');
+Route::post('/psychologists/mfa', [PsychologistController::class, 'verifyMfaChallenge'])->name('psychologists.mfa.verify');
+Route::post('/psychologists/mfa/resend', [PsychologistController::class, 'resendMfaChallenge'])->name('psychologists.mfa.resend');
+Route::post('/psychologists/signout', [PsychologistController::class, 'signout'])->name('psychologists.signout');
+Route::get('/psychologists/dashboard', [PsychologistController::class, 'dashboard'])->name('psychologists.dashboard');
+Route::post('/psychologists/dashboard/validation', [PsychologistController::class, 'updateValidation'])->name('psychologists.validation.update');
+Route::delete('/psychologists/dashboard/validation/messages/{messageId}', [PsychologistController::class, 'destroyValidationMessage'])->name('psychologists.validation.messages.destroy');
+Route::get('/psychologists/dashboard/articles/new', [PsychologistController::class, 'createArticlePage'])->name('psychologists.articles.create');
+Route::get('/psychologists/dashboard/articles/{articleId}/edit', [PsychologistController::class, 'editArticlePage'])->name('psychologists.articles.edit');
+Route::get('/psychologists/dashboard/community/new', [PsychologistController::class, 'createCommunityGroupPage'])->name('psychologists.community.create');
+Route::get('/psychologists/dashboard/community/{groupId}/edit', [PsychologistController::class, 'editCommunityGroupPage'])->name('psychologists.community.edit');
+Route::post('/psychologists/dashboard/community', [PsychologistController::class, 'storeCommunityGroup'])->name('psychologists.community.store');
+Route::put('/psychologists/dashboard/community/{groupId}', [PsychologistController::class, 'updateCommunityGroup'])->name('psychologists.community.update');
+Route::delete('/psychologists/dashboard/community/{groupId}', [PsychologistController::class, 'destroyCommunityGroup'])->name('psychologists.community.destroy');
+Route::post('/psychologists/dashboard/appointment-types', [PsychologistController::class, 'storeAppointmentType'])->name('psychologists.appointment-types.store');
+Route::put('/psychologists/dashboard/appointment-types/{typeId}', [PsychologistController::class, 'updateAppointmentType'])->name('psychologists.appointment-types.update');
+Route::delete('/psychologists/dashboard/appointment-types/{typeId}', [PsychologistController::class, 'destroyAppointmentType'])->name('psychologists.appointment-types.destroy');
+Route::post('/psychologists/dashboard/availability-rules', [PsychologistController::class, 'storeAvailabilityRule'])->name('psychologists.availability-rules.store');
+Route::put('/psychologists/dashboard/availability-rules/{ruleId}', [PsychologistController::class, 'updateAvailabilityRule'])->name('psychologists.availability-rules.update');
+Route::delete('/psychologists/dashboard/availability-rules/{ruleId}', [PsychologistController::class, 'destroyAvailabilityRule'])->name('psychologists.availability-rules.destroy');
+Route::post('/psychologists/dashboard/availability-exceptions', [PsychologistController::class, 'storeAvailabilityException'])->name('psychologists.availability-exceptions.store');
+Route::put('/psychologists/dashboard/availability-exceptions/{exceptionId}', [PsychologistController::class, 'updateAvailabilityException'])->name('psychologists.availability-exceptions.update');
+Route::delete('/psychologists/dashboard/availability-exceptions/{exceptionId}', [PsychologistController::class, 'destroyAvailabilityException'])->name('psychologists.availability-exceptions.destroy');
+Route::post('/psychologists/dashboard/appointments/{appointmentId}/status', [PsychologistController::class, 'updateAppointmentStatus'])->name('psychologists.appointments.status');
+Route::post('/psychologists/dashboard/articles', [PsychologistController::class, 'storeArticle'])->name('psychologists.articles.store');
+Route::put('/psychologists/dashboard/articles/{articleId}', [PsychologistController::class, 'updateArticle'])->name('psychologists.articles.update');
+Route::delete('/psychologists/dashboard/articles/{articleId}', [PsychologistController::class, 'destroyArticle'])->name('psychologists.articles.destroy');
+Route::get('/superadmin/signin', [SuperadminController::class, 'signinPage'])->name('superadmin.signin');
+Route::post('/superadmin/signin', [SuperadminController::class, 'signin'])->name('superadmin.signin.store');
+Route::post('/superadmin/signout', [SuperadminController::class, 'signout'])->name('superadmin.signout');
+Route::get('/superadmin/dashboard', [SuperadminController::class, 'dashboard'])->name('superadmin.dashboard');
+Route::post('/superadmin/profile', [SuperadminController::class, 'updateProfile'])->name('superadmin.profile.update');
+Route::post('/superadmin/validation-applications/{applicationId}/approve', [SuperadminController::class, 'approveValidationApplication'])->name('superadmin.validation.approve');
+Route::post('/superadmin/validation-applications/{applicationId}/reject', [SuperadminController::class, 'rejectValidationApplication'])->name('superadmin.validation.reject');
+Route::post('/superadmin/validation-applications/{applicationId}/messages', [SuperadminController::class, 'storeValidationMessage'])->name('superadmin.validation.messages.store');
+Route::delete('/superadmin/validation-applications/{applicationId}/messages/{messageId}', [SuperadminController::class, 'destroyValidationMessage'])->name('superadmin.validation.messages.destroy');
+Route::post('/superadmin/articles/{articleId}/approve', [SuperadminController::class, 'approveArticle'])->name('superadmin.articles.approve');
+Route::post('/superadmin/articles/{articleId}/reject', [SuperadminController::class, 'rejectArticle'])->name('superadmin.articles.reject');
+Route::post('/superadmin/article-categories', [SuperadminController::class, 'storeArticleCategory'])->name('superadmin.article-categories.store');
+Route::put('/superadmin/article-categories/{categoryId}', [SuperadminController::class, 'updateArticleCategory'])->name('superadmin.article-categories.update');
+Route::delete('/superadmin/article-categories/{categoryId}', [SuperadminController::class, 'destroyArticleCategory'])->name('superadmin.article-categories.destroy');
+Route::put('/superadmin/notification-templates/{templateId}', [SuperadminController::class, 'updateNotificationTemplate'])->name('superadmin.notification-templates.update');
+Route::get('/appointments', [CalmPageController::class, 'appointments'])->name('appointments');
+Route::get('/appointments/availability', [AppointmentController::class, 'availability'])->name('appointments.availability');
+Route::get('/article/{slug}', [CalmPageController::class, 'article'])->name('article.show');
+Route::get('/community/{groupSlug}/conversatii/messages', [CalmPageController::class, 'communityConversationMessages'])->name('community.group.conversations.messages.index');
+Route::post('/community/{groupSlug}/conversatii/messages', [CalmPageController::class, 'storeCommunityConversationMessage'])->name('community.group.conversations.messages.store');
+
+Route::post('/preferences', [PreferenceController::class, 'update'])->name('preferences.update');
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/journal-entries', [JournalEntryController::class, 'store'])->name('journal.store');
+    Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::get('/account', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/account', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/account', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile', [ProfileController::class, 'update']);
+    Route::delete('/profile', [ProfileController::class, 'destroy']);
+});
+
+Route::get('/dashboard', fn () => to_route('home'))->middleware(['auth', 'verified'])->name('dashboard');
+
+require __DIR__.'/auth.php';

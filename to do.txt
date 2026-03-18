@@ -1,0 +1,7 @@
+pentru chat: WebSockets
+fallback mai simplu: SSE
+
+
+	
+
+- forgot password - nu merge

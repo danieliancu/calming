@@ -1,0 +1,30 @@
+# ENV (CRITIC)
+.env
+.env.*
+
+# Composer
+/vendor
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# Build files
+/public/build
+/public/hot
+
+# Storage
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# IDE
+/.idea
+/.vscode
+
+# OS
+.DS_Store
+Thumbs.db

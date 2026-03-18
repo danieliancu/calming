@@ -1,0 +1,102 @@
+## Implementare Programări Specialist
+
+### Rezumat
+Se extinde fluxul actual de programări dintr-un formular generic într-un sistem real de booking pe specialist, cu sloturi disponibile controlate din dashboard-ul specialistului. Fluxul public devine `/psychologists` -> `/appointments` cu specialistul deja ales, fără selector suplimentar de specialist în pagina de programare. Programarea rămâne disponibilă doar pentru utilizatori autentificați; guest-ul poate explora specialistul și disponibilitatea, dar la confirmare este obligat să se autentifice.
+
+### Schimbări principale
+- **Flux user**
+  - Din `/psychologists`, butonul `Programeaza` trimite către `/appointments` cu contextul specialistului selectat.
+  - `/appointments` nu mai afișează `Alege specialistul`; specialistul vine din URL/context și pagina devine scoped pe acel specialist.
+  - Userul vede doar tipurile de ședință active ale specialistului și doar sloturile disponibile reale.
+  - Confirmarea rezervă instant slotul dacă este încă liber; dacă userul nu este logat, este redirecționat în fluxul de autentificare înainte de creare.
+
+- **Dashboard specialist**
+  - Secțiunea `Programări` devine un modul real de administrare.
+  - Specialistul administrează propriile tipuri de ședință: seed inițial din tipurile actuale, apoi poate adăuga, edita, șterge, activa/dezactiva.
+  - Specialistul administrează disponibilitatea prin:
+    - program săptămânal recurent pe zi + intervale orare
+    - excepții pe date concrete (zile indisponibile, sloturi blocate, sloturi speciale)
+  - Specialistul vede lista programărilor reale și stările lor.
+
+- **Model de date / bază de date**
+  - `appointments` trebuie normalizat:
+    - adăugat `psychologist_id`
+    - adăugat `appointment_type_id` sau snapshot echivalent al tipului selectat
+    - adăugat `starts_at`, `ends_at`
+    - păstrat și/sau migrat câmpurile snapshot utile pentru audit (`type_label`, `psychologist_name`)
+    - stări explicite: minim `scheduled`, `cancelled_by_user`, `cancelled_by_psychologist`, `completed`, `no_show`
+  - Referințele globale actuale `appointment_types` și `appointment_time_slots` nu mai sunt suficiente pentru noul model; ele devin fie seed, fie sunt înlocuite logic de tabele dedicate specialistului.
+  - Tabele noi recomandate:
+    - `psychologist_appointment_types`
+    - `psychologist_availability_rules`
+    - `psychologist_availability_exceptions`
+    - opțional `appointment_status_history` dacă se dorește audit clar
+  - Migrare de date:
+    - tipurile actuale sunt copiate ca tipuri inițiale per specialist
+    - programările vechi primesc `psychologist_id` prin mapare din nume, unde se poate rezolva univoc; cele ambigue trebuie marcate pentru fallback controlat
+    - `psychologist_name` rămâne snapshot, nu sursă de adevăr
+
+- **API / interfețe**
+  - `GET /appointments` trebuie să primească un identificator de specialist; cum nu există slug public azi, planul include adăugarea unui identificator public stabil pentru specialist, preferabil `slug`.
+  - Endpoints noi pentru dashboard specialist:
+    - CRUD tipuri de programare per specialist
+    - CRUD reguli de disponibilitate
+    - CRUD excepții / blocări
+    - listare programări specialist
+  - Endpoint nou pentru sloturile disponibile ale unui specialist într-o lună/zi, calculat server-side.
+  - `POST /appointments` validează:
+    - user autentificat
+    - specialist valid și aprobat
+    - tip activ pentru acel specialist
+    - slot încă liber în momentul rezervării
+    - durată și capătul intervalului fără suprapunere
+  - Control concurență la booking: rezervarea trebuie protejată tranzacțional, astfel încât două cereri simultane să nu ia același slot.
+
+- **Comportamente necesare în procesul de programare**
+  - Durata trebuie să fie definită per tip de ședință; sloturile disponibile se calculează în funcție de această durată.
+  - Disponibilitatea trebuie filtrată după data curentă și după suportul tipului/regimului de ședință.
+  - Programările trebuie afișate în:
+    - agenda userului
+    - dashboard-ul specialistului
+  - Notificările existente trebuie actualizate să folosească noul model și noile denumiri/URL-uri.
+  - Milestones și statistici pe profil trebuie să continue să funcționeze pe noua schemă.
+  - Trebuie definit comportamentul de anulare:
+    - minim specialistul poate anula din dashboard
+    - userul poate anula din agenda proprie până la implementarea unei politici mai stricte; aceasta este recomandarea implicită
+  - Trebuie exclusă rezervarea în trecut și orice suprapunere cu programări deja confirmate.
+  - Timezone-ul se tratează explicit pe fusul aplicației; toate calculele de disponibilitate și reminder-ele folosesc aceeași convenție.
+
+### Testare
+- Booking reușit pentru user autentificat, pe specialist aprobat, tip activ, slot liber.
+- Guest poate ajunge în flux, dar nu poate finaliza fără autentificare.
+- `/appointments` fără specialist valid nu afișează formular generic; răspunde cu fallback controlat sau redirect.
+- Slot ocupat simultan de două cereri: doar una reușește.
+- Tip șters/dezactivat de specialist nu mai apare pentru rezervări noi.
+- Zi blocată sau excepție adăugată de specialist elimină sloturile corespunzătoare.
+- Programare anulată eliberează sau nu slotul conform regulii finale; recomandat să îl elibereze dacă anularea e înainte de start.
+- Dashboard specialist listează corect programările reale, nu mock data.
+- Reminder-ele și notificarea de creare folosesc `appointment` nou și duc către agenda corectă.
+
+### Presupuneri și decizii alese
+- Programarea cere cont autentificat; este decizia corectă pentru identificarea clientului, notificări, istoric și prevenirea rezervărilor anonime.
+- Tipurile de ședință sunt **per specialist**, pornind de la sugestiile actuale ca seed inițial.
+- Disponibilitatea este modelată ca **program recurent + excepții**.
+- Confirmarea rezervării este **instantă** dacă slotul este liber.
+- Se introduce un identificator public stabil pentru specialist, preferabil `slug`, pentru legătura `/psychologists` -> `/appointments`.
+- Lista actuală mock din dashboard-ul specialistului este înlocuită complet cu date reale din DB.
+
+
+
+
+
+0 out of 5 tasks completed
+1.
+Adaug schema și modelele pentru tipuri per specialist, disponibilitate, excepții și normalizez appointments cu migrare de date
+2.
+Extind controller-ele și rutele pentru listare sloturi, booking tranzacțional și acțiuni specialist asupra programărilor/disponibilității
+3.
+Actualizez UI-ul public pentru /psychologists și /appointments cu context de specialist și sloturi reale
+4.
+Înlocuiesc secțiunea mock din dashboardul specialistului cu administrare reală pentru tipuri, disponibilitate și programări
+5.
+Rulez verificări țintite și rezum riscurile rămase

@@ -1,0 +1,5 @@
+auth-ul separat users vs psychologists;
+sesiunea custom pentru specialiști;
+documentele sensibile încă pe storage public;
+denormalizarea last_active / facilitator;
+partea de MFA / verificare email / blocare publicare.
