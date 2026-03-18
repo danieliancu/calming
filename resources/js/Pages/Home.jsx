@@ -240,8 +240,8 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
             <section className={`hero${isAuthenticated ? ' home-default-auth' : ''}`}>
                 <video autoPlay muted loop playsInline src="/video/calm.mp4" className="hero-video" />
                 <div className="u-relative">
-                    <div className="hero-badge">Psihologul tau</div>
-                    <h1 className="hero-title">Indrumare confidentiala pentru echilibrul tau</h1>
+                    <div className="hero-badge">Psihologul tău</div>
+                    <h1 className="hero-title">Indrumare confidentiala pentru echilibrul tău</h1>
                     <p className="hero-lead u-mt-2">
                         Un spatiu sigur in care poti vorbi cu un asistent AI, poti tine un jurnal al starilor si poti gasi rapid specialisti si resurse de incredere.
                     </p>

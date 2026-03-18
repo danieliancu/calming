@@ -960,6 +960,7 @@ main {
   font-size: clamp(32px, 4vw, 44px);
   font-weight: 700;
   line-height: 1.2;
+  margin-bottom:0 !important;
 }
 
 .hero-lead {
