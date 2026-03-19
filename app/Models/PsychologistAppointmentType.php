@@ -14,6 +14,9 @@ class PsychologistAppointmentType extends Model
         'psychologist_id',
         'label',
         'duration_minutes',
+        'price_amount',
+        'currency',
+        'is_paid_online',
         'location_mode',
         'is_active',
         'sort_order',
@@ -23,6 +26,8 @@ class PsychologistAppointmentType extends Model
     {
         return [
             'duration_minutes' => 'integer',
+            'price_amount' => 'decimal:2',
+            'is_paid_online' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];

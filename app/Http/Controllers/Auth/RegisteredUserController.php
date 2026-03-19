@@ -23,9 +23,11 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'redirectTo' => $this->sanitizeRedirectPath($request->query('redirectTo')),
+        ]);
     }
 
     /**
@@ -35,6 +37,8 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $redirectTo = $this->sanitizeRedirectPath($request->input('redirect_to'));
+
         $request->validate([
             'name' => 'required|string|max:255',
             'first_name' => 'nullable|string|max:80',
@@ -57,6 +61,25 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        if ($redirectTo) {
+            return redirect()->to($redirectTo);
+        }
+
         return redirect(route('dashboard', absolute: false));
+    }
+
+    protected function sanitizeRedirectPath(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        if ($value === '' || ! str_starts_with($value, '/') || str_starts_with($value, '//')) {
+            return null;
+        }
+
+        return $value;
     }
 }

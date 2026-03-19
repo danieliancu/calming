@@ -286,7 +286,7 @@ export default function CommunityConversations({ group }) {
                                         ))}
                                     </div>
                                 </article>
-                            )) : <div className="group-dialog-empty muted">Nu exista mesaje pentru persoana selectata in aceasta selectie demo.</div>}
+                            )) : <div className="group-dialog-empty muted">Nu exista inca mesaje.</div>}
                             <div ref={bottomAnchorRef} />
                         </div>
                     </section>

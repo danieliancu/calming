@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Appointment;
+use App\Models\Psychologist;
 use App\Models\PsychologistAppointmentType;
 use App\Models\User;
 use Carbon\Carbon;
@@ -41,7 +42,7 @@ class PsychologistBookingService
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get(['id', 'label', 'duration_minutes', 'location_mode']);
+            ->get(['id', 'label', 'duration_minutes', 'price_amount', 'currency', 'is_paid_online', 'location_mode']);
     }
 
     public function availabilitySnapshot(int $psychologistId, int $typeId, CarbonInterface $month, ?CarbonInterface $date = null): array
@@ -160,7 +161,7 @@ class PsychologistBookingService
         $bookedAppointments = Appointment::query()
             ->where('psychologist_id', $psychologistId)
             ->whereDate('starts_at', $date->toDateString())
-            ->whereNotIn('status', ['cancelled_by_user', 'cancelled_by_psychologist'])
+            ->whereIn('status', Appointment::ACTIVE_BLOCKING_STATUSES)
             ->get(['starts_at', 'ends_at']);
 
         $slots = $slots->reject(function (array $slot) use ($bookedAppointments) {
@@ -188,10 +189,10 @@ class PsychologistBookingService
             ->all();
     }
 
-    public function createAppointmentForUser(User $user, int $psychologistId, int $typeId, CarbonInterface $startsAt): Appointment
+    public function createAppointmentRequestForUser(User $user, int $psychologistId, int $typeId, CarbonInterface $startsAt): Appointment
     {
         return DB::transaction(function () use ($user, $psychologistId, $typeId, $startsAt) {
-            $psychologist = DB::table('psychologists')->where('id', $psychologistId)->lockForUpdate()->first(['id', 'title', 'name', 'surname']);
+            $psychologist = Psychologist::query()->where('id', $psychologistId)->lockForUpdate()->first(['id', 'title', 'name', 'surname', 'email', 'slug']);
             abort_unless($psychologist, 404, 'Specialistul nu exista.');
 
             $type = PsychologistAppointmentType::query()
@@ -213,12 +214,16 @@ class PsychologistBookingService
 
             $overlapExists = Appointment::query()
                 ->where('psychologist_id', $psychologistId)
-                ->whereNotIn('status', ['cancelled_by_user', 'cancelled_by_psychologist'])
+                ->whereIn('status', Appointment::ACTIVE_BLOCKING_STATUSES)
                 ->where('starts_at', '<', $endsAt)
                 ->where('ends_at', '>', $startsAt)
                 ->exists();
 
             abort_if($overlapExists, 422, 'Slotul selectat a fost rezervat intre timp.');
+
+            $totalAmount = (float) $type->price_amount;
+            $platformFee = round($totalAmount * 0.15, 2);
+            $payoutAmount = round($totalAmount - $platformFee, 2);
 
             return $user->appointments()->create([
                 'psychologist_id' => $psychologistId,
@@ -229,9 +234,21 @@ class PsychologistBookingService
                 'ends_at' => $endsAt,
                 'scheduled_for' => $startsAt,
                 'location_mode' => $type->location_mode,
-                'status' => 'scheduled',
+                'status' => Appointment::STATUS_PENDING,
+                'requested_at' => now(),
+                'expires_at' => $this->expirationMoment($startsAt),
+                'payment_status' => $type->is_paid_online ? 'authorization_pending' : 'not_required',
+                'total_amount' => $totalAmount,
+                'platform_fee_amount' => $platformFee,
+                'psychologist_payout_amount' => $payoutAmount,
+                'currency' => $type->currency,
             ]);
         });
+    }
+
+    public function createAppointmentForUser(User $user, int $psychologistId, int $typeId, CarbonInterface $startsAt): Appointment
+    {
+        return $this->createAppointmentRequestForUser($user, $psychologistId, $typeId, $startsAt);
     }
 
     protected function buildSlotsFromWindow(CarbonInterface $date, string $startTime, string $endTime, int $intervalMinutes, int $durationMinutes): Collection
@@ -266,5 +283,16 @@ class PsychologistBookingService
     protected function weekdayIndex(CarbonInterface $date): int
     {
         return ((int) $date->dayOfWeekIso) - 1;
+    }
+
+    protected function expirationMoment(CarbonInterface $startsAt): CarbonInterface
+    {
+        $appointmentStart = Carbon::instance($startsAt->toDateTime());
+        $twelveHoursFromNow = now()->addHours(12);
+        $twoHoursBeforeStart = $appointmentStart->copy()->subHours(2);
+
+        return $twelveHoursFromNow->lessThan($twoHoursBeforeStart)
+            ? $twelveHoursFromNow
+            : $twoHoursBeforeStart;
     }
 }

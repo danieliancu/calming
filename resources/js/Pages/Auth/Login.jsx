@@ -52,7 +52,7 @@ export default function Login({ status, canResetPassword, redirectTo = null }) {
                         <div className="auth-footer u-mt-3">
                             {canResetPassword ? <Link className="link-button" href={route('password.request')}>Ai uitat parola?</Link> : null}
                         </div>
-                        <p className="muted u-mt-3">Nu ai cont? <Link href={route('register')}>Creeaza unul aici</Link>.</p>
+                        <p className="muted u-mt-3">Nu ai cont? <Link href={route('register', redirectTo ? { redirectTo } : {})}>Creeaza unul aici</Link>.</p>
                     </section>
                 </div>
             </div>

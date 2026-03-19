@@ -40,7 +40,7 @@ export default function AuthPromptModal({ onClose, mode = 'user' }) {
                             </div>
 
                             <div className="grid u-gap-3 u-mt-4">
-                                <Link className="btn primary" href={route('register')} onClick={onClose}>
+                                <Link className="btn primary" href={route('register', { redirectTo })} onClick={onClose}>
                                     Creeaza un cont
                                 </Link>
                                 <Link className="btn" href={route('login', { redirectTo })} onClick={onClose}>

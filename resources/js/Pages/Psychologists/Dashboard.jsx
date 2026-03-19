@@ -2,8 +2,12 @@
 import SignOutAction from '@/Components/SignOutAction';
 import AccentCard from '@/Components/AccentCard';
 import { DEFAULT_PSYCH_DASHBOARD_SECTION, normalizePsychDashboardSection, PSYCH_DASHBOARD_MENU_ITEMS } from '@/data/psychDashboardNav';
+import { apiFetch } from '@/lib/http';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { FiEdit2, FiExternalLink, FiEye, FiPlus, FiTrash2, FiUpload } from '@/lib/icons';
+import { FiChevronRight, FiCopy, FiEdit2, FiExternalLink, FiEye, FiPlus, FiTrash2, FiUpload, FiX } from '@/lib/icons';
+import { useEffect, useState } from 'react';
+
+const AVAILABILITY_CALENDAR_DATE_KEY = 'psych-dashboard:selected-specific-date';
 
 function attestationDraft(attestation = {}) {
     return {
@@ -51,6 +55,9 @@ export default function PsychologistDashboard({
     validationCatalog,
     initialArticles = [],
     initialGroups = [],
+    appointmentTypes = [],
+    availabilityRules = [],
+    availabilityExceptions = [],
     initialAppointments = [],
 }) {
     const page = usePage();
@@ -62,10 +69,47 @@ export default function PsychologistDashboard({
     const isValidated = Number(initialValidationStatus) === 1;
     const flashStatus = page.props.flash?.status;
     const reviewStatus = approvalStatus ?? 'draft';
+    const [showNewAppointmentTypeForm, setShowNewAppointmentTypeForm] = useState(false);
+    const [expandedAppointmentTypes, setExpandedAppointmentTypes] = useState([]);
+    const today = new Date();
+    const initialSpecificDate = readStoredSpecificDate() ?? formatDateInput(today);
+    const initialSpecificDateObject = parseDateInput(initialSpecificDate) ?? today;
+    const [availabilityMonth, setAvailabilityMonth] = useState(initialSpecificDateObject.getMonth());
+    const [availabilityYear, setAvailabilityYear] = useState(initialSpecificDateObject.getFullYear());
+    const [selectedSpecificDate, setSelectedSpecificDate] = useState(initialSpecificDate);
+    const [copyMenuWeekday, setCopyMenuWeekday] = useState(null);
+    const [copyTargets, setCopyTargets] = useState({});
 
     const gradeCodeById = Object.fromEntries(validationCatalog.grades.map((item) => [String(item.id), item.code]));
     const roleIdByNormalizedLabel = Object.fromEntries(validationCatalog.roles.map((item) => [item.label.toLowerCase(), item.id]));
     const fallbackRoleId = validationCatalog.roles.find((item) => item.code === 'alta_specializare')?.id ?? '';
+    const weeklyAvailability = WEEKDAY_OPTIONS.map((day) => ({
+        ...day,
+        rules: availabilityRules.filter((item) => Number(item.weekday) === Number(day.value)),
+    }));
+    const calendarDays = buildMonthGrid(availabilityYear, availabilityMonth);
+    const selectedDateObject = parseDateInput(selectedSpecificDate);
+    const selectedDateWeekday = selectedDateObject ? getWeekdayValue(selectedDateObject) : null;
+    const selectedDateBlockedIntervals = availabilityExceptions
+        .filter((item) => item.date === selectedSpecificDate && item.is_available === false && item.start_time && item.end_time)
+        .map((item) => `${item.start_time}-${item.end_time}`);
+    const selectedDateWeeklyRules = selectedDateWeekday === null
+        ? []
+        : availabilityRules
+            .filter((item) => Number(item.weekday) === selectedDateWeekday)
+            .filter((item) => !selectedDateBlockedIntervals.includes(`${item.start_time}-${item.end_time}`))
+            .sort((left, right) => String(left.start_time ?? '').localeCompare(String(right.start_time ?? '')));
+    const selectedDateExceptions = availabilityExceptions
+        .filter((item) => item.date === selectedSpecificDate && item.is_available !== false)
+        .sort((left, right) => String(left.start_time ?? '').localeCompare(String(right.start_time ?? '')));
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !selectedSpecificDate) {
+            return;
+        }
+
+        window.localStorage.setItem(AVAILABILITY_CALENDAR_DATE_KEY, selectedSpecificDate);
+    }, [selectedSpecificDate]);
 
     const updateDashboardSection = (nextSection) => {
         const target = normalizePsychDashboardSection(nextSection);
@@ -170,6 +214,203 @@ export default function PsychologistDashboard({
         router.delete(route('psychologists.community.destroy', groupId), {
             preserveScroll: true,
         });
+    };
+
+    const submitScheduleForm = (event, submit) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        submit(normalizeSchedulePayload(formData), {
+            preserveScroll: true,
+        });
+    };
+
+    const autosaveScheduleForm = (event, submit) => {
+        const form = event.currentTarget.form;
+        if (!form) {
+            return;
+        }
+
+        const formData = new FormData(form);
+        submit(normalizeSchedulePayload(formData), {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const deleteScheduleItem = (href, message = null) => {
+        if (message && !window.confirm(message)) {
+            return;
+        }
+
+        router.delete(href, {
+            preserveScroll: true,
+        });
+    };
+
+    const toggleAppointmentType = (typeId) => {
+        setExpandedAppointmentTypes((current) => (
+            current.includes(typeId)
+                ? current.filter((item) => item !== typeId)
+                : [...current, typeId]
+        ));
+    };
+
+    const toggleCopyMenu = (weekday) => {
+        setCopyMenuWeekday((current) => current === weekday ? null : weekday);
+        setCopyTargets(
+            Object.fromEntries(
+                WEEKDAY_OPTIONS
+                    .filter((item) => item.value !== String(weekday))
+                    .map((item) => [item.value, false])
+            )
+        );
+    };
+
+    const shiftAvailabilityMonth = (delta) => {
+        const next = new Date(availabilityYear, availabilityMonth + delta, 1);
+        setAvailabilityMonth(next.getMonth());
+        setAvailabilityYear(next.getFullYear());
+    };
+
+    const handleCopyAvailability = async (sourceWeekday) => {
+        const sourceRules = availabilityRules.filter((item) => Number(item.weekday) === Number(sourceWeekday));
+        const targetWeekdays = Object.entries(copyTargets)
+            .filter(([, checked]) => checked)
+            .map(([weekday]) => Number(weekday));
+
+        if (targetWeekdays.length === 0) {
+            setCopyMenuWeekday(null);
+            return;
+        }
+
+        for (const targetWeekday of targetWeekdays) {
+            const targetRules = availabilityRules.filter((item) => Number(item.weekday) === targetWeekday);
+
+            for (const rule of targetRules) {
+                await apiFetch(route('psychologists.availability-rules.destroy', rule.id), {
+                    method: 'DELETE',
+                });
+            }
+
+            for (const rule of sourceRules) {
+                await apiFetch(route('psychologists.availability-rules.store'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        weekday: targetWeekday,
+                        start_time: rule.start_time,
+                        end_time: rule.end_time,
+                        interval_minutes: rule.interval_minutes,
+                        is_active: rule.is_active,
+                    }),
+                });
+            }
+        }
+
+        setCopyMenuWeekday(null);
+        router.reload({ preserveScroll: true, preserveState: false });
+    };
+
+    const addWeeklyAvailabilitySlot = async (weekday) => {
+        await apiFetch(route('psychologists.availability-rules.store'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                weekday: Number(weekday),
+                start_time: '09:00',
+                end_time: '17:00',
+                interval_minutes: 60,
+                is_active: true,
+            }),
+        });
+
+        router.reload({ preserveScroll: true, preserveState: false });
+    };
+
+    const addSpecificDateAvailabilitySlot = async () => {
+        if (!selectedSpecificDate) {
+            return;
+        }
+
+        const existingItems = availabilityExceptions
+            .filter((item) => item.date === selectedSpecificDate && item.is_available !== false)
+            .sort((left, right) => String(left.start_time ?? '').localeCompare(String(right.start_time ?? '')));
+        const lastItem = existingItems.at(-1);
+        const startTime = lastItem?.end_time || '09:00';
+        const endTime = lastItem?.end_time ? addMinutesToTime(lastItem.end_time, 180) : '12:00';
+
+        await apiFetch(route('psychologists.availability-exceptions.store'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                date: selectedSpecificDate,
+                is_available: true,
+                start_time: startTime,
+                end_time: endTime,
+                interval_minutes: 60,
+                note: null,
+            }),
+        });
+
+        router.reload({ preserveScroll: true, preserveState: false });
+    };
+
+    const createSpecificDateOverrideFromWeeklyRule = async (rule, overrides = {}) => {
+        if (!selectedSpecificDate) {
+            return;
+        }
+
+        await apiFetch(route('psychologists.availability-exceptions.store'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                date: selectedSpecificDate,
+                is_available: true,
+                start_time: overrides.start_time ?? rule.start_time,
+                end_time: overrides.end_time ?? rule.end_time,
+                interval_minutes: rule.interval_minutes || 60,
+                note: null,
+            }),
+        });
+
+        router.reload({ preserveScroll: true, preserveState: false });
+    };
+
+    const removeSpecificDateInterval = async (item, inherited = false) => {
+        if (!selectedSpecificDate) {
+            return;
+        }
+
+        if (inherited) {
+            await apiFetch(route('psychologists.availability-exceptions.store'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: selectedSpecificDate,
+                    is_available: false,
+                    start_time: item.start_time,
+                    end_time: item.end_time,
+                    interval_minutes: item.interval_minutes || 60,
+                    note: null,
+                }),
+            });
+        } else {
+            await apiFetch(route('psychologists.availability-exceptions.destroy', item.id), {
+                method: 'DELETE',
+            });
+        }
+
+        router.reload({ preserveScroll: true, preserveState: false });
     };
 
     return (
@@ -521,6 +762,9 @@ export default function PsychologistDashboard({
                                                         <span className={`status-pill ${(group.last_active ?? '').toLowerCase() === 'acum' ? 'status-pill--valid' : 'status-pill--pending'}`}>
                                                             Activ {group.last_active ?? 'recent'}
                                                         </span>
+                                                        <span className={`status-pill ${group.validation_status === 'approved' ? 'status-pill--valid' : 'status-pill--pending'}`}>
+                                                            {group.validation_status === 'approved' ? 'Aprobat' : 'In review'}
+                                                        </span>
                                                     </div>
                                                 </div>
                                                 <div className="article-list-actions">
@@ -546,25 +790,442 @@ export default function PsychologistDashboard({
 
                         {activeMenu === 'schedule' ? (
                             <section className="card psych-card">
-                                <div className="psych-section-head">
-                                    <div>
-                                        <div className="section-title">Programarile mele</div>
-                                        <p className="muted">Vizualizeaza sesiunile confirmate si gestioneaza disponibilitatile.</p>
+                                {!canManageContent ? <div className="info u-mt-3">Administrarea programarilor si a disponibilitatii este activa dupa aprobarea validarii profesionale.</div> : null}
+                                {flashStatus ? <div className="info u-mt-3">{flashStatus}</div> : null}
+
+                                <div className="u-mt-4">
+                                    <div className="section-title" style={{ marginBottom:"0" }}>Tipuri de sedinta</div>
+                                    <p className="muted">Configureaza oferta publica afisata clientilor pentru rezervari noi.</p>
+                                    <form className="card subtle u-mt-3" onSubmit={(event) => submitScheduleForm(event, (payload, options) => router.post(route('psychologists.appointment-types.store'), payload, options))}>
+                                        <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                                            <div className="row wrap" style={{ alignItems: 'center', gap: '0.75rem' }}>
+                                                <button
+                                                    className="superadmin-caret"
+                                                    type="button"
+                                                    aria-label={showNewAppointmentTypeForm ? 'Ascunde formularul' : 'Arata formularul'}
+                                                    aria-expanded={showNewAppointmentTypeForm}
+                                                    onClick={() => setShowNewAppointmentTypeForm((current) => !current)}
+                                                >
+                                                    <FiChevronRight
+                                                        aria-hidden
+                                                        style={{
+                                                            transform: showNewAppointmentTypeForm ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                            transition: 'transform 0.2s ease',
+                                                        }}
+                                                    />
+                                                </button>
+                                                <div className="u-text-semibold">Adauga tip nou de sedinta</div>
+                                            </div>
+                                        </div>
+                                        {showNewAppointmentTypeForm ? (
+                                            <>
+                                                <div className="form-grid u-mt-3">
+                                                    <label>
+                                                        <span>Denumire</span>
+                                                        <input name="label" required />
+                                                    </label>
+                                                    <label>
+                                                        <span>Durata (minute)</span>
+                                                        <input name="duration_minutes" type="number" min="15" max="240" step="5" defaultValue="50" required />
+                                                    </label>
+                                                    <label>
+                                                        <span>Pret</span>
+                                                        <input name="price_amount" type="number" min="0" step="0.01" defaultValue="220" required />
+                                                    </label>
+                                                    <label>
+                                                        <span>Desfasurare</span>
+                                                        <select name="location_mode" defaultValue="both">
+                                                            <option value="online">Online</option>
+                                                            <option value="in_person">In cabinet</option>
+                                                            <option value="both">Online sau in cabinet</option>
+                                                        </select>
+                                                    </label>
+                                                    <label>
+                                                        <span>Moneda</span>
+                                                        <input name="currency" defaultValue="RON" maxLength="3" required />
+                                                    </label>
+                                                    <label className="checkbox-field">
+                                                        <input name="is_active" type="checkbox" defaultChecked />
+                                                        <span>Activ pentru rezervari noi</span>
+                                                    </label>
+                                                    <label className="checkbox-field">
+                                                        <input name="is_paid_online" type="checkbox" defaultChecked />
+                                                        <span>Plata online in platforma</span>
+                                                    </label>
+                                                </div>
+                                                <div className="validation-actions">
+                                                    <button className="btn btn-success" type="submit" disabled={!canManageContent}>Adauga tip nou de sedinta</button>
+                                                </div>
+                                            </>
+                                        ) : null}
+                                    </form>
+                                    {appointmentTypes.length ? (
+                                        <div className="grid u-gap-3 u-mt-3">
+                                            {appointmentTypes.map((item) => (
+                                                <form key={item.id} className="card subtle" onSubmit={(event) => submitScheduleForm(event, (payload, options) => router.put(route('psychologists.appointment-types.update', item.id), payload, options))}>
+                                                    <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                                                        <div className="row wrap" style={{ alignItems: 'center', gap: '0.75rem' }}>
+                                                            <button
+                                                                className="superadmin-caret"
+                                                                type="button"
+                                                                aria-label={expandedAppointmentTypes.includes(item.id) ? 'Ascunde detalii' : 'Arata detalii'}
+                                                                aria-expanded={expandedAppointmentTypes.includes(item.id)}
+                                                                onClick={() => toggleAppointmentType(item.id)}
+                                                            >
+                                                                <FiChevronRight
+                                                                    aria-hidden
+                                                                    style={{
+                                                                        transform: expandedAppointmentTypes.includes(item.id) ? 'rotate(90deg)' : 'rotate(0deg)',
+                                                                        transition: 'transform 0.2s ease',
+                                                                    }}
+                                                                />
+                                                            </button>
+                                                            <div className="u-text-semibold">{item.label}</div>
+                                                        </div>
+                                                        <span className={`status-pill ${item.is_active ? 'status-pill--valid' : 'status-pill--pending'}`}>
+                                                            {item.is_active ? 'Vizibil' : 'Ascuns'}
+                                                        </span>
+                                                    </div>
+                                                    {expandedAppointmentTypes.includes(item.id) ? (
+                                                        <>
+                                                            <div className="form-grid u-mt-3">
+                                                                <label>
+                                                                    <span>Denumire</span>
+                                                                    <input name="label" defaultValue={item.label} required />
+                                                                </label>
+                                                                <label>
+                                                                    <span>Durata (minute)</span>
+                                                                    <input name="duration_minutes" type="number" min="15" max="240" step="5" defaultValue={item.duration_minutes} required />
+                                                                </label>
+                                                                <label>
+                                                                    <span>Pret</span>
+                                                                    <input name="price_amount" type="number" min="0" step="0.01" defaultValue={item.price_amount} required />
+                                                                </label>
+                                                                <label>
+                                                                    <span>Desfasurare</span>
+                                                                    <select name="location_mode" defaultValue={item.location_mode}>
+                                                                        <option value="online">Online</option>
+                                                                        <option value="in_person">In cabinet</option>
+                                                                        <option value="both">Online sau in cabinet</option>
+                                                                    </select>
+                                                                </label>
+                                                                <label>
+                                                                    <span>Moneda</span>
+                                                                    <input name="currency" defaultValue={item.currency} maxLength="3" required />
+                                                                </label>
+                                                                <label className="checkbox-field">
+                                                                    <input name="is_active" type="checkbox" defaultChecked={item.is_active} />
+                                                                    <span>Activ</span>
+                                                                </label>
+                                                                <label className="checkbox-field">
+                                                                    <input name="is_paid_online" type="checkbox" defaultChecked={item.is_paid_online} />
+                                                                    <span>Plata online</span>
+                                                                </label>
+                                                            </div>
+                                                            <div className="row wrap u-mt-3">
+                                                                <span className="muted">{formatLocationModeLabel(item.location_mode)} · {formatMoney(item.price_amount, item.currency)} · {item.is_paid_online ? 'Plata online activa' : 'Plata in afara platformei'}</span>
+                                                            </div>
+                                                            <div className="validation-actions">
+                                                                <button className="btn primary" type="submit" disabled={!canManageContent}>Salveaza</button>
+                                                                <button className="btn" type="button" disabled={!canManageContent} onClick={() => deleteScheduleItem(route('psychologists.appointment-types.destroy', item.id), 'Esti sigur ca vrei sa stergi acest tip de sedinta?')}>
+                                                                    Sterge
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    ) : null}
+                                                </form>
+                                            ))}
+                                        </div>
+                                    ) : <div className="muted u-mt-3">Nu exista tipuri de sedinta configurate.</div>}
+                                </div>
+
+                                <div className="u-mt-5">
+                                    <div className="section-title" style={{ marginTop:"20px", display:"inline-block", marginBottom:0 }}>Disponibilitate</div>
+                                    <p className="muted">Programul saptamanal si ajustarile pentru zile specifice sunt administrate aici, cat mai simplu.</p>
+
+                                    <div className="card subtle u-mt-3">
+                                        <div className="section-title" style={{ marginBottom: '0.35rem' }}>Program saptamanal</div>
+                                        <div className="muted">Apasa pe `Copy` pentru a duplica intervalele unei zile catre alte zile.</div>
+
+                                        <div className="u-mt-3" style={{ display: 'grid', gap: '0.75rem' }}>
+                                            {weeklyAvailability.map((day) => (
+                                                <div key={day.value} style={{ position: 'relative', border: '1px solid rgba(15, 23, 42, 0.08)', borderRadius: '16px', padding: '1rem', background: '#fff' }}>
+                                                    <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                                        <div
+                                                            className="row wrap"
+                                                            style={{ alignItems: 'center', gap: '0.75rem' }}
+                                                        >
+                                                            <div style={{ width: '74px', flexShrink: 0 }}>
+                                                                <span className="status-pill status-pill--valid">{day.label}</span>
+                                                            </div>
+
+                                                            <div className="grow">
+                                                                {day.rules.length ? (
+                                                                    <form
+                                                                        onSubmit={(event) => submitScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-rules.update', day.rules[0].id), payload, options))}
+                                                                        style={{ display: 'grid', gap: '0.5rem' }}
+                                                                    >
+                                                                        <input type="hidden" name="weekday" value={day.value} />
+                                                                        <input type="hidden" name="interval_minutes" value={day.rules[0].interval_minutes} />
+                                                                        <input type="hidden" name="is_active" value="1" />
+                                                                        <div className="row wrap" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                                                                            <input className="schedule-time-input" name="start_time" type="time" defaultValue={day.rules[0].start_time} required style={{ maxWidth: '140px' }} onChange={(event) => autosaveScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-rules.update', day.rules[0].id), payload, options))} />
+                                                                            <span className="muted">-</span>
+                                                                            <input className="schedule-time-input" name="end_time" type="time" defaultValue={day.rules[0].end_time} required style={{ maxWidth: '140px' }} onChange={(event) => autosaveScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-rules.update', day.rules[0].id), payload, options))} />
+                                                                            <button
+                                                                                className="icon-btn plain danger"
+                                                                                type="button"
+                                                                                disabled={!canManageContent}
+                                                                                onClick={() => deleteScheduleItem(route('psychologists.availability-rules.destroy', day.rules[0].id))}
+                                                                                title="Sterge intervalul"
+                                                                                aria-label="Sterge intervalul"
+                                                                            >
+                                                                                <FiX />
+                                                                            </button>
+                                                                        </div>
+                                                                    </form>
+                                                                ) : (
+                                                                    <div className="muted" style={{ paddingTop: '0.15rem' }}>Indisponibil</div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="row wrap" style={{ gap: '0.5rem' }}>
+                                                                <button
+                                                                    className="icon-btn"
+                                                                    type="button"
+                                                                    disabled={!canManageContent}
+                                                                    onClick={() => addWeeklyAvailabilitySlot(day.value)}
+                                                                    title="Adauga interval"
+                                                                    aria-label="Adauga interval"
+                                                                >
+                                                                    <FiPlus />
+                                                                </button>
+                                                                <button
+                                                                    className="icon-btn"
+                                                                    type="button"
+                                                                    disabled={!canManageContent}
+                                                                    onClick={() => toggleCopyMenu(day.value)}
+                                                                    title="Copiaza intervalele"
+                                                                    aria-label="Copiaza intervalele"
+                                                                >
+                                                                    <FiCopy />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {day.rules.slice(1).map((rule) => (
+                                                            <div key={rule.id} style={{ paddingLeft: '85px' }}>
+                                                                <form
+                                                                    onSubmit={(event) => submitScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-rules.update', rule.id), payload, options))}
+                                                                    style={{ display: 'grid', gap: '0.5rem' }}
+                                                                >
+                                                                    <input type="hidden" name="weekday" value={day.value} />
+                                                                    <input type="hidden" name="interval_minutes" value={rule.interval_minutes} />
+                                                                    <input type="hidden" name="is_active" value="1" />
+                                                                    <div className="row wrap" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                                                                        <input className="schedule-time-input" name="start_time" type="time" defaultValue={rule.start_time} required style={{ maxWidth: '140px' }} onChange={(event) => autosaveScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-rules.update', rule.id), payload, options))} />
+                                                                        <span className="muted">-</span>
+                                                                        <input className="schedule-time-input" name="end_time" type="time" defaultValue={rule.end_time} required style={{ maxWidth: '140px' }} onChange={(event) => autosaveScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-rules.update', rule.id), payload, options))} />
+                                                                        <button
+                                                                            className="icon-btn plain danger"
+                                                                            type="button"
+                                                                            disabled={!canManageContent}
+                                                                            onClick={() => deleteScheduleItem(route('psychologists.availability-rules.destroy', rule.id))}
+                                                                            title="Sterge intervalul"
+                                                                            aria-label="Sterge intervalul"
+                                                                        >
+                                                                            <FiX />
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {copyMenuWeekday === day.value ? (
+                                                        <div className="card subtle" style={{ marginTop: '0.75rem', padding: '1rem', maxWidth: '280px' }}>
+                                                            <div className="muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Copy times to...</div>
+                                                            <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                                                {WEEKDAY_OPTIONS.map((option) => (
+                                                                    <label key={option.value} className="copy-checkbox-row" style={{ opacity: option.value === day.value ? 0.55 : 1 }}>
+                                                                        <span>{option.label}</span>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={option.value === day.value ? false : Boolean(copyTargets[option.value])}
+                                                                            disabled={option.value === day.value}
+                                                                            onChange={(event) => setCopyTargets((current) => ({ ...current, [option.value]: event.target.checked }))}
+                                                                        />
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                            <div className="validation-actions" style={{ marginTop: '1rem' }}>
+                                                                <button className="btn primary" type="button" disabled={!canManageContent} onClick={() => handleCopyAvailability(day.value)}>Apply</button>
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="card subtle u-mt-4">
+                                        <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                                            <div>
+                                                <div className="section-title" style={{ marginBottom: '0.35rem' }}>Ajustare ore pentru zile specifice</div>
+                                                <div className="muted">Selecteaza o data din calendar si defineste ore speciale sau blocari pentru acea zi.</div>
+                                            </div>
+                                            <div className="row wrap" style={{ gap: '0.5rem' }}>
+                                                <button className="btn" type="button" onClick={() => shiftAvailabilityMonth(-1)}>&lt;</button>
+                                                <div className="u-text-semibold" style={{ minWidth: '170px', textAlign: 'center' }}>{formatCalendarMonth(availabilityYear, availabilityMonth)}</div>
+                                                <button className="btn" type="button" onClick={() => shiftAvailabilityMonth(1)}>&gt;</button>
+                                            </div>
+                                        </div>
+
+                                        <div className="u-mt-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '0.5rem' }}>
+                                            {CALENDAR_WEEKDAYS.map((day) => (
+                                                <div key={day} className="muted" style={{ textAlign: 'center', fontSize: '0.75rem', textTransform: 'uppercase' }}>{day}</div>
+                                            ))}
+                                            {calendarDays.map((day, index) => {
+                                                const dateKey = formatDateInput(day);
+                                                const isCurrentMonth = day.getMonth() === availabilityMonth;
+                                                const isSelected = selectedSpecificDate === dateKey;
+                                                const hasAdjustments = availabilityExceptions.some((item) => item.date === dateKey);
+
+                                                return (
+                                                    <button
+                                                        key={`${dateKey}-${index}`}
+                                                        type="button"
+                                                        className={`btn ${isSelected ? 'primary' : ''}`}
+                                                        style={{ opacity: isCurrentMonth ? 1 : 0.4, minHeight: '44px', borderRadius: '999px', position: 'relative' }}
+                                                        onClick={() => setSelectedSpecificDate(dateKey)}
+                                                    >
+                                                        {day.getDate()}
+                                                        {hasAdjustments ? <span style={{ position: 'absolute', top: '6px', right: '8px', width: '8px', height: '8px', borderRadius: '999px', background: 'var(--primary-600)' }} /> : null}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="u-mt-4">
+                                            <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                                                <div>
+                                                    <div className="u-text-semibold">{formatSelectedDateLabel(selectedSpecificDate)}</div>
+                                                    <div className="muted">Ore specifice pentru data selectata.</div>
+                                                </div>
+                                                <button className="icon-btn" type="button" disabled={!canManageContent} onClick={addSpecificDateAvailabilitySlot} title="Adauga interval" aria-label="Adauga interval">
+                                                    <FiPlus />
+                                                </button>
+                                            </div>
+
+                                            {selectedDateExceptions.length ? (
+                                                <div className="u-mt-3" style={{ display: 'grid', gap: '0.75rem' }}>
+                                                    {selectedDateExceptions.map((item) => (
+                                                        <form key={item.id} className="card subtle" onSubmit={(event) => submitScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-exceptions.update', item.id), payload, options))}>
+                                                            <input type="hidden" name="date" value={item.date} />
+                                                            <div className="row wrap" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                                                                <input type="hidden" name="is_available" value="1" />
+                                                                <input className="schedule-time-input" name="start_time" type="time" defaultValue={item.start_time} style={{ maxWidth: '140px' }} onChange={(event) => autosaveScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-exceptions.update', item.id), payload, options))} />
+                                                                <span className="muted">-</span>
+                                                                <input className="schedule-time-input" name="end_time" type="time" defaultValue={item.end_time} style={{ maxWidth: '140px' }} onChange={(event) => autosaveScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-exceptions.update', item.id), payload, options))} />
+                                                                <input name="interval_minutes" type="hidden" value={item.interval_minutes || ''} />
+                                                                <button className="icon-btn plain danger" type="button" disabled={!canManageContent} onClick={() => removeSpecificDateInterval(item)} title="Sterge intervalul" aria-label="Sterge intervalul"><FiX /></button>
+                                                            </div>
+                                                            <input type="hidden" name="note" value={item.note ?? ''} />
+                                                        </form>
+                                                    ))}
+                                                </div>
+                                            ) : selectedDateWeeklyRules.length ? (
+                                                <div className="u-mt-3" style={{ display: 'grid', gap: '0.75rem' }}>
+                                                    {selectedDateWeeklyRules.map((item) => (
+                                                        <form key={`weekly-${item.id}`} className="card subtle" style={{ opacity: 0.88 }}>
+                                                            <div className="row wrap" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                                                                <input
+                                                                    className="schedule-time-input"
+                                                                    type="time"
+                                                                    defaultValue={item.start_time}
+                                                                    style={{ maxWidth: '140px' }}
+                                                                    onChange={(event) => createSpecificDateOverrideFromWeeklyRule(item, { start_time: event.target.value })}
+                                                                />
+                                                                <span className="muted">-</span>
+                                                                <input
+                                                                    className="schedule-time-input"
+                                                                    type="time"
+                                                                    defaultValue={item.end_time}
+                                                                    style={{ maxWidth: '140px' }}
+                                                                    onChange={(event) => createSpecificDateOverrideFromWeeklyRule(item, { end_time: event.target.value })}
+                                                                />
+                                                                <button
+                                                                    className="icon-btn plain danger"
+                                                                    type="button"
+                                                                    disabled={!canManageContent}
+                                                                    onClick={() => removeSpecificDateInterval(item, true)}
+                                                                    title="Sterge intervalul"
+                                                                    aria-label="Sterge intervalul"
+                                                                >
+                                                                    <FiX />
+                                                                </button>
+                                                            </div>
+                                                            <div className="muted u-mt-2">Interval preluat din Program saptamanal. Prima modificare il transforma in override pentru aceasta zi.</div>
+                                                        </form>
+                                                    ))}
+                                                </div>
+                                            ) : <div className="muted u-mt-3">Nu exista intervale salvate pentru aceasta zi.</div>}
+                                        </div>
                                     </div>
                                 </div>
-                                {initialAppointments.length ? (
-                                    <ul className="simple-list u-mt-3">
-                                        {initialAppointments.map((appointment) => (
-                                            <li key={appointment.id} className="simple-list__item">
-                                                <div>
-                                                    <div className="u-text-semibold">{appointment.client}</div>
-                                                    <div className="simple-list__meta">{appointment.date} · {appointment.slot} · {appointment.status}</div>
-                                                </div>
-                                                <span className="muted">{appointment.type}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : <div className="muted u-mt-3">Nu exista programari inregistrate.</div>}
+
+                                <div className="u-mt-5">
+                                    <div className="section-title">Programari reale</div>
+                                    {initialAppointments.length ? (
+                                        <div className="grid u-gap-3 u-mt-3">
+                                            {initialAppointments.map((appointment) => (
+                                                <form key={appointment.id} className="card subtle" onSubmit={(event) => submitScheduleForm(event, (payload, options) => router.post(route('psychologists.appointments.status', appointment.id), payload, options))}>
+                                                    <div className="row wrap">
+                                                        <div className="grow">
+                                                            <div className="u-text-semibold">{appointment.client}</div>
+                                                            <div className="simple-list__meta">{appointment.date} · {appointment.slot}</div>
+                                                            <div className="simple-list__meta">{appointment.type} · {formatLocationModeLabel(appointment.location_mode)}</div>
+                                                            <div className="simple-list__meta">{formatMoney(appointment.price_total, appointment.currency)} · {formatPaymentStatusLabel(appointment.payment_status)}</div>
+                                                            {appointment.expires_at && appointment.status === 'pending' ? <div className="simple-list__meta">Expira la {appointment.expires_at}</div> : null}
+                                                        </div>
+                                                        <span className={`status-pill ${appointment.status === 'confirmed' ? 'status-pill--valid' : appointment.status === 'pending' ? 'status-pill--pending' : 'status-pill--danger'}`}>
+                                                            {formatAppointmentStatusLabel(appointment.status)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="form-grid u-mt-3">
+                                                        <label>
+                                                            <span>Status</span>
+                                                            <select name="status" defaultValue={appointment.status}>
+                                                                {APPOINTMENT_STATUS_OPTIONS.map((option) => (
+                                                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        </label>
+                                                        <label>
+                                                            <span>Reminder email</span>
+                                                            <select
+                                                                name="psychologist_reminder_minutes"
+                                                                defaultValue={appointment.psychologist_reminder_minutes ? String(appointment.psychologist_reminder_minutes) : 'none'}
+                                                                onChange={(event) => router.post(route('psychologists.appointments.reminder', appointment.id), {
+                                                                    minutes_before: event.target.value === 'none' ? null : event.target.value,
+                                                                }, {
+                                                                    preserveScroll: true,
+                                                                })}
+                                                            >
+                                                                {REMINDER_OPTIONS.map((option) => (
+                                                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <div className="validation-actions">
+                                                        <button className="btn primary" type="submit" disabled={!canManageContent || !appointment.can_manage}>Actualizeaza statusul</button>
+                                                    </div>
+                                                </form>
+                                            ))}
+                                        </div>
+                                    ) : <div className="muted u-mt-3">Nu exista programari inregistrate.</div>}
+                                </div>
                             </section>
                         ) : null}
                     </div>
@@ -572,6 +1233,219 @@ export default function PsychologistDashboard({
             </div>
         </>
     );
+}
+
+const WEEKDAY_OPTIONS = [
+    { value: '0', label: 'Luni' },
+    { value: '1', label: 'Marti' },
+    { value: '2', label: 'Miercuri' },
+    { value: '3', label: 'Joi' },
+    { value: '4', label: 'Vineri' },
+    { value: '5', label: 'Sambata' },
+    { value: '6', label: 'Duminica' },
+];
+
+const APPOINTMENT_STATUS_OPTIONS = [
+    { value: 'confirmed', label: 'Confirmata' },
+    { value: 'declined_by_psychologist', label: 'Respinsa de specialist' },
+    { value: 'cancelled_by_psychologist', label: 'Anulata de specialist' },
+    { value: 'completed', label: 'Finalizata' },
+    { value: 'no_show', label: 'Neonorata' },
+];
+const REMINDER_OPTIONS = [
+    { value: '1440', label: '24h inainte' },
+    { value: '120', label: '2h inainte' },
+    { value: '30', label: '30m inainte' },
+    { value: 'none', label: 'Fara reminder' },
+];
+
+const CALENDAR_WEEKDAYS = ['Du', 'Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sa'];
+
+function buildMonthGrid(year, month) {
+    const firstDay = new Date(year, month, 1);
+    const start = new Date(firstDay);
+    start.setDate(firstDay.getDate() - firstDay.getDay());
+    const cells = [];
+
+    for (let index = 0; index < 42; index += 1) {
+        const item = new Date(start);
+        item.setDate(start.getDate() + index);
+        cells.push(item);
+    }
+
+    return cells;
+}
+
+function formatDateInput(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function parseDateInput(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ''))) {
+        return null;
+    }
+
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, (month || 1) - 1, day || 1);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function readStoredSpecificDate() {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const value = window.localStorage.getItem(AVAILABILITY_CALENDAR_DATE_KEY);
+
+    return parseDateInput(value) ? value : null;
+}
+
+function getWeekdayValue(date) {
+    const weekday = date.getDay();
+
+    return weekday === 0 ? 6 : weekday - 1;
+}
+
+function formatCalendarMonth(year, month) {
+    return new Intl.DateTimeFormat('ro-RO', { month: 'long', year: 'numeric' }).format(new Date(year, month, 1));
+}
+
+function formatSelectedDateLabel(value) {
+    if (!value) {
+        return 'Selecteaza o data';
+    }
+
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, (month || 1) - 1, day || 1);
+
+    return new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+}
+
+function addMinutesToTime(value, minutesToAdd) {
+    const [hours, minutes] = String(value ?? '09:00').split(':').map((item) => Number(item));
+    const totalMinutes = Math.min((hours * 60) + minutes + minutesToAdd, (23 * 60) + 59);
+    const nextHours = Math.floor(totalMinutes / 60);
+    const nextMinutes = totalMinutes % 60;
+
+    return `${String(nextHours).padStart(2, '0')}:${String(nextMinutes).padStart(2, '0')}`;
+}
+
+function normalizeSchedulePayload(formData) {
+    const payload = {};
+
+    for (const [key, value] of formData.entries()) {
+        payload[key] = typeof value === 'string' ? value.trim() : value;
+    }
+
+    if ('duration_minutes' in payload) {
+        payload.duration_minutes = Number(payload.duration_minutes);
+    }
+
+    if ('price_amount' in payload) {
+        payload.price_amount = Number(payload.price_amount);
+    }
+
+    if ('interval_minutes' in payload) {
+        payload.interval_minutes = payload.interval_minutes === '' ? null : Number(payload.interval_minutes);
+    }
+
+    if ('weekday' in payload) {
+        payload.weekday = Number(payload.weekday);
+    }
+
+    if ('is_available' in payload) {
+        payload.is_available = payload.is_available === '1';
+    }
+
+    if ('is_active' in payload) {
+        payload.is_active = true;
+    } else {
+        payload.is_active = false;
+    }
+
+    if ('is_paid_online' in payload) {
+        payload.is_paid_online = true;
+    } else if ('price_amount' in payload) {
+        payload.is_paid_online = false;
+    }
+
+    if (payload.note === '') {
+        payload.note = null;
+    }
+
+    if (payload.start_time === '') {
+        payload.start_time = null;
+    }
+
+    if (payload.end_time === '') {
+        payload.end_time = null;
+    }
+
+    return payload;
+}
+
+function formatLocationModeLabel(value) {
+    switch (value) {
+        case 'online':
+            return 'Online';
+        case 'in_person':
+            return 'In cabinet';
+        case 'both':
+            return 'Online sau in cabinet';
+        default:
+            return value || 'Nespecificat';
+    }
+}
+
+function formatAppointmentStatusLabel(value) {
+    switch (value) {
+        case 'pending':
+            return 'In asteptare';
+        case 'confirmed':
+            return 'Confirmata';
+        case 'declined_by_psychologist':
+            return 'Respinsa de specialist';
+        case 'cancelled_by_user':
+            return 'Anulata de client';
+        case 'cancelled_by_psychologist':
+            return 'Anulata de specialist';
+        case 'completed':
+            return 'Finalizata';
+        case 'no_show':
+            return 'Neonorata';
+        case 'expired':
+            return 'Expirata';
+        default:
+            return value;
+    }
+}
+
+function formatPaymentStatusLabel(value) {
+    switch (value) {
+        case 'authorization_pending':
+            return 'Plata in pregatire';
+        case 'authorized':
+            return 'Plata autorizata';
+        case 'captured':
+            return 'Plata capturata';
+        case 'voided':
+            return 'Autorizare anulata';
+        case 'refunded':
+            return 'Refund procesat';
+        case 'not_required':
+            return 'Fara plata online';
+        default:
+            return value || 'Fara plata';
+    }
+}
+
+function formatMoney(value, currency = 'RON') {
+    return new Intl.NumberFormat('ro-RO', {
+        style: 'currency',
+        currency: currency || 'RON',
+        minimumFractionDigits: 2,
+    }).format(Number(value || 0));
 }
 
 PsychologistDashboard.layout = (page) => <AppLayout>{page}</AppLayout>;

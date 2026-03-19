@@ -18,6 +18,7 @@ import {
     FaEnvelope,
     FaEye,
     FaFileLines,
+    FaFloppyDisk,
     FaFont,
     FaGear,
     FaGlobe,
@@ -39,6 +40,7 @@ import {
     FaRegBookmark,
     FaRegCalendar,
     FaRegClock,
+    FaRegCopy,
     FaRegFileLines,
     FaRightFromBracket,
     FaScissors,
@@ -70,6 +72,7 @@ export const FiCheckCircle = FaCircleCheck;
 export const FiChevronRight = FaChevronRight;
 export const FiClock = FaClock;
 export const FiClipboard = FaFileLines;
+export const FiCopy = FaRegCopy;
 export const FiDatabase = FaDatabase;
 export const FiEdit2 = FaPenToSquare;
 export const FiExternalLink = FaArrowRight;
@@ -93,6 +96,7 @@ export const FiMoon = FaMoon;
 export const FiPhone = FaPhone;
 export const FiPlus = FaPlus;
 export const FiReply = FiCornerUpLeft;
+export const FiSave = FaFloppyDisk;
 export const FiScissors = FaScissors;
 export const FiSearch = FaMagnifyingGlass;
 export const FiSend = FaPaperPlane;

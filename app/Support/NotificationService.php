@@ -140,6 +140,9 @@ class NotificationService
             ->where('recipient_type', 'guest')
             ->whereNull('guest_token')
             ->where('published_at', '>=', now()->subHours(12))
+            ->where(function ($query) {
+                $query->where('status', '!=', 'read')->orWhereNull('status');
+            })
             ->count();
 
         if (! $userId) {
@@ -149,7 +152,10 @@ class NotificationService
         $personalCount = Notification::query()
             ->where('recipient_type', 'user')
             ->where('user_id', $userId)
-            ->where('status', 'unread')
+            ->where('published_at', '>=', now()->subHours(12))
+            ->where(function ($query) {
+                $query->where('status', '!=', 'read')->orWhereNull('status');
+            })
             ->count();
 
         return $publicCount + $personalCount;

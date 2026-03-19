@@ -8,6 +8,8 @@ use App\Mail\PsychologistMfaCodeMail;
 use App\Models\Appointment;
 use App\Models\Psychologist;
 use App\Models\NotificationTemplate;
+use App\Support\AppointmentLifecycleService;
+use App\Support\AppointmentReminderService;
 use App\Support\PsychologistValidationCatalog;
 use App\Support\NotificationService;
 use App\Support\PsychologistBookingService;
@@ -28,7 +30,11 @@ use Inertia\Response;
 
 class PsychologistController extends Controller
 {
-    public function __construct(protected PsychologistBookingService $booking)
+    public function __construct(
+        protected PsychologistBookingService $booking,
+        protected AppointmentLifecycleService $appointmentLifecycle,
+        protected AppointmentReminderService $appointmentReminders,
+    )
     {
     }
 
@@ -428,9 +434,17 @@ class PsychologistController extends Controller
             ->groupBy('group_id');
 
         $myGroups = DB::table('community_groups')
+            ->leftJoin('community_groups_validation as cgv', 'cgv.group_id', '=', 'community_groups.id')
             ->where('author', $psychologistId)
-            ->orderByDesc('id')
-            ->get(['id', 'slug', 'name', 'members', 'is_private'])
+            ->orderByDesc('community_groups.id')
+            ->get([
+                'community_groups.id',
+                'community_groups.slug',
+                'community_groups.name',
+                'community_groups.members',
+                'community_groups.is_private',
+                'cgv.is_valid as validation_is_valid',
+            ])
             ->map(function ($item) use ($groupActivityRows) {
                 $lastMessage = collect($groupActivityRows->get($item->id, []))->last();
                 $lastMessageAt = $this->communityMessageDateTime($lastMessage?->stamp, $lastMessage?->time);
@@ -442,6 +456,7 @@ class PsychologistController extends Controller
                     'members' => $item->members,
                     'last_active' => $this->communityExactElapsedLabel($lastMessageAt),
                     'is_private' => (bool) $item->is_private,
+                    'validation_status' => $item->validation_is_valid ? 'approved' : 'pending',
                 ];
             });
 
@@ -454,6 +469,9 @@ class PsychologistController extends Controller
                 'id' => $item->id,
                 'label' => $item->label,
                 'duration_minutes' => (int) $item->duration_minutes,
+                'price_amount' => (float) $item->price_amount,
+                'currency' => $item->currency,
+                'is_paid_online' => (bool) $item->is_paid_online,
                 'location_mode' => $item->location_mode,
                 'is_active' => (bool) $item->is_active,
                 'sort_order' => (int) $item->sort_order,
@@ -493,7 +511,7 @@ class PsychologistController extends Controller
 
         $psychologistAppointments = Appointment::query()
             ->where('psychologist_id', $psychologistId)
-            ->with(['user', 'appointmentType'])
+            ->with(['user', 'appointmentType', 'reminderPreferences'])
             ->orderBy('starts_at')
             ->get()
             ->map(fn (Appointment $appointment) => [
@@ -504,7 +522,17 @@ class PsychologistController extends Controller
                 'status' => $appointment->status,
                 'type' => $appointment->type,
                 'location_mode' => $appointment->location_mode,
-                'can_manage' => in_array($appointment->status, ['scheduled', 'no_show'], true),
+                'payment_status' => $appointment->payment_status,
+                'price_total' => (float) $appointment->total_amount,
+                'currency' => $appointment->currency,
+                'expires_at' => optional($appointment->expires_at)->format('d.m.Y H:i'),
+                'user_reminder_minutes' => optional($appointment->reminderPreferences->firstWhere('actor_type', 'user'))->minutes_before,
+                'psychologist_reminder_minutes' => optional($appointment->reminderPreferences->firstWhere('actor_type', 'psychologist'))->minutes_before,
+                'can_manage' => in_array($appointment->status, [
+                    Appointment::STATUS_PENDING,
+                    Appointment::STATUS_CONFIRMED,
+                    Appointment::STATUS_NO_SHOW,
+                ], true),
             ])
             ->all();
 
@@ -577,6 +605,9 @@ class PsychologistController extends Controller
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:120'],
             'duration_minutes' => ['required', 'integer', 'min:15', 'max:240'],
+            'price_amount' => ['required', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'size:3'],
+            'is_paid_online' => ['nullable', 'boolean'],
             'location_mode' => ['required', Rule::in(['online', 'in_person', 'both'])],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -589,6 +620,9 @@ class PsychologistController extends Controller
             'psychologist_id' => $psychologist->id,
             'label' => $validated['label'],
             'duration_minutes' => (int) $validated['duration_minutes'],
+            'price_amount' => (float) $validated['price_amount'],
+            'currency' => strtoupper((string) ($validated['currency'] ?? 'RON')),
+            'is_paid_online' => (bool) ($validated['is_paid_online'] ?? true),
             'location_mode' => $validated['location_mode'],
             'is_active' => (bool) ($validated['is_active'] ?? true),
             'sort_order' => $nextSortOrder,
@@ -610,6 +644,9 @@ class PsychologistController extends Controller
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:120'],
             'duration_minutes' => ['required', 'integer', 'min:15', 'max:240'],
+            'price_amount' => ['required', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'size:3'],
+            'is_paid_online' => ['required', 'boolean'],
             'location_mode' => ['required', Rule::in(['online', 'in_person', 'both'])],
             'is_active' => ['required', 'boolean'],
         ]);
@@ -620,6 +657,9 @@ class PsychologistController extends Controller
             ->update([
                 'label' => $validated['label'],
                 'duration_minutes' => (int) $validated['duration_minutes'],
+                'price_amount' => (float) $validated['price_amount'],
+                'currency' => strtoupper((string) ($validated['currency'] ?? 'RON')),
+                'is_paid_online' => (bool) $validated['is_paid_online'],
                 'location_mode' => $validated['location_mode'],
                 'is_active' => (bool) $validated['is_active'],
                 'updated_at' => now(),
@@ -641,7 +681,7 @@ class PsychologistController extends Controller
         $hasActiveAppointments = Appointment::query()
             ->where('psychologist_id', $psychologist->id)
             ->where('appointment_type_id', $typeId)
-            ->where('status', 'scheduled')
+            ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED])
             ->exists();
 
         abort_if($hasActiveAppointments, 422, 'Tipul are programari active si nu poate fi sters.');
@@ -831,7 +871,13 @@ class PsychologistController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => ['required', Rule::in(['cancelled_by_psychologist', 'completed', 'no_show', 'scheduled'])],
+            'status' => ['required', Rule::in([
+                Appointment::STATUS_CONFIRMED,
+                Appointment::STATUS_DECLINED_BY_PSYCHOLOGIST,
+                Appointment::STATUS_CANCELLED_BY_PSYCHOLOGIST,
+                Appointment::STATUS_COMPLETED,
+                Appointment::STATUS_NO_SHOW,
+            ])],
         ]);
 
         $appointment = Appointment::query()
@@ -839,11 +885,42 @@ class PsychologistController extends Controller
             ->where('psychologist_id', $psychologist->id)
             ->firstOrFail();
 
-        $appointment->update([
-            'status' => $validated['status'],
-        ]);
+        match ($validated['status']) {
+            Appointment::STATUS_CONFIRMED => $this->appointmentLifecycle->confirmByPsychologist($appointment, $psychologist),
+            Appointment::STATUS_DECLINED_BY_PSYCHOLOGIST => $this->appointmentLifecycle->declineByPsychologist($appointment, $psychologist),
+            Appointment::STATUS_CANCELLED_BY_PSYCHOLOGIST => $this->appointmentLifecycle->cancelByPsychologist($appointment, $psychologist),
+            Appointment::STATUS_COMPLETED => $this->appointmentLifecycle->markCompleted($appointment, $psychologist),
+            Appointment::STATUS_NO_SHOW => $this->appointmentLifecycle->markNoShow($appointment, $psychologist),
+            default => null,
+        };
 
         return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Programarea a fost actualizata.');
+    }
+
+    public function updateAppointmentReminder(Request $request, int $appointmentId): RedirectResponse
+    {
+        $psychologist = $this->requirePsychologistSession($request, true);
+
+        if ($psychologist instanceof RedirectResponse) {
+            return $psychologist;
+        }
+
+        $validated = $request->validate([
+            'minutes_before' => ['nullable'],
+        ]);
+
+        $appointment = Appointment::query()
+            ->where('id', $appointmentId)
+            ->where('psychologist_id', $psychologist->id)
+            ->firstOrFail();
+
+        $this->appointmentReminders->updatePreference(
+            $appointment,
+            'psychologist',
+            $validated['minutes_before'] ?? null,
+        );
+
+        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Reminderul pentru programare a fost actualizat.');
     }
 
     public function createArticlePage(Request $request): Response|RedirectResponse
@@ -945,6 +1022,17 @@ class PsychologistController extends Controller
             'is_private' => $validated['access_type'] === 'private',
         ]);
 
+        DB::table('community_groups_validation')->updateOrInsert(
+            ['group_id' => $groupId],
+            [
+                'is_valid' => false,
+                'validated_at' => null,
+                'reviewer_notes' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
         foreach ($this->parseTagLines($validated['focus_areas']) as $index => $label) {
             DB::table('community_group_focus_areas')->insert([
                 'group_id' => $groupId,
@@ -960,8 +1048,8 @@ class PsychologistController extends Controller
         }
 
         $status = $missingEmails === []
-            ? 'Grupul a fost creat.'
-            : 'Grupul a fost creat. Acest email nu face parte din baza noastra de date: '.implode(', ', $missingEmails);
+            ? 'Grupul a fost creat si trimis pentru aprobare.'
+            : 'Grupul a fost creat si trimis pentru aprobare. Acest email nu face parte din baza noastra de date: '.implode(', ', $missingEmails);
 
         return redirect()
             ->route('psychologists.dashboard', ['section' => 'community'])
@@ -1006,6 +1094,15 @@ class PsychologistController extends Controller
                 'is_private' => $validated['access_type'] === 'private',
             ]);
 
+        DB::table('community_groups_validation')->updateOrInsert(
+            ['group_id' => $groupId],
+            [
+                'is_valid' => false,
+                'validated_at' => null,
+                'updated_at' => now(),
+            ]
+        );
+
         DB::table('community_group_focus_areas')->where('group_id', $groupId)->delete();
         foreach ($this->parseTagLines($validated['focus_areas']) as $index => $label) {
             DB::table('community_group_focus_areas')->insert([
@@ -1024,8 +1121,8 @@ class PsychologistController extends Controller
         }
 
         $status = $missingEmails === []
-            ? 'Grupul a fost actualizat.'
-            : 'Grupul a fost actualizat. Acest email nu face parte din baza noastra de date: '.implode(', ', $missingEmails);
+            ? 'Grupul a fost actualizat si retrimis pentru aprobare.'
+            : 'Grupul a fost actualizat si retrimis pentru aprobare. Acest email nu face parte din baza noastra de date: '.implode(', ', $missingEmails);
 
         return redirect()
             ->route('psychologists.dashboard', ['section' => 'community'])
@@ -1698,7 +1795,7 @@ class PsychologistController extends Controller
         try {
             [$verificationId, $token] = $this->issueVerificationToken($psychologist->id);
 
-            Mail::to($psychologist->email)->send(new PsychologistEmailVerificationMail(
+            Mail::mailer(config('mail.default', 'failover'))->to($psychologist->email)->send(new PsychologistEmailVerificationMail(
                 firstName: $psychologist->name ?? 'specialist',
                 verificationUrl: route('psychologists.verify-email', ['verificationId' => $verificationId, 'token' => $token]),
             ));
@@ -1752,7 +1849,7 @@ class PsychologistController extends Controller
                 'created_at' => now(),
             ]);
 
-            Mail::to($psychologist->email)->send(new PsychologistMfaCodeMail(
+            Mail::mailer(config('mail.default', 'failover'))->to($psychologist->email)->send(new PsychologistMfaCodeMail(
                 firstName: $psychologist->name ?? 'specialist',
                 code: $code,
                 purpose: $purpose,
@@ -1776,5 +1873,75 @@ class PsychologistController extends Controller
         $localMask = strlen($local) <= 2 ? str_repeat('*', max(1, strlen($local))) : substr($local, 0, 2).str_repeat('*', max(1, strlen($local) - 2));
 
         return $localMask.'@'.$domain;
+    }
+
+    protected function communityMessageDateTime(?string $stamp, ?string $time): ?Carbon
+    {
+        if (! $stamp || ! preg_match('/^[^,]+,\s+(\d{1,2})\s+([[:alpha:]]+)\s+(\d{4})$/u', $stamp, $matches)) {
+            return null;
+        }
+
+        $months = [
+            'ianuarie' => 1,
+            'februarie' => 2,
+            'martie' => 3,
+            'aprilie' => 4,
+            'mai' => 5,
+            'iunie' => 6,
+            'iulie' => 7,
+            'august' => 8,
+            'septembrie' => 9,
+            'octombrie' => 10,
+            'noiembrie' => 11,
+            'decembrie' => 12,
+        ];
+
+        $month = $months[mb_strtolower($matches[2])] ?? null;
+        if (! $month) {
+            return null;
+        }
+
+        [$hours, $minutes] = array_pad(explode(':', $time ?: '00:00', 2), 2, '00');
+
+        return Carbon::create(
+            (int) $matches[3],
+            $month,
+            (int) $matches[1],
+            (int) $hours,
+            (int) $minutes,
+            0
+        );
+    }
+
+    protected function communityExactElapsedLabel(?Carbon $lastMessageAt): string
+    {
+        if (! $lastMessageAt) {
+            return 'fara mesaje';
+        }
+
+        $now = now();
+        if ($lastMessageAt->greaterThan($now)) {
+            return '0 minute';
+        }
+
+        $diff = $lastMessageAt->diff($now);
+        $parts = [];
+
+        if ($diff->days > 0) {
+            $parts[] = $diff->days.' '.$this->communityPluralize($diff->days, 'zi', 'zile');
+        }
+        if ($diff->h > 0) {
+            $parts[] = $diff->h.' '.$this->communityPluralize($diff->h, 'ora', 'ore');
+        }
+        if ($diff->i > 0) {
+            $parts[] = $diff->i.' '.$this->communityPluralize($diff->i, 'minut', 'minute');
+        }
+
+        return $parts !== [] ? implode(' ', $parts) : '0 minute';
+    }
+
+    protected function communityPluralize(int $count, string $singular, string $plural): string
+    {
+        return $count === 1 ? $singular : $plural;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NotificationTemplate;
+use App\Support\CommunityVisibilityService;
 use App\Support\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,11 @@ use Inertia\Response;
 
 class SuperadminController extends Controller
 {
+    public function __construct(
+        protected CommunityVisibilityService $communityVisibility,
+    ) {
+    }
+
     public function signinPage(Request $request): Response|RedirectResponse
     {
         if ($this->superadminFromSession($request)) {
@@ -225,6 +231,35 @@ class SuperadminController extends Controller
             ])
             ->all();
 
+        $pendingSupportGroups = $this->communityVisibility
+            ->applyPendingReviewScope(DB::table('community_groups as cg'), 'cg')
+            ->join('psychologists as p', 'p.id', '=', 'cg.author')
+            ->orderByDesc('cg.id')
+            ->get([
+                'cg.id',
+                'cg.name',
+                'cg.slug',
+                'cg.description',
+                'cg.schedule',
+                'cg.is_private',
+                'cgv.updated_at as queued_at',
+                'cgv.reviewer_notes',
+                'p.name as author_name',
+                'p.surname as author_surname',
+            ])
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $item->name,
+                'slug' => $item->slug,
+                'description' => $item->description,
+                'schedule' => $item->schedule,
+                'is_private' => (bool) $item->is_private,
+                'queued_at' => $item->queued_at,
+                'reviewer_notes' => $item->reviewer_notes,
+                'author_name' => trim(implode(' ', array_filter([$item->author_name, $item->author_surname]))),
+            ])
+            ->all();
+
         $stats = [
             'specialists_total' => DB::table('psychologists')->count(),
             'specialists_approved' => DB::table('psychologist_validation_applications')->where('status', 'approved')->count(),
@@ -235,6 +270,9 @@ class SuperadminController extends Controller
                 ->where(function ($query) {
                     $query->whereNull('av.article_id')->orWhere('av.is_valid', false);
                 })
+                ->count(),
+            'support_groups_pending' => $this->communityVisibility
+                ->applyPendingReviewScope(DB::table('community_groups as cg'), 'cg')
                 ->count(),
         ];
 
@@ -336,6 +374,7 @@ class SuperadminController extends Controller
             'stats' => $stats,
             'validationApplications' => $validationApplications,
             'pendingArticles' => $pendingArticles,
+            'pendingSupportGroups' => $pendingSupportGroups,
             'categories' => $categories,
             'notificationTemplates' => $notificationTemplates,
             'notificationEvents' => $notificationEvents,
@@ -604,6 +643,54 @@ class SuperadminController extends Controller
         );
 
         return back()->with('status', 'Articolul a fost lasat in asteptare.');
+    }
+
+    public function approveCommunityGroup(Request $request, int $groupId): RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        DB::table('community_groups_validation')->updateOrInsert(
+            ['group_id' => $groupId],
+            [
+                'is_valid' => true,
+                'validated_at' => now(),
+                'reviewer_notes' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        return back()->with('status', 'Grupul de sprijin a fost aprobat.');
+    }
+
+    public function rejectCommunityGroup(Request $request, int $groupId): RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        $validated = $request->validate([
+            'reviewer_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        DB::table('community_groups_validation')->updateOrInsert(
+            ['group_id' => $groupId],
+            [
+                'is_valid' => false,
+                'validated_at' => null,
+                'reviewer_notes' => $validated['reviewer_notes'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        return back()->with('status', 'Grupul de sprijin a ramas in asteptare.');
     }
 
     public function updateNotificationTemplate(Request $request, int $templateId): RedirectResponse

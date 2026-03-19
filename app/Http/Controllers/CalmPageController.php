@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\SavedArticle;
+use App\Support\CommunityVisibilityService;
 use App\Support\MilestoneService;
 use App\Support\NotificationDigestService;
 use App\Support\NotificationService;
 use App\Support\PsychologistBookingService;
+use App\Support\UserAppointmentPresenter;
 use App\Support\UserProfileBootstrapper;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +27,8 @@ class CalmPageController extends Controller
         protected NotificationDigestService $notificationDigest,
         protected MilestoneService $milestones,
         protected PsychologistBookingService $booking,
+        protected UserAppointmentPresenter $appointmentPresenter,
+        protected CommunityVisibilityService $communityVisibility,
     ) {
     }
 
@@ -152,8 +156,9 @@ class CalmPageController extends Controller
         }
 
         $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
-        $groups = DB::table('community_groups')
-            ->select('id', 'slug', 'name', 'is_private', 'author')
+        $groups = $this->communityVisibility
+            ->applyVisibleToPublicScope(DB::table('community_groups'), $activePsychologistId)
+            ->select('community_groups.id', 'community_groups.slug', 'community_groups.name', 'community_groups.is_private', 'community_groups.author')
             ->get();
         $invitationCounts = DB::table('community_group_invitations')
             ->select('group_id', DB::raw('COUNT(*) as total'))
@@ -398,6 +403,7 @@ class CalmPageController extends Controller
                     'id' => 'template-'.$template->id,
                     'label' => $template->label,
                 ]),
+            'upcomingAppointments' => $user ? $this->appointmentPresenter->forUser($user->id) : [],
         ]);
     }
 
@@ -554,6 +560,10 @@ class CalmPageController extends Controller
     public function appointments(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $slug = (string) $request->query('psychologist', '');
+        $requestedTypeId = max(0, (int) $request->query('type', 0));
+        $requestedDate = (string) $request->query('date', '');
+        $requestedTime = (string) $request->query('time', '');
+
         if ($slug === '') {
             return redirect()->route('psychologists')->with('status', 'Alege un specialist pentru a continua programarea.');
         }
@@ -564,6 +574,9 @@ class CalmPageController extends Controller
         }
 
         $types = $this->booking->activeTypesForPsychologist((int) $specialist->id);
+        $initialTypeId = $requestedTypeId > 0 && $types->contains(fn ($type) => (int) $type->id === $requestedTypeId)
+            ? $requestedTypeId
+            : (int) ($types->first()->id ?? 0);
 
         return Inertia::render('Appointments', [
             'specialist' => [
@@ -580,23 +593,14 @@ class CalmPageController extends Controller
                 'county' => $specialist->county,
             ],
             'types' => $types->values(),
-            'initialTypeId' => (int) ($types->first()->id ?? 0),
+            'initialTypeId' => $initialTypeId,
+            'requestedBooking' => [
+                'typeId' => $initialTypeId,
+                'date' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedDate) ? $requestedDate : null,
+                'time' => preg_match('/^\d{2}:\d{2}$/', $requestedTime) ? $requestedTime : null,
+            ],
             'upcomingAppointments' => $request->user()
-                ? Appointment::query()
-                    ->whereBelongsTo($request->user())
-                    ->with(['psychologist', 'appointmentType'])
-                    ->orderBy('starts_at')
-                    ->get()
-                    ->map(fn (Appointment $appointment) => [
-                        'id' => $appointment->id,
-                        'psychologist_slug' => $appointment->psychologist?->slug,
-                        'psychologist_name' => $appointment->psychologist_name,
-                        'type' => $appointment->type,
-                        'location_mode' => $appointment->location_mode,
-                        'scheduled_for' => optional($appointment->starts_at ?? $appointment->scheduled_for)->format('d.m.Y H:i'),
-                        'status' => $appointment->status,
-                        'can_cancel' => $appointment->status === 'scheduled' && optional($appointment->starts_at ?? $appointment->scheduled_for)?->isFuture(),
-                    ])
+                ? $this->appointmentPresenter->forUser($request->user()->id)
                 : [],
         ]);
     }
@@ -738,10 +742,17 @@ class CalmPageController extends Controller
     protected function communityGroupPayload(string $slug, bool $includeDialogues = false): ?array
     {
         $group = DB::table('community_groups')
+            ->leftJoin('community_groups_validation as cgv', 'cgv.group_id', '=', 'community_groups.id')
             ->where('slug', $slug)
+            ->select('community_groups.*', 'cgv.is_valid as validation_is_valid')
             ->first();
 
         if (! $group) {
+            return null;
+        }
+
+        $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
+        if (! $this->communityVisibility->isVisibleToViewer($group, $activePsychologistId)) {
             return null;
         }
 

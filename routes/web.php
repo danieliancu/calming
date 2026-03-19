@@ -51,6 +51,7 @@ Route::post('/psychologists/dashboard/availability-exceptions', [PsychologistCon
 Route::put('/psychologists/dashboard/availability-exceptions/{exceptionId}', [PsychologistController::class, 'updateAvailabilityException'])->name('psychologists.availability-exceptions.update');
 Route::delete('/psychologists/dashboard/availability-exceptions/{exceptionId}', [PsychologistController::class, 'destroyAvailabilityException'])->name('psychologists.availability-exceptions.destroy');
 Route::post('/psychologists/dashboard/appointments/{appointmentId}/status', [PsychologistController::class, 'updateAppointmentStatus'])->name('psychologists.appointments.status');
+Route::post('/psychologists/dashboard/appointments/{appointmentId}/reminder', [PsychologistController::class, 'updateAppointmentReminder'])->name('psychologists.appointments.reminder');
 Route::post('/psychologists/dashboard/articles', [PsychologistController::class, 'storeArticle'])->name('psychologists.articles.store');
 Route::put('/psychologists/dashboard/articles/{articleId}', [PsychologistController::class, 'updateArticle'])->name('psychologists.articles.update');
 Route::delete('/psychologists/dashboard/articles/{articleId}', [PsychologistController::class, 'destroyArticle'])->name('psychologists.articles.destroy');
@@ -65,6 +66,8 @@ Route::post('/superadmin/validation-applications/{applicationId}/messages', [Sup
 Route::delete('/superadmin/validation-applications/{applicationId}/messages/{messageId}', [SuperadminController::class, 'destroyValidationMessage'])->name('superadmin.validation.messages.destroy');
 Route::post('/superadmin/articles/{articleId}/approve', [SuperadminController::class, 'approveArticle'])->name('superadmin.articles.approve');
 Route::post('/superadmin/articles/{articleId}/reject', [SuperadminController::class, 'rejectArticle'])->name('superadmin.articles.reject');
+Route::post('/superadmin/community-groups/{groupId}/approve', [SuperadminController::class, 'approveCommunityGroup'])->name('superadmin.community-groups.approve');
+Route::post('/superadmin/community-groups/{groupId}/reject', [SuperadminController::class, 'rejectCommunityGroup'])->name('superadmin.community-groups.reject');
 Route::post('/superadmin/article-categories', [SuperadminController::class, 'storeArticleCategory'])->name('superadmin.article-categories.store');
 Route::put('/superadmin/article-categories/{categoryId}', [SuperadminController::class, 'updateArticleCategory'])->name('superadmin.article-categories.update');
 Route::delete('/superadmin/article-categories/{categoryId}', [SuperadminController::class, 'destroyArticleCategory'])->name('superadmin.article-categories.destroy');
@@ -81,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/journal-entries', [JournalEntryController::class, 'store'])->name('journal.store');
     Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::post('/appointments/{appointment}/reminder', [AppointmentController::class, 'updateReminderPreferences'])->name('appointments.reminder');
     Route::get('/account', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/account', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/account', [ProfileController::class, 'destroy'])->name('profile.destroy');

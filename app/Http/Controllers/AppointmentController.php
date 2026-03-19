@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Support\AppointmentLifecycleService;
+use App\Support\AppointmentReminderService;
 use App\Support\MilestoneService;
 use App\Support\NotificationService;
 use App\Support\PsychologistBookingService;
@@ -10,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 class AppointmentController extends Controller
 {
@@ -17,6 +20,8 @@ class AppointmentController extends Controller
         protected NotificationService $notifications,
         protected MilestoneService $milestones,
         protected PsychologistBookingService $booking,
+        protected AppointmentLifecycleService $lifecycle,
+        protected AppointmentReminderService $reminders,
     ) {
     }
 
@@ -54,74 +59,48 @@ class AppointmentController extends Controller
         $psychologist = $this->booking->approvedPsychologistBySlug($validated['psychologist']);
         abort_unless($psychologist, 404, 'Specialistul selectat nu este disponibil.');
 
-        $appointment = $this->booking->createAppointmentForUser(
+        $appointment = $this->lifecycle->createPendingForUser(
             $request->user(),
             (int) $psychologist->id,
             (int) $validated['appointment_type_id'],
             Carbon::createFromFormat('Y-m-d H:i', "{$validated['date']} {$validated['time']}", config('app.timezone'))
         );
 
-        $scheduledFor = optional($appointment->starts_at)->format('d.m.Y H:i');
-        $baseKey = "appointment:{$request->user()->id}:{$appointment->id}";
-
-        $this->notifications->publishToUser($request->user()->id, 'appointment_created', [
-            'title' => 'Programare confirmata',
-            'body' => "Programarea ta {$appointment->type} a fost salvata pentru {$scheduledFor}.",
-            'category' => 'appointment',
-            'icon' => 'FiCalendar',
-            'icon_color' => 'peach',
-            'trigger_type' => 'appointment',
-            'trigger_id' => (string) $appointment->id,
-            'dedupe_key' => $baseKey.':created',
-            'cta_kind' => 'open',
-            'cta_payload' => ['href' => "/appointments?psychologist={$validated['psychologist']}", 'label' => 'Vezi programarile'],
-        ]);
-
-        if ($appointment->starts_at) {
-            $this->notifications->publishToUser($request->user()->id, 'appointment_reminder_24h', [
-                'title' => 'Reminder programare',
-                'body' => "Urmeaza programarea ta pe {$scheduledFor}.",
-                'category' => 'appointment',
-                'icon' => 'FiClock',
-                'icon_color' => 'peach',
-                'trigger_type' => 'appointment',
-                'trigger_id' => (string) $appointment->id,
-                'published_at' => $appointment->starts_at->copy()->subDay(),
-                'expires_at' => $appointment->starts_at,
-                'dedupe_key' => $baseKey.':24h',
-                'cta_kind' => 'open',
-                'cta_payload' => ['href' => "/appointments?psychologist={$validated['psychologist']}", 'label' => 'Deschide agenda'],
-            ]);
-            $this->notifications->publishToUser($request->user()->id, 'appointment_reminder_2h', [
-                'title' => 'Programarea incepe curand',
-                'body' => "Mai sunt aproximativ 2 ore pana la programarea ta de la {$scheduledFor}.",
-                'category' => 'appointment',
-                'icon' => 'FiClock',
-                'icon_color' => 'coral',
-                'trigger_type' => 'appointment',
-                'trigger_id' => (string) $appointment->id,
-                'published_at' => $appointment->starts_at->copy()->subHours(2),
-                'expires_at' => $appointment->starts_at,
-                'dedupe_key' => $baseKey.':2h',
-                'cta_kind' => 'open',
-                'cta_payload' => ['href' => "/appointments?psychologist={$validated['psychologist']}", 'label' => 'Vezi detaliile'],
-            ]);
-        }
-
-        $this->milestones->syncForUser($request->user()->id);
-
-        return back()->with('status', 'Programarea a fost salvata.');
+        return back()->with('status', 'Cererea de programare a fost trimisa.');
     }
 
     public function cancel(Request $request, Appointment $appointment): RedirectResponse
     {
         abort_unless($appointment->user_id === $request->user()->id, 404);
-        abort_if($appointment->status !== 'scheduled', 422, 'Programarea nu mai poate fi anulata.');
+        abort_if(! in_array($appointment->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true), 422, 'Programarea nu mai poate fi anulata.');
+        abort_if(optional($appointment->starts_at ?? $appointment->scheduled_for)?->lessThanOrEqualTo(now()), 422, 'Programarea nu mai poate fi anulata dupa ora de start.');
 
-        $appointment->update([
-            'status' => 'cancelled_by_user',
-        ]);
+        $this->lifecycle->cancelByUser($appointment, $request->user());
 
         return back()->with('status', 'Programarea a fost anulata.');
+    }
+
+    public function updateReminderPreferences(Request $request, Appointment $appointment): RedirectResponse
+    {
+        abort_unless($appointment->user_id === $request->user()->id, 404);
+
+        $validated = $request->validate([
+            'minutes_before' => ['nullable'],
+        ]);
+
+        $this->reminders->updatePreference(
+            $appointment,
+            'user',
+            $validated['minutes_before'] ?? null,
+        );
+
+        return back()->with('status', 'Reminderul pentru programare a fost actualizat.');
+    }
+
+    protected function appointmentsUrl(string $psychologistSlug): string
+    {
+        return Route::has('appointments')
+            ? route('appointments', ['psychologist' => $psychologistSlug], false)
+            : "/appointments?psychologist={$psychologistSlug}";
     }
 }

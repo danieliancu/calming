@@ -1,13 +1,14 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 
-export default function Register() {
+export default function Register({ redirectTo = null }) {
     const form = useForm({
         first_name: '',
         last_name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        redirect_to: redirectTo,
     });
 
     const submit = (event) => {
@@ -61,7 +62,7 @@ export default function Register() {
                                 {form.processing ? 'Se creeaza contul...' : 'Creeaza cont'}
                             </button>
                         </form>
-                        <p className="muted u-mt-3">Ai deja cont? <Link href={route('login')}>Autentifica-te</Link>.</p>
+                        <p className="muted u-mt-3">Ai deja cont? <Link href={route('login', redirectTo ? { redirectTo } : {})}>Autentifica-te</Link>.</p>
                     </section>
                 </div>
             </div>

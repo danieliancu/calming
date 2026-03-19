@@ -51,6 +51,7 @@ export default function SuperadminDashboard({
     stats,
     validationApplications = [],
     pendingArticles = [],
+    pendingSupportGroups = [],
     categories = [],
     notificationTemplates = [],
     notificationEvents = [],
@@ -293,6 +294,7 @@ export default function SuperadminDashboard({
                     <StatCard label="TOTAL USERS" value={stats?.users_total ?? 0} hint="conturi user active" />
                     <StatCard label="VALIDARI PENDING" value={stats?.validation_pending ?? 0} hint="cereri de verificat" />
                     <StatCard label="ARTICOLE PENDING" value={stats?.articles_pending ?? 0} hint="articole in review" />
+                    <StatCard label="GRUPURI PENDING" value={stats?.support_groups_pending ?? 0} hint="grupuri in review" />
                 </section>
 
                 <div className="superadmin-grid">
@@ -309,6 +311,9 @@ export default function SuperadminDashboard({
                                     </button>
                                     <button type="button" className={`superadmin-tab ${activeTab === 'articles' ? 'active' : ''}`} onClick={() => setActiveTab('articles')}>
                                         Articole
+                                    </button>
+                                    <button type="button" className={`superadmin-tab ${activeTab === 'groups' ? 'active' : ''}`} onClick={() => setActiveTab('groups')}>
+                                        Grupuri
                                     </button>
                                     <button type="button" className={`superadmin-tab ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
                                         Categorii
@@ -524,6 +529,52 @@ export default function SuperadminDashboard({
                                         </table>
                                     </div>
                                 ) : <div className="muted">Nu exista articole in asteptare.</div>
+                            ) : activeTab === 'groups' ? (
+                                pendingSupportGroups.length ? (
+                                    <div className="superadmin-table-wrap">
+                                        <table className="superadmin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Grup</th>
+                                                    <th>Autor</th>
+                                                    <th>Tip</th>
+                                                    <th>Actualizat</th>
+                                                    <th>Status</th>
+                                                    <th>Actiuni</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {pendingSupportGroups.map((group) => (
+                                                    <tr key={group.id}>
+                                                        <td>#{group.id}</td>
+                                                        <td>
+                                                            <div className="superadmin-cell-title">{group.name}</div>
+                                                            <div className="superadmin-cell-subtle">{group.description || '-'}</div>
+                                                        </td>
+                                                        <td>{group.author_name || '-'}</td>
+                                                        <td>
+                                                            <div>{group.is_private ? 'Privat' : 'Public'}</div>
+                                                            <div className="superadmin-cell-subtle">{group.schedule || '-'}</div>
+                                                        </td>
+                                                        <td>{formatDate(group.queued_at)}</td>
+                                                        <td><span className="status-pill status-pill--pending">PENDING</span></td>
+                                                        <td>
+                                                            <div className="superadmin-actions superadmin-actions--inline">
+                                                                <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.community-groups.approve', group.id), {}, { preserveScroll: true })}>
+                                                                    Approve
+                                                                </button>
+                                                                <button className="status-pill status-pill--pending superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.community-groups.reject', group.id), {}, { preserveScroll: true })}>
+                                                                    Keep pending
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : <div className="muted">Nu exista grupuri de sprijin in asteptare.</div>
                             ) : activeTab === 'categories' ? (
                                 <div className="superadmin-table-wrap">
                                     <div className="superadmin-panel__head">

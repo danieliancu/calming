@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -106,6 +107,7 @@ return new class extends Migration {
         }
 
         $appointments = DB::table('appointments')->orderBy('id')->get();
+        $unresolvedAppointments = [];
         foreach ($appointments as $appointment) {
             $normalizedPsychologistName = Str::of((string) $appointment->psychologist_name)->squish()->lower()->value();
             $matchedPsychologist = $psychologists->first(function ($psychologist) use ($normalizedPsychologistName) {
@@ -133,6 +135,23 @@ return new class extends Migration {
                     'ends_at' => $startsAt?->copy()->addMinutes($duration),
                     'location_mode' => $typeRow?->location_mode ?? null,
                 ]);
+
+            if (! $matchedPsychologist || ! $typeRow) {
+                $unresolvedAppointments[] = [
+                    'appointment_id' => $appointment->id,
+                    'psychologist_name' => $appointment->psychologist_name,
+                    'type' => $appointment->type,
+                    'resolved_psychologist_id' => $matchedPsychologist?->id,
+                    'resolved_type_id' => $typeRow?->id,
+                ];
+            }
+        }
+
+        if ($unresolvedAppointments !== []) {
+            Log::warning('Specialist booking migration left unresolved appointment mappings.', [
+                'count' => count($unresolvedAppointments),
+                'appointments' => $unresolvedAppointments,
+            ]);
         }
 
         Schema::table('psychologists', function (Blueprint $table) {

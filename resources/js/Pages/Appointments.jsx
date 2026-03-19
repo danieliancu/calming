@@ -2,7 +2,8 @@ import AccentCard from '@/Components/AccentCard';
 import AppLayout from '@/Layouts/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { formatAppointmentStatus, formatPaymentStatus, partitionAppointments, REMINDER_OPTIONS } from '@/lib/appointments';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 const MONTHS = [
@@ -28,28 +29,41 @@ const LOCATION_LABELS = {
     both: 'Online sau in cabinet',
 };
 
-export default function Appointments({ specialist, types = [], initialTypeId, upcomingAppointments = [] }) {
-    const today = new Date();
-    const { isAuthenticated, promptAuth } = useAuth();
+export default function Appointments({
+    specialist,
+    types = [],
+    initialTypeId,
+    requestedBooking = null,
+    upcomingAppointments = [],
+}) {
+    const page = usePage();
+    const { isAuthenticated } = useAuth();
+    const initialDate = requestedBooking?.date ?? null;
+    const initialTime = requestedBooking?.time ?? null;
+    const initialMonthDate = parseDateString(initialDate) ?? new Date();
     const [selectedTypeId, setSelectedTypeId] = useState(initialTypeId ?? types[0]?.id ?? null);
-    const [month, setMonth] = useState(today.getMonth());
-    const [year, setYear] = useState(today.getFullYear());
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [time, setTime] = useState(null);
+    const [month, setMonth] = useState(initialMonthDate.getMonth());
+    const [year, setYear] = useState(initialMonthDate.getFullYear());
+    const [selectedDate, setSelectedDate] = useState(initialDate);
+    const [time, setTime] = useState(initialTime);
     const [availableDates, setAvailableDates] = useState([]);
     const [slots, setSlots] = useState([]);
     const [loadingAvailability, setLoadingAvailability] = useState(false);
     const [availabilityError, setAvailabilityError] = useState(null);
+    const [resumeNotice, setResumeNotice] = useState(null);
+    const [resumeCheckPending, setResumeCheckPending] = useState(Boolean(initialDate || initialTime));
     const days = useMemo(() => buildMonthGrid(year, month), [year, month]);
     const form = useForm({
         psychologist: specialist.slug,
         appointment_type_id: initialTypeId ?? types[0]?.id ?? '',
-        date: '',
-        time: '',
+        date: initialDate ?? '',
+        time: initialTime ?? '',
     });
 
     const type = types.find((item) => item.id === selectedTypeId) ?? null;
     const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
+    const flashStatus = page.props.flash?.status;
+    const { pendingAppointments, confirmedAppointments, historyAppointments } = partitionAppointments(upcomingAppointments);
 
     useEffect(() => {
         if (!selectedTypeId) {
@@ -57,6 +71,7 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
             setSlots([]);
             setSelectedDate(null);
             setTime(null);
+            setResumeCheckPending(false);
             return;
         }
 
@@ -72,16 +87,22 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
 
                 const nextAvailableDates = payload?.availableDates ?? [];
                 const nextSlots = payload?.slots ?? [];
+                const selectedDateStillAvailable = selectedDate && nextAvailableDates.includes(selectedDate);
+                const selectedTimeStillAvailable = time && nextSlots.some((slot) => slot.label === time);
+
                 setAvailableDates(nextAvailableDates);
                 setSlots(nextSlots);
 
-                if (selectedDate && !nextAvailableDates.includes(selectedDate)) {
+                if (selectedDate && !selectedDateStillAvailable) {
+                    if (resumeCheckPending) {
+                        setResumeNotice('Slotul salvat anterior nu mai este disponibil. Alege o alta data.');
+                    }
                     setSelectedDate(null);
                     setTime(null);
                 } else if (!selectedDate && nextAvailableDates.length) {
                     const firstDateInMonth = nextAvailableDates.find((entry) => {
-                        const date = new Date(`${entry}T00:00:00`);
-                        return date.getMonth() === month && date.getFullYear() === year;
+                        const date = parseDateString(entry);
+                        return date && date.getMonth() === month && date.getFullYear() === year;
                     });
 
                     if (firstDateInMonth) {
@@ -89,8 +110,19 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
                     }
                 }
 
-                if (time && !nextSlots.some((slot) => slot.label === time)) {
+                if (time && !selectedTimeStillAvailable) {
+                    if (resumeCheckPending && selectedDateStillAvailable) {
+                        setResumeNotice('Ora selectata inainte de autentificare nu mai este libera. Alege alt slot.');
+                    }
                     setTime(null);
+                }
+
+                if (resumeCheckPending && selectedDateStillAvailable && (!initialTime || selectedTimeStillAvailable)) {
+                    setResumeNotice('Am restaurat selectia ta dinainte de autentificare.');
+                }
+
+                if (resumeCheckPending) {
+                    setResumeCheckPending(false);
                 }
             })
             .catch((error) => {
@@ -101,6 +133,7 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
                 setAvailabilityError(error.message ?? 'Nu am putut incarca disponibilitatea.');
                 setAvailableDates([]);
                 setSlots([]);
+                setResumeCheckPending(false);
             })
             .finally(() => {
                 if (active) {
@@ -111,7 +144,7 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
         return () => {
             active = false;
         };
-    }, [selectedTypeId, specialist.slug, month, year, selectedDate, time]);
+    }, [initialTime, month, resumeCheckPending, selectedDate, selectedTypeId, specialist.slug, time, year]);
 
     const handleConfirm = () => {
         if (!selectedTypeId || !selectedDate || !time) {
@@ -119,19 +152,20 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
         }
 
         if (!isAuthenticated) {
-            promptAuth();
+            router.visit(route('login', {
+                redirectTo: buildAppointmentRedirectUrl(specialist.slug, selectedTypeId, selectedDate, time),
+            }));
             return;
         }
 
-        form
-            .transform((data) => ({
-                ...data,
-                psychologist: specialist.slug,
-                appointment_type_id: selectedTypeId,
-                date: selectedDate,
-                time,
-            }))
-            .post(route('appointments.store'));
+        form.transform((data) => ({
+            ...data,
+            psychologist: specialist.slug,
+            appointment_type_id: selectedTypeId,
+            date: selectedDate,
+            time,
+        }));
+        form.post(route('appointments.store'));
     };
 
     return (
@@ -153,6 +187,9 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
                 </div>
             </AccentCard>
 
+            {flashStatus ? <div className="info u-mt-4">{flashStatus}</div> : null}
+            {resumeNotice ? <div className="info u-mt-4">{resumeNotice}</div> : null}
+
             <section className="card u-mt-4">
                 <div className="section-title">Tip sedinta</div>
                 {types.length ? (
@@ -168,12 +205,12 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
                                 }}
                                 type="button"
                             >
-                                {entry.label} · {entry.duration_minutes} min
+                                {entry.label} · {entry.duration_minutes} min · {formatMoney(entry.price_amount, entry.currency)}
                             </button>
                         ))}
                     </div>
                 ) : <div className="muted">Specialistul nu a configurat inca tipuri de sedinta disponibile.</div>}
-                {type ? <div className="muted u-mt-2">{LOCATION_LABELS[type.location_mode] ?? LOCATION_LABELS.both}</div> : null}
+                {type ? <div className="muted u-mt-2">{LOCATION_LABELS[type.location_mode] ?? LOCATION_LABELS.both} · {type.is_paid_online ? 'Plata online la confirmare' : 'Fara plata online'}</div> : null}
             </section>
 
             <section className="card u-mt-4">
@@ -253,43 +290,79 @@ export default function Appointments({ specialist, types = [], initialTypeId, up
                         <div className="muted">
                             {selectedDate ? formatDateString(selectedDate) : 'Selecteaza data'} {time ? `/ ${time}` : ''}
                         </div>
+                        {type ? <div className="muted">{formatMoney(type.price_amount, type.currency)} · cererea intra initial in asteptare</div> : null}
                     </div>
                     <button className="btn primary" type="button" onClick={handleConfirm} disabled={!selectedTypeId || !selectedDate || !time || form.processing}>
-                        {form.processing ? 'Se salveaza...' : 'Confirma programarea'}
+                        {form.processing ? 'Se trimite...' : isAuthenticated ? 'Trimite cererea' : 'Continua spre autentificare'}
                     </button>
                 </div>
-                {!isAuthenticated ? <div className="muted u-mt-2">Pentru confirmare este necesar sa fii autentificat.</div> : null}
+                {!isAuthenticated ? <div className="muted u-mt-2">Pentru a continua, trebuie sa te autentifici.</div> : null}
             </section>
 
             <section className="card u-mt-4">
-                <div className="section-title">Programarile mele</div>
+                <div className="section-title">Sesiuni programate</div>
                 {upcomingAppointments.length ? (
                     <div className="grid">
-                        {upcomingAppointments.map((appointment) => (
-                            <div key={appointment.id} className="list-item">
-                                <div>
-                                    <div className="u-text-semibold">{appointment.type}</div>
-                                    <div className="simple-list__meta">{appointment.psychologist_name} · {appointment.scheduled_for}</div>
-                                    <div className="simple-list__meta">{formatAppointmentStatus(appointment.status)}</div>
-                                </div>
-                                <div className="row wrap">
-                                    {appointment.psychologist_slug ? <Link className="btn" href={`/appointments?psychologist=${appointment.psychologist_slug}`}>Vezi</Link> : null}
-                                    {appointment.can_cancel ? (
-                                        <button
-                                            type="button"
-                                            className="btn"
-                                            onClick={() => router.post(route('appointments.cancel', appointment.id))}
-                                        >
-                                            Anuleaza
-                                        </button>
-                                    ) : null}
-                                </div>
-                            </div>
-                        ))}
+                        <AppointmentBlock title="In asteptare" items={pendingAppointments} />
+                        <AppointmentBlock title="Confirmate" items={confirmedAppointments} />
+                        <AppointmentBlock title="Istoric" items={historyAppointments} />
                     </div>
                 ) : <div className="muted">Nu ai programari salvate momentan.</div>}
             </section>
         </>
+    );
+}
+
+function AppointmentBlock({ title, items }) {
+    if (!items.length) {
+        return null;
+    }
+
+    return (
+        <div className="u-mb-2">
+            <div className="u-text-semibold u-mb-2">{title}</div>
+            <div className="grid">
+                {items.map((appointment) => (
+                    <div key={appointment.id} className="list-item">
+                        <div className="grow">
+                            <div className="u-text-semibold">{appointment.type}</div>
+                            <div className="simple-list__meta">{appointment.psychologist_name} · {appointment.scheduled_for}</div>
+                            <div className="simple-list__meta">{formatAppointmentStatus(appointment.status)} · {formatPaymentStatus(appointment.payment_status)}</div>
+                            {appointment.expires_at && appointment.status === 'pending' ? <div className="simple-list__meta">Expira la {appointment.expires_at}</div> : null}
+                            {appointment.status === 'confirmed' ? (
+                                <label className="u-mt-2" style={{ display: 'grid', gap: '0.35rem', maxWidth: '220px' }}>
+                                    <span className="muted">Reminder email</span>
+                                    <select
+                                        defaultValue={appointment.reminder_minutes ? String(appointment.reminder_minutes) : 'none'}
+                                        onChange={(event) => router.post(route('appointments.reminder', appointment.id), {
+                                            minutes_before: event.target.value === 'none' ? null : event.target.value,
+                                        }, {
+                                            preserveScroll: true,
+                                        })}
+                                    >
+                                        {REMINDER_OPTIONS.map((option) => (
+                                            <option key={option.value} value={option.value}>{option.label}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                            ) : null}
+                        </div>
+                        <div className="row wrap">
+                            {appointment.psychologist_slug ? <Link className="btn" href={`/appointments?psychologist=${appointment.psychologist_slug}`}>Vezi</Link> : null}
+                            {appointment.can_cancel ? (
+                                <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={() => router.post(route('appointments.cancel', appointment.id))}
+                                >
+                                    Anuleaza
+                                </button>
+                            ) : null}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 
@@ -329,14 +402,38 @@ function buildMonthGrid(year, month) {
     return cells;
 }
 
+function buildAppointmentRedirectUrl(slug, typeId, date, time) {
+    const params = new URLSearchParams({
+        psychologist: slug,
+        type: String(typeId),
+        date,
+        time,
+    });
+
+    return `/appointments?${params.toString()}`;
+}
+
 function formatPsychologistName(entry) {
     return [entry.title, entry.name, entry.surname].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 }
 
 function formatDateString(value) {
-    const date = new Date(`${value}T00:00:00`);
+    const date = parseDateString(value);
+    if (!date) {
+        return value;
+    }
+
     const weekday = WEEKDAYS[(date.getDay() + 6) % 7];
     return `${weekday}, ${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
+function parseDateString(value) {
+    if (!value) {
+        return null;
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function toDateKey(date) {
@@ -355,21 +452,12 @@ function formatMonthParam(year, month) {
     return `${year}-${String(month + 1).padStart(2, '0')}`;
 }
 
-function formatAppointmentStatus(status) {
-    switch (status) {
-        case 'scheduled':
-            return 'Confirmata';
-        case 'cancelled_by_user':
-            return 'Anulata de tine';
-        case 'cancelled_by_psychologist':
-            return 'Anulata de specialist';
-        case 'completed':
-            return 'Finalizata';
-        case 'no_show':
-            return 'Neonorata';
-        default:
-            return status;
-    }
+function formatMoney(value, currency = 'RON') {
+    return new Intl.NumberFormat('ro-RO', {
+        style: 'currency',
+        currency: currency || 'RON',
+        minimumFractionDigits: 2,
+    }).format(Number(value || 0));
 }
 
 Appointments.layout = (page) => <AppLayout>{page}</AppLayout>;

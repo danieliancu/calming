@@ -244,7 +244,7 @@ export default function AppLayout({ children }) {
                 }
 
                 const merged = buildGuestNotifications(data.publicNotifications ?? []);
-                setGuestNotificationCount(merged.filter((item) => !item.is_read).length);
+                setGuestNotificationCount(merged.filter((item) => !item.is_read && Boolean(item.is_new)).length);
             })
             .catch(() => {
                 if (active) {
