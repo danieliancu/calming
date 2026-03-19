@@ -5,7 +5,7 @@ import SignOutAction from '@/Components/SignOutAction';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildGuestMilestones, getGuestState } from '@/lib/guestActivity';
 import { formatAppointmentStatus, formatPaymentStatus, partitionAppointments, REMINDER_OPTIONS } from '@/lib/appointments';
-import { FiActivity, FiAward, FiChevronRight, ICON_BY_NAME } from '@/lib/icons';
+import { FiActivity, FiAward, FiChevronRight, FiLock, FiTrash2, FiUser, ICON_BY_NAME } from '@/lib/icons';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -16,7 +16,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
     const [profileData, setProfileData] = useState(profile ?? null);
     const [profileExtra, setProfileExtra] = useState(profileDetails ?? null);
     const [editOpen, setEditOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState(() => readProfileTab());
+    const [appointmentsOpen, setAppointmentsOpen] = useState(() => shouldOpenAppointmentsPanel());
     const accountForm = useForm({
         name: authUser?.name ?? '',
         email: authUser?.email ?? '',
@@ -113,20 +113,6 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
     }, [completionValue]);
     const { pendingAppointments, confirmedAppointments, historyAppointments } = partitionAppointments(upcomingAppointments);
     const accountStatus = page.props.flash?.status;
-
-    useEffect(() => {
-        if (typeof window === 'undefined') {
-            return;
-        }
-
-        const url = new URL(window.location.href);
-        if (activeTab === 'overview') {
-            url.searchParams.delete('tab');
-        } else {
-            url.searchParams.set('tab', activeTab);
-        }
-        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
-    }, [activeTab]);
 
     if (!authResolved) {
         return null;
@@ -247,91 +233,91 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                     <SignOutAction className="list-item settings-signout-card" onClick={signOut} />
                 </div>
 
-                <section className="card">
-                    <div className="row wrap gap-2">
-                        <button type="button" className={`btn ${activeTab === 'overview' ? 'primary' : ''}`} onClick={() => setActiveTab('overview')}>
-                            Profil
-                        </button>
-                        <button type="button" className={`btn ${activeTab === 'appointments' ? 'primary' : ''}`} onClick={() => setActiveTab('appointments')}>
-                            Sesiuni programate
-                        </button>
-                        <button type="button" className={`btn ${activeTab === 'account' ? 'primary' : ''}`} onClick={() => setActiveTab('account')}>
-                            Cont
-                        </button>
+                <section className="card stats-section">
+                    <div className="section-title">Statisticile tale</div>
+                    <div className="stats-grid">
+                        {stats.map((item) => {
+                            const Icon = ICON_BY_NAME[item.icon] ?? FiActivity;
+                            return (
+                                <div className="stats-card" key={item.metric_key}>
+                                    <div className={`stats-icon stats-icon--${item.tone}`}><Icon /></div>
+                                    <div className="stats-value">{item.value}</div>
+                                    <div className="stats-label">{item.label}</div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
 
-                {activeTab === 'overview' ? (
-                    <>
-                        <section className="card stats-section">
-                            <div className="section-title">Statisticile tale</div>
-                            <div className="stats-grid">
-                                {stats.map((item) => {
-                                    const Icon = ICON_BY_NAME[item.icon] ?? FiActivity;
-                                    return (
-                                        <div className="stats-card" key={item.metric_key}>
-                                            <div className={`stats-icon stats-icon--${item.tone}`}><Icon /></div>
-                                            <div className="stats-value">{item.value}</div>
-                                            <div className="stats-label">{item.label}</div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
+                <section className="card milestones-section">
+                    <div className="section-title">Repere</div>
+                    <div className="milestones">
+                        {userMilestones.map((milestone) => (
+                            <MilestoneCard key={milestone.id} milestone={milestone} />
+                        ))}
+                        {userMilestones.length === 0 ? <div className="muted">Reperele apar pe masura ce folosesti jurnalul, articolele, programarile, comunitatea si Assistant.</div> : null}
+                    </div>
+                </section>
 
-                        <section className="card milestones-section">
-                            <div className="section-title">Repere</div>
-                            <div className="milestones">
-                                {userMilestones.map((milestone) => (
-                                    <MilestoneCard key={milestone.id} milestone={milestone} />
-                                ))}
-                                {userMilestones.length === 0 ? <div className="muted">Reperele apar pe masura ce folosesti jurnalul, articolele, programarile, comunitatea si Assistant.</div> : null}
+                <section className="card info-section">
+                    <div className="section-title">Resurse</div>
+                    <div className="info-list">
+                        <button
+                            className={`info-item info-item--appointments ${appointmentsOpen ? 'is-open' : ''}`}
+                            type="button"
+                            onClick={() => setAppointmentsOpen((current) => !current)}
+                            aria-expanded={appointmentsOpen}
+                        >
+                            <span>Sesiuni programate</span>
+                            <FiChevronRight aria-hidden />
+                        </button>
+                        {appointmentsOpen ? (
+                            <div className="info-item__body">
+                                <AppointmentsPanel
+                                    upcomingAppointments={upcomingAppointments}
+                                    pendingAppointments={pendingAppointments}
+                                    confirmedAppointments={confirmedAppointments}
+                                    historyAppointments={historyAppointments}
+                                />
                             </div>
-                        </section>
+                        ) : null}
 
-                        <section className="card info-section">
-                            <div className="section-title">Resurse</div>
-                            <div className="info-list">
-                                {infoLinks.map((link) => (
-                                    <button className="info-item" key={link.id} type="button">
-                                        <span>{link.label}</span>
-                                        <FiChevronRight aria-hidden />
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
-                    </>
-                ) : activeTab === 'appointments' ? (
-                    <section className="card">
-                        <div className="section-title">Sesiuni programate</div>
-                        {upcomingAppointments.length ? (
-                            <div className="stack gap-3">
-                                {pendingAppointments.length ? <AppointmentSection title="In asteptare" appointments={pendingAppointments} /> : null}
-                                {confirmedAppointments.length ? <AppointmentSection title="Confirmate" appointments={confirmedAppointments} /> : null}
-                                {historyAppointments.length ? <AppointmentSection title="Istoric" appointments={historyAppointments} /> : null}
-                            </div>
-                        ) : (
-                            <div className="muted">Nu ai inca programari. Exploreaza lista de specialisti si trimite o cerere noua.</div>
-                        )}
-                    </section>
-                ) : (
-                    <section className="card">
-                        <div className="section-title">Cont</div>
-                        {accountStatus ? <div className="info u-mb-3">{accountStatus}</div> : null}
+                        {infoLinks.filter((link) => link.label !== 'Sesiuni programate').map((link) => (
+                            <button className="info-item" key={link.id} type="button">
+                                <span>{link.label}</span>
+                                <FiChevronRight aria-hidden />
+                            </button>
+                        ))}
+                    </div>
+                </section>
 
-                        <form className="stack gap-3 u-mt-3" onSubmit={(event) => {
+                <section className="card">
+                    <div className="section-title">Cont</div>
+                    {accountStatus ? <div className="info u-mb-3">{accountStatus}</div> : null}
+
+                    <div className="account-panels">
+                        <form className="card subtle stack gap-3" onSubmit={(event) => {
                             event.preventDefault();
                             accountForm.patch(route('profile.update'), {
                                 preserveScroll: true,
                             });
                         }}>
-                            <label>
-                                <span>Nume</span>
-                                <input className="input" value={accountForm.data.name} onChange={(event) => accountForm.setData('name', event.target.value)} />
+                            <div className="settings-item">
+                                <div className="settings-leading">
+                                    <span className="settings-icon-bubble"><FiUser /></span>
+                                    <div className="settings-item-content">
+                                        <span className="settings-item-title">Date profil</span>
+                                        <span className="settings-item-muted">Actualizeaza numele si adresa de email asociate contului.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <label className="account-field">
+                                <span className="profile-label">Nume</span>
+                                <input className="form-input" value={accountForm.data.name} onChange={(event) => accountForm.setData('name', event.target.value)} />
                             </label>
-                            <label>
-                                <span>Email</span>
-                                <input className="input" type="email" value={accountForm.data.email} onChange={(event) => accountForm.setData('email', event.target.value)} />
+                            <label className="account-field">
+                                <span className="profile-label">Email</span>
+                                <input className="form-input" type="email" value={accountForm.data.email} onChange={(event) => accountForm.setData('email', event.target.value)} />
                             </label>
                             {renderErrors(accountForm.errors)}
                             <div className="row wrap gap-2">
@@ -341,25 +327,33 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                             </div>
                         </form>
 
-                        <form className="stack gap-3 u-mt-4" onSubmit={(event) => {
+                        <form className="card subtle stack gap-3" onSubmit={(event) => {
                             event.preventDefault();
                             passwordForm.put(route('password.update'), {
                                 preserveScroll: true,
                                 onSuccess: () => passwordForm.reset(),
                             });
                         }}>
-                            <div className="u-text-semibold">Schimba parola</div>
-                            <label>
-                                <span>Parola curenta</span>
-                                <input className="input" type="password" value={passwordForm.data.current_password} onChange={(event) => passwordForm.setData('current_password', event.target.value)} />
+                            <div className="settings-item">
+                                <div className="settings-leading">
+                                    <span className="settings-icon-bubble"><FiLock /></span>
+                                    <div className="settings-item-content">
+                                        <span className="settings-item-title">Securitate</span>
+                                        <span className="settings-item-muted">Schimba parola pentru a pastra accesul la cont in siguranta.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <label className="account-field">
+                                <span className="profile-label">Parola curenta</span>
+                                <input className="form-input" type="password" value={passwordForm.data.current_password} onChange={(event) => passwordForm.setData('current_password', event.target.value)} />
                             </label>
-                            <label>
-                                <span>Parola noua</span>
-                                <input className="input" type="password" value={passwordForm.data.password} onChange={(event) => passwordForm.setData('password', event.target.value)} />
+                            <label className="account-field">
+                                <span className="profile-label">Parola noua</span>
+                                <input className="form-input" type="password" value={passwordForm.data.password} onChange={(event) => passwordForm.setData('password', event.target.value)} />
                             </label>
-                            <label>
-                                <span>Confirma parola noua</span>
-                                <input className="input" type="password" value={passwordForm.data.password_confirmation} onChange={(event) => passwordForm.setData('password_confirmation', event.target.value)} />
+                            <label className="account-field">
+                                <span className="profile-label">Confirma parola noua</span>
+                                <input className="form-input" type="password" value={passwordForm.data.password_confirmation} onChange={(event) => passwordForm.setData('password_confirmation', event.target.value)} />
                             </label>
                             {renderErrors(passwordForm.errors)}
                             <div className="row wrap gap-2">
@@ -369,17 +363,24 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                             </div>
                         </form>
 
-                        <form className="stack gap-3 u-mt-4" onSubmit={(event) => {
+                        <form className="card subtle stack gap-3" onSubmit={(event) => {
                             event.preventDefault();
                             deleteForm.delete(route('profile.destroy'), {
                                 preserveScroll: true,
                             });
                         }}>
-                            <div className="u-text-semibold">Sterge contul</div>
-                            <div className="muted">Aceasta actiune este permanenta.</div>
-                            <label>
-                                <span>Confirma cu parola curenta</span>
-                                <input className="input" type="password" value={deleteForm.data.password} onChange={(event) => deleteForm.setData('password', event.target.value)} />
+                            <div className="settings-item">
+                                <div className="settings-leading">
+                                    <span className="settings-icon-bubble settings-icon-bubble--danger"><FiTrash2 /></span>
+                                    <div className="settings-item-content">
+                                        <span className="settings-item-title">Sterge contul</span>
+                                        <span className="settings-item-muted">Aceasta actiune este permanenta si va elimina accesul la profil.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <label className="account-field">
+                                <span className="profile-label">Confirma cu parola curenta</span>
+                                <input className="form-input" type="password" value={deleteForm.data.password} onChange={(event) => deleteForm.setData('password', event.target.value)} />
                             </label>
                             {renderErrors(deleteForm.errors)}
                             <div className="row wrap gap-2">
@@ -388,8 +389,8 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                                 </button>
                             </div>
                         </form>
-                    </section>
-                )}
+                    </div>
+                </section>
             </main>
 
             {editOpen ? <ProfileEditModal initialProfile={profileData} initialDetails={profileExtra} onClose={closeEditModal} onSaved={handleProfileSaved} /> : null}
@@ -479,6 +480,20 @@ function AppointmentSection({ title, appointments }) {
     );
 }
 
+function AppointmentsPanel({ upcomingAppointments, pendingAppointments, confirmedAppointments, historyAppointments }) {
+    if (!upcomingAppointments.length) {
+        return <div className="muted">Nu ai inca programari. Exploreaza lista de specialisti si trimite o cerere noua.</div>;
+    }
+
+    return (
+        <div className="stack gap-3">
+            {pendingAppointments.length ? <AppointmentSection title="In asteptare" appointments={pendingAppointments} /> : null}
+            {confirmedAppointments.length ? <AppointmentSection title="Confirmate" appointments={confirmedAppointments} /> : null}
+            {historyAppointments.length ? <AppointmentSection title="Istoric" appointments={historyAppointments} /> : null}
+        </div>
+    );
+}
+
 function formatMemberSince(dateString) {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('ro-RO', { month: 'long', year: 'numeric' }).format(date);
@@ -515,13 +530,13 @@ function formatCategory(category) {
     }
 }
 
-function readProfileTab() {
+function shouldOpenAppointmentsPanel() {
     if (typeof window === 'undefined') {
-        return 'overview';
+        return false;
     }
 
     const value = new URLSearchParams(window.location.search).get('tab');
-    return ['overview', 'appointments', 'account'].includes(value) ? value : 'overview';
+    return value === 'appointments';
 }
 
 Profile.layout = (page) => <AppLayout>{page}</AppLayout>;

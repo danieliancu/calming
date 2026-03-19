@@ -3227,6 +3227,50 @@ main.community-container {
   background: rgba(74, 144, 226, 0.08);
 }
 
+.info-item--appointments {
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+}
+
+.info-item--appointments.is-open svg {
+  transform: rotate(90deg);
+}
+
+.info-item--appointments svg {
+  transition: transform 0.2s ease;
+}
+
+.info-item__body {
+  margin-top: calc(var(--space-3) * -1 + 6px);
+  padding: 22px 18px 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--surface);
+}
+
+.account-panels {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.account-field {
+  display: grid;
+  gap: 8px;
+}
+
+.account-field span {
+  font-weight: 600;
+  color: var(--text-700);
+}
+
+.settings-icon-bubble--danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
 /* Psychologists */
 .psychologists-grid {
   display: grid;
