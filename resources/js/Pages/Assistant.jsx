@@ -34,26 +34,35 @@ const THERAPY_STATUS = [
     { value: 'active', label: 'Sunt in terapie activa' },
     { value: 'completed', label: 'Am incheiat recent un proces terapeutic' },
 ];
+const ASSISTANT_MODES = [
+    {
+        value: 'supportive',
+        label: 'Sustinere',
+        description: 'Cald, empatic, bun pentru descarcare emotionala',
+    },
+    {
+        value: 'clarity',
+        label: 'Claritate',
+        description: 'Pune ordine in ganduri si separa esentialul',
+    },
+    {
+        value: 'action',
+        label: 'Actiune',
+        description: 'Mai direct, orientat spre pasul urmator',
+    },
+    {
+        value: 'checkin',
+        label: 'Check-in',
+        description: 'Scurt, linistit, bun pentru reglare si ritm zilnic',
+    },
+];
 
 function LoadingDots() {
-    const [dots, setDots] = useState(1);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setDots((d) => (d === 3 ? 1 : d + 1));
-        }, 300);
-        return () => clearInterval(interval);
-    }, []);
-
     return (
-        <div style={{
-            fontSize: '1.5rem',
-            letterSpacing: '0.15rem',
-            fontWeight: 'bold',
-            color: 'var(--color-text)',
-            lineHeight: 1,
-        }}>
-            {''.padEnd(dots, '.')}
+        <div className="assistant-typing-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
         </div>
     );
 }
@@ -61,7 +70,9 @@ function LoadingDots() {
 export default function Assistant() {
     const { isAuthenticated, promptAuth } = useAuth();
     const threadRef = useRef(null);
+    const composeInputRef = useRef(null);
     const guestStateHydratedRef = useRef(false);
+    const modeMenuRef = useRef(null);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -73,7 +84,10 @@ export default function Assistant() {
     const [guestMode, setGuestMode] = useState(!isAuthenticated);
     const [guestSessionCount, setGuestSessionCount] = useState(0);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [modeMenuOpen, setModeMenuOpen] = useState(false);
     const focusTopicSet = useMemo(() => new Set(profile.focusTopics ?? profile.focus_topics ?? []), [profile.focusTopics, profile.focus_topics]);
+    const activeAssistantMode = profile.assistantMode ?? profile.assistant_mode ?? 'supportive';
+    const activeAssistantModeMeta = ASSISTANT_MODES.find((mode) => mode.value === activeAssistantMode) ?? ASSISTANT_MODES[0];
 
     const scrollToLatestMessage = useCallback(() => {
         const thread = threadRef.current;
@@ -157,6 +171,22 @@ export default function Assistant() {
         });
     }, [guestMode, guestSessionCount, messages, profile]);
 
+    useEffect(() => {
+        if (!modeMenuOpen) {
+            return undefined;
+        }
+
+        const handlePointerDown = (event) => {
+            if (modeMenuRef.current && !modeMenuRef.current.contains(event.target)) {
+                setModeMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+
+        return () => document.removeEventListener('mousedown', handlePointerDown);
+    }, [modeMenuOpen]);
+
     useLayoutEffect(() => {
         window.requestAnimationFrame(() => {
             window.requestAnimationFrame(() => {
@@ -169,6 +199,16 @@ export default function Assistant() {
             });
         });
     }, [messages, scrollToLatestMessage, loading]);
+
+    useLayoutEffect(() => {
+        const element = composeInputRef.current;
+        if (!element) {
+            return;
+        }
+
+        element.style.height = '48px';
+        element.style.height = `${element.scrollHeight}px`;
+    }, [input]);
 
     const updateProfileField = (key, value) => {
         setProfile((current) => ({ ...current, [key]: value }));
@@ -212,6 +252,7 @@ export default function Assistant() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         guestProfile: profile,
+                        assistantMode: activeAssistantMode,
                         messages: nextMessages.map((item) => ({ role: item.role, content: item.content })),
                         sessionMessageCount: guestSessionCount,
                     }),
@@ -230,7 +271,10 @@ export default function Assistant() {
                 const payload = await apiFetch('/api/assistant/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content }),
+                    body: JSON.stringify({
+                        content,
+                        assistantMode: activeAssistantMode,
+                    }),
                 });
 
                 setMessages((current) => {
@@ -248,23 +292,27 @@ export default function Assistant() {
         }
 
         setSending(false);
-    }, [guestMode, guestSessionCount, input, messages, profile, sending]);
+    }, [activeAssistantMode, guestMode, guestSessionCount, input, messages, profile, sending]);
 
-    const handleNewConversation = useCallback(async () => {
+    const handleNewConversation = useCallback(async (nextMode = null) => {
         if (resetting || loading || sending) {
             return;
         }
 
+        const resolvedMode = nextMode ?? activeAssistantMode;
         setResetting(true);
         setError(null);
+        setModeMenuOpen(false);
 
         try {
             if (guestMode) {
                 setMessages([]);
                 setInput('');
                 clearGuestAssistantState();
+                const nextProfile = { ...profile, assistantMode: resolvedMode };
+                setProfile(nextProfile);
                 saveGuestAssistantState({
-                    profile,
+                    profile: nextProfile,
                     messages: [],
                     sessionMessageCount: guestSessionCount,
                 });
@@ -273,7 +321,10 @@ export default function Assistant() {
                     method: 'POST',
                 });
 
-                setProfile(normalizeUserProfile(payload?.profile ?? {}));
+                setProfile({
+                    ...normalizeUserProfile(payload?.profile ?? {}),
+                    assistantMode: resolvedMode,
+                });
                 setMessages(payload?.messages ?? []);
                 setInput('');
             }
@@ -283,7 +334,7 @@ export default function Assistant() {
         }
 
         setResetting(false);
-    }, [guestMode, guestSessionCount, loading, profile, resetting, sending]);
+    }, [activeAssistantMode, guestMode, guestSessionCount, loading, profile, resetting, sending]);
 
     const guestLimitReached = guestMode && guestSessionCount >= (limits.max_guest_messages ?? 12);
     const handleSettingsClick = useCallback(() => {
@@ -294,6 +345,24 @@ export default function Assistant() {
 
         router.visit('/profile?edit=1', { preserveScroll: true });
     }, [guestMode]);
+
+    const handleModeSelect = useCallback((mode) => {
+        if (mode === activeAssistantMode) {
+            setModeMenuOpen(false);
+            return;
+        }
+
+        handleNewConversation(mode);
+    }, [activeAssistantMode, handleNewConversation]);
+
+    const handleComposeKeyDown = useCallback((event) => {
+        if (event.key !== 'Enter' || event.shiftKey) {
+            return;
+        }
+
+        event.preventDefault();
+        event.currentTarget.form?.requestSubmit();
+    }, []);
 
     return (
         <>
@@ -312,28 +381,6 @@ export default function Assistant() {
                                 : 'Assistantul porneste de la profilul tau si te poate ajuta cu un check-in, clarificare sau urmatorul pas.'}
                         </div>
                     </AccentCard>
-
-                    <div className="assistant-intro-actions assistant-intro-actions--floating">
-                        <button
-                            type="button"
-                            className="assistant-fab assistant-new-conversation"
-                            onClick={handleNewConversation}
-                            disabled={resetting || loading || sending}
-                            aria-label={resetting ? 'Se reseteaza conversatia' : 'Conversatie noua'}
-                            title={resetting ? 'Se reseteaza...' : 'Conversatie noua'}
-                        >
-                            <FiPlus />
-                        </button>
-                        <button
-                            type="button"
-                            className="assistant-fab assistant-title-settings"
-                            onClick={handleSettingsClick}
-                            aria-label={guestMode ? 'Setari assistant' : 'Editeaza profilul'}
-                            title={guestMode ? 'Setari assistant' : 'Editeaza profilul'}
-                        >
-                            <SettingsIcon />
-                        </button>
-                    </div>
 
                     <section className="assistant-pane">
                         <div className="assistant-body">
@@ -356,19 +403,66 @@ export default function Assistant() {
                                 </div>
                             ) : null}
 
-                            <form className="assistant-form row u-mt-4" onSubmit={handleSend}>
-                                {sending ? (
+                            {sending ? (
+                                <div className="assistant-typing-indicator" aria-live="polite" aria-label="Asistentul raspunde">
                                     <LoadingDots />
-                                ) : (
-                                    <input
-                                        className="grow form-input"
+                                    <span>{activeAssistantModeMeta.label}</span>
+                                </div>
+                            ) : null}
+
+                            <form className="assistant-form row u-mt-4" onSubmit={handleSend}>
+                                <div className="assistant-compose-field grow">
+                                    <div className="assistant-compose-actions" ref={modeMenuRef}>
+                                        {modeMenuOpen ? (
+                                            <div className="assistant-mode-menu" role="menu" aria-label="Alege modelul asistentului">
+                                                {ASSISTANT_MODES.map((mode) => (
+                                                    <button
+                                                        key={mode.value}
+                                                        type="button"
+                                                        className={`assistant-mode-option${mode.value === activeAssistantMode ? ' is-active' : ''}`}
+                                                        onClick={() => handleModeSelect(mode.value)}
+                                                        role="menuitem"
+                                                    >
+                                                        <strong>{mode.label}</strong>
+                                                        <span>{mode.description}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : null}
+                                        <button
+                                            type="button"
+                                            className="assistant-fab assistant-new-conversation"
+                                            onClick={() => setModeMenuOpen((current) => !current)}
+                                            disabled={resetting || loading || sending}
+                                            aria-label="Alege modelul pentru o conversatie noua"
+                                            title="Alege modelul pentru o conversatie noua"
+                                            aria-haspopup="menu"
+                                            aria-expanded={modeMenuOpen}
+                                        >
+                                            <FiPlus />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="assistant-fab assistant-title-settings"
+                                            onClick={handleSettingsClick}
+                                            aria-label={guestMode ? 'Setari assistant' : 'Editeaza profilul'}
+                                            title={guestMode ? 'Setari assistant' : 'Editeaza profilul'}
+                                        >
+                                            <SettingsIcon />
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        ref={composeInputRef}
+                                        className="grow form-input assistant-compose-input"
                                         placeholder="Scrie un mesaj..."
                                         value={input}
                                         onChange={(event) => setInput(event.target.value)}
+                                        onKeyDown={handleComposeKeyDown}
                                         maxLength={limits.max_message_chars ?? 1500}
                                         disabled={sending || loading || guestLimitReached}
+                                        rows={1}
                                     />
-                                )}
+                                </div>
                                 <button className="btn primary" type="submit" disabled={sending || loading || guestLimitReached}>
                                     Trimite
                                 </button>
@@ -444,6 +538,7 @@ function normalizeUserProfile(profile) {
         ...defaultGuestAssistantProfile(),
         ...profile,
         focusTopics: profile.focus_topics ?? [],
+        assistantMode: profile.assistant_mode ?? profile.assistantMode ?? 'supportive',
     };
 }
 

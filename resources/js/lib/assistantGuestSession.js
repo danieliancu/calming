@@ -8,6 +8,7 @@ const DEFAULT_PROFILE = {
     stressTriggers: '',
     copingStrategies: '',
     guidanceStyle: 'calm-empathetic',
+    assistantMode: 'supportive',
     checkInPreference: 'morning',
     notificationFrequency: 'daily',
     therapyStatus: '',

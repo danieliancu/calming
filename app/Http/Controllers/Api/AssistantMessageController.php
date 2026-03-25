@@ -19,10 +19,11 @@ class AssistantMessageController extends Controller
 
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:'.config('assistant.max_message_chars', 1500)],
+            'assistantMode' => ['nullable', 'string', 'in:supportive,clarity,action,checkin'],
         ]);
 
         return response()->json(
-            $this->assistant->respondAsUser($request->user(), $validated['content'])
+            $this->assistant->respondAsUser($request->user(), $validated['content'], $validated['assistantMode'] ?? null)
         );
     }
 }

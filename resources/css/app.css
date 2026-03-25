@@ -1215,44 +1215,29 @@ main {
           gap: var(--space-2);
           z-index: 5;
         }
-        .assistant-intro-actions--floating {
-            position: fixed;
-            right: var(--space-4);
-            bottom: calc(var(--space-4) + 85px);
-        }
         .assistant-fab {
-          width: 48px;
-          height: 48px;
+          width: 36px;
+          height: 36px;
           border-radius: 999px;
-          border: 1px solid rgba(15, 23, 42, 0.08);
-          background: #ffffff;
-          color: var(--primary-600);
+          border: none;
+          background: transparent;
+          color: #342f2a;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          box-shadow: var(--shadow-sm);
           flex-shrink: 0;
           cursor: pointer;
-          transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+          transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
         }
         .assistant-fab:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
+          background: rgba(52, 47, 42, 0.08);
         }
         .assistant-fab:disabled {
-          opacity: 0.7;
+          opacity: 0.45;
           cursor: not-allowed;
         }
         .assistant-fab svg {
           font-size: 18px;
-        }
-        .assistant-new-conversation {
-          background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-          color: #ffffff;
-        }
-        .assistant-title-settings {
-          background: #ffffff;
-          color: var(--primary-600);
         }
         .assistant-settings-panel {
           display: grid;
@@ -1383,9 +1368,101 @@ main {
         }
         .assistant-form {
           margin-top: var(--space-4);
+          margin-bottom: 15px;
         }
         .assistant-form .form-input {
           min-height: 48px;
+        }
+        .assistant-compose-field {
+          position: relative;
+          min-width: 0;
+        }
+        .assistant-compose-actions {
+          position: absolute;
+          left: 12px;
+          top: 45%;
+          transform: translateY(-50%);
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          z-index: 2;
+        }
+        .assistant-mode-menu {
+          position: absolute;
+          left: 0;
+          bottom: calc(100% + 10px);
+          display: grid;
+          gap: 6px;
+          width: min(280px, calc(100vw - 48px));
+          padding: 8px;
+          border: 1px solid rgba(52, 47, 42, 0.12);
+          border-radius: 18px;
+          background: rgba(255, 252, 248, 0.98);
+          box-shadow: 0 18px 34px rgba(34, 28, 24, 0.12);
+          backdrop-filter: blur(12px);
+        }
+        .assistant-mode-option {
+          display: grid;
+          gap: 3px;
+          width: 100%;
+          padding: 10px 12px;
+          border: none;
+          border-radius: 14px;
+          background: transparent;
+          color: #342f2a;
+          text-align: left;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+        .assistant-mode-option:hover,
+        .assistant-mode-option.is-active {
+          background: rgba(52, 47, 42, 0.08);
+        }
+        .assistant-mode-option strong {
+          font-size: 14px;
+          font-weight: 700;
+        }
+        .assistant-mode-option span {
+          font-size: 12px;
+          line-height: 1.35;
+          color: rgba(52, 47, 42, 0.72);
+        }
+        .assistant-compose-input {
+          width: 100%;
+          padding-left: 96px;
+          padding-top: 13px;
+          padding-bottom: 13px;
+          line-height: 1.45;
+          font: inherit;
+          resize: none;
+          overflow: hidden;
+        }
+        .assistant-typing-indicator {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0 8px 8px 8px;
+          color: rgba(52, 47, 42, 0.72);
+          font-size: 13px;
+        }
+        .assistant-typing-dots {
+          display: inline-flex;
+          align-items: flex-end;
+          gap: 5px;
+          height: 14px;
+        }
+        .assistant-typing-dots span {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: rgba(52, 47, 42, 0.72);
+          animation: assistantTypingDance 1.2s ease-in-out infinite;
+        }
+        .assistant-typing-dots span:nth-child(2) {
+          animation-delay: 0.14s;
+        }
+        .assistant-typing-dots span:nth-child(3) {
+          animation-delay: 0.28s;
         }
         .assistant-bubble--ai {
           justify-self: start;
@@ -1398,13 +1475,24 @@ main {
           text-align:right;
         }
         @media (max-width: 900px) {
-          .assistant-intro-actions--floating {
-            top: 245px;
-            left: var(--space-4);
-            bottom: auto;
+          .assistant-form {
+            margin-bottom: 0;
           }
           .assistant-pane {
             padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+          }
+          .assistant-mode-menu {
+            width: min(260px, calc(100vw - 40px));
+          }
+        }
+        @keyframes assistantTypingDance {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            opacity: 0.42;
+          }
+          50% {
+            transform: translateY(-4px) scale(1.08);
+            opacity: 0.92;
           }
         }
         .assistant-settings-backdrop {
@@ -1413,7 +1501,7 @@ main {
 
 
         body.assistant-page {
-          --assistant-bottom-offset: 40px;
+          --assistant-bottom-offset: 0;
         }
         body.assistant-page main.container {
           min-height: calc(100vh - var(--header-height));
@@ -1427,9 +1515,6 @@ body.assistant-page main.container > .assistant-wrapper {
           min-height: 0;
         }
         @media (max-width: 900px) {
-          body.assistant-page {
-            --assistant-bottom-offset: 90px;
-          }
           body.assistant-page main.container {
             padding-bottom: calc(env(safe-area-inset-bottom) + var(--assistant-bottom-offset));
           }

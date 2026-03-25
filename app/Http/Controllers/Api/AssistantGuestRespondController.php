@@ -19,6 +19,7 @@ class AssistantGuestRespondController extends Controller
             'guestProfile' => ['array'],
             'guestProfile.focusTopics' => ['array'],
             'guestProfile.focusTopics.*' => ['string', 'max:80'],
+            'assistantMode' => ['nullable', 'string', 'in:supportive,clarity,action,checkin'],
             'messages' => ['array'],
             'messages.*.role' => ['required', 'string', 'in:user,assistant'],
             'messages.*.content' => ['required', 'string', 'max:'.config('assistant.max_message_chars', 1500)],
@@ -29,7 +30,8 @@ class AssistantGuestRespondController extends Controller
             $this->assistant->respondAsGuest(
                 $validated['guestProfile'] ?? [],
                 $validated['messages'] ?? [],
-                (int) $validated['sessionMessageCount']
+                (int) $validated['sessionMessageCount'],
+                $validated['assistantMode'] ?? null,
             )
         );
     }

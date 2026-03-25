@@ -129,10 +129,10 @@ class AssistantService
         return $this->bootstrap($user);
     }
 
-    public function respondAsUser(User $user, string $content): array
+    public function respondAsUser(User $user, string $content, ?string $assistantMode = null): array
     {
         $messageText = $this->normalizeMessage($content);
-        $profile = $this->profileContextForUser($user->id);
+        $profile = $this->applyAssistantMode($this->profileContextForUser($user->id), $assistantMode);
 
         if (! $this->assistantStorageReady()) {
             $reply = $this->generateReply(
@@ -232,7 +232,7 @@ class AssistantService
         });
     }
 
-    public function respondAsGuest(array $guestProfile, array $messages, int $sessionMessageCount): array
+    public function respondAsGuest(array $guestProfile, array $messages, int $sessionMessageCount, ?string $assistantMode = null): array
     {
         $maxMessages = (int) config('assistant.max_guest_messages', 12);
         if ($sessionMessageCount >= $maxMessages) {
@@ -256,7 +256,7 @@ class AssistantService
 
         $reply = $this->generateReply(
             messages: $normalizedMessages,
-            profile: $this->normalizeGuestProfile($guestProfile),
+            profile: $this->applyAssistantMode($this->normalizeGuestProfile($guestProfile), $assistantMode),
             memory: null,
             guest: true,
         );
@@ -300,6 +300,7 @@ class AssistantService
 
     protected function generateReply(Collection $messages, array $profile, ?array $memory, bool $guest): array
     {
+        $profile = $this->enrichProfileFromConversation($messages, $profile);
         $lastUser = $messages->filter(fn ($message) => ($message['role'] ?? null) === 'user')->last();
         $lastUserMessage = (string) ($lastUser['content'] ?? '');
         $userTurnCount = $messages->filter(fn ($message) => ($message['role'] ?? null) === 'user')->count();
@@ -360,31 +361,78 @@ class AssistantService
     protected function localFallbackReply(string $message, array $profile, bool $guest, int $userTurnCount = 1): string
     {
         $normalized = Str::of($message)->lower()->squish()->value();
+        $assistantMode = $this->normalizeAssistantMode($profile['assistant_mode'] ?? null);
+        $ageRange = trim((string) ($profile['age_range'] ?? ''));
+        $exactAge = isset($profile['exact_age']) ? (int) $profile['exact_age'] : null;
+
+        if (preg_match('/(stii cati ani am|stii ce varsta am|ce varsta am|ce varsta crezi ca am|cati ani am)/', $normalized)) {
+            if ($exactAge && $exactAge >= 13 && $exactAge <= 99) {
+                return "Da, din ce mi-ai spus reiese ca ai {$exactAge} ani. Tin cont de asta cand iti raspund.";
+            }
+
+            if ($ageRange !== '') {
+                return "Da, in setarile sesiunii apare intervalul de varsta {$ageRange}. Trec prin raspunsuri tinand cont de etapa asta de viata.";
+            }
+
+            return 'Nu am in setarile sesiunii un interval de varsta salvat acum. Daca vrei, il poti selecta si tin cont de el in raspunsuri.';
+        }
+
+        if ($exactAge && preg_match('/^\d{1,2}$/', $normalized)) {
+            return "Am inteles, ai {$exactAge} ani. Tin cont de asta mai departe. Ce simti ca apasa cel mai tare in perioada asta?";
+        }
+
+        if ($exactAge && preg_match('/\b(am|implinesc|fac)\s+(\d{1,2})\s+de\s+ani\b/', $normalized)) {
+            return "Am retinut, ai {$exactAge} ani. Tin cont de etapa asta de viata in raspunsurile mele. Ce te preocupa cel mai mult acum?";
+        }
 
         if ($normalized === '' || preg_match('/^(salut|hello|hei|buna|buna ziua|good morning|good evening)$/', $normalized)) {
-            return 'Sigur. Ce te apasa cel mai tare acum?';
+            return match ($assistantMode) {
+                'clarity' => 'Sigur. Care este lucrul principal pe care vrei sa-l intelegi mai clar acum?',
+                'action' => 'Sigur. Cu ce vrei sa pleci concret din discutia asta: claritate, calm sau un pas de facut azi?',
+                'checkin' => 'Sigur. Cum esti chiar acum, in cateva cuvinte?',
+                default => 'Sigur. Ce te apasa cel mai tare acum?',
+            };
         }
 
         if (preg_match('/(vreau sa vorb|as vrea sa vorb|vreau doar sa vorb|am nevoie sa vorb|pot sa vorbesc)/', $normalized)) {
-            return 'Sigur. Sunt aici. Spune-mi ce e cel mai greu pentru tine acum.';
+            return match ($assistantMode) {
+                'clarity' => 'Sigur. Spune-mi ce se intampla, iar eu te ajut sa punem cap la cap ce e esential.',
+                'action' => 'Sigur. Spune-mi pe scurt situatia, iar apoi alegem cel mai bun pas urmator.',
+                'checkin' => 'Sigur. Sunt aici. Spune-mi usor ce apasa cel mai tare acum.',
+                default => 'Sigur. Sunt aici. Spune-mi ce e cel mai greu pentru tine acum.',
+            };
         }
 
         if (preg_match('/(nu stiu cum sa ma descurc|nu mai stiu ce sa fac|nu stiu ce sa fac|nu ma descurc|sunt blocat|sunt blocata)/', $normalized)) {
-            return 'Pare ca esti coplesit acum. Nu trebuie sa rezolvi tot dintr-o data. Care e problema cea mai urgenta dintre toate?';
+            return match ($assistantMode) {
+                'clarity' => 'Pare mult de dus acum. Hai sa separam totul: care este nodul principal si ce e doar zgomot in jurul lui?',
+                'action' => 'Pare ca s-au adunat multe. Nu le rezolvam pe toate acum. Care este singurul lucru care trebuie gestionat primul?',
+                'checkin' => 'Pare foarte mult acum. Hai sa ramanem doar cu urmatorul minut: ce parte apasa cel mai tare?',
+                default => 'Pare ca esti coplesit acum. Nu trebuie sa rezolvi tot dintr-o data. Care e problema cea mai urgenta dintre toate?',
+            };
         }
 
         if (preg_match('/(atac de panica|panica|atac de inima|infarct|o sa mor|mor imediat|frica ca mor|frica ca o sa mor)/', $normalized)) {
-            return trim(implode(' ', array_filter([
-                'Ce descrii suna foarte aproape de panica sau anxietate intensa, chiar daca senzatia din corp pare extrem de reala.',
-                'Pentru moment, spune-mi: ce simti cel mai puternic acum in corp, iar apoi luam pas cu pas ce inseamna asta.',
-            ])));
+            return match ($assistantMode) {
+                'action' => 'Ce descrii suna foarte aproape de panica sau anxietate intensa. Hai direct la un punct sigur: spune-mi ce simti cel mai tare in corp chiar acum, iar eu te ghidez pas cu pas.',
+                'checkin' => 'Ce descrii suna foarte intens si e de inteles sa te sperie. Ramai cu mine un pas mic: ce simti cel mai tare in corp chiar acum?',
+                default => trim(implode(' ', array_filter([
+                    'Ce descrii suna foarte aproape de panica sau anxietate intensa, chiar daca senzatia din corp pare extrem de reala.',
+                    'Pentru moment, spune-mi: ce simti cel mai puternic acum in corp, iar apoi luam pas cu pas ce inseamna asta.',
+                ]))),
+            };
         }
 
         if (preg_match('/\b(stres|stresat|stresata|agitat|agitata|anxios|anxioasa|coplesit|coplesita|obos|epuizat|epuizata)\b/', $normalized)) {
-            return trim(implode(' ', array_filter([
-                'Se simte multa tensiune in ce spui, iar asta poate face lucrurile sa para mai grele decat sunt pe moment.',
-                'Hai sa alegem un singur lucru concret: ce anume te preseaza cel mai tare chiar astazi?',
-            ])));
+            return match ($assistantMode) {
+                'clarity' => 'Se simte multa tensiune. Hai sa clarificam sursa ei: ce anume te preseaza cel mai tare astazi si ce este doar in fundal?',
+                'action' => 'Se simte multa tensiune. Hai sa alegem un singur lucru concret de atacat: ce te preseaza cel mai tare astazi?',
+                'checkin' => 'Se simte multa tensiune. Hai bland: ce apasare se simte cea mai puternica exact acum?',
+                default => trim(implode(' ', array_filter([
+                    'Se simte multa tensiune in ce spui, iar asta poate face lucrurile sa para mai grele decat sunt pe moment.',
+                    'Hai sa alegem un singur lucru concret: ce anume te preseaza cel mai tare chiar astazi?',
+                ]))),
+            };
         }
 
         if (preg_match('/(nesimt|enerv|furios|furioasa|nervi|nervos|nervoasa|nedrept|frustrat|frustrata)/', $normalized)) {
@@ -402,9 +450,21 @@ class AssistantService
             ])));
         }
 
-        return $userTurnCount <= 1
-            ? 'Spune-mi pe scurt ce te apasa acum, iar apoi luam lucrurile pe rand.'
-            : 'Hai sa luam un singur punct din tot ce se intampla. Care este partea cea mai grea chiar acum?';
+        if ($userTurnCount <= 1) {
+            return match ($assistantMode) {
+                'clarity' => 'Spune-mi pe scurt situatia, iar eu te ajut sa vedem ce e central si ce e secundar.',
+                'action' => 'Spune-mi pe scurt situatia, iar apoi alegem cel mai util pas pe care il poti face acum.',
+                'checkin' => 'Spune-mi pe scurt cum esti acum, fara sa fortezi explicatia.',
+                default => 'Spune-mi pe scurt ce te apasa acum, iar apoi luam lucrurile pe rand.',
+            };
+        }
+
+        return match ($assistantMode) {
+            'clarity' => 'Hai sa alegem un singur fir si sa-l clarificam. Care este partea care te incurca cel mai mult?',
+            'action' => 'Hai sa reducem totul la un singur pas urmator. Care este blocajul care te opreste chiar acum?',
+            'checkin' => 'Hai sa ramanem cu un singur punct, fara graba. Care este partea cea mai grea chiar acum?',
+            default => 'Hai sa luam un singur punct din tot ce se intampla. Care este partea cea mai grea chiar acum?',
+        };
     }
 
     protected function normalizeMessage(string $content): string
@@ -455,6 +515,7 @@ class AssistantService
             'notification_frequency' => $details->notification_frequency ?? 'daily',
             'assistant_opt_in' => $hasAssistantOptIn ? (bool) ($details->assistant_opt_in ?? true) : true,
             'preferred_language' => $hasPreferredLanguage ? ($details->preferred_language ?? 'ro') : 'ro',
+            'assistant_mode' => 'supportive',
         ];
     }
 
@@ -508,6 +569,7 @@ class AssistantService
             'notification_frequency' => 'daily',
             'assistant_opt_in' => true,
             'preferred_language' => 'ro',
+            'assistant_mode' => 'supportive',
         ];
     }
 
@@ -537,7 +599,84 @@ class AssistantService
             'notification_frequency' => (string) ($profile['notification_frequency'] ?? $profile['notificationFrequency'] ?? 'daily'),
             'assistant_opt_in' => true,
             'preferred_language' => 'ro',
+            'assistant_mode' => $this->normalizeAssistantMode($profile['assistant_mode'] ?? $profile['assistantMode'] ?? null),
         ];
+    }
+
+    protected function applyAssistantMode(array $profile, ?string $assistantMode): array
+    {
+        $profile['assistant_mode'] = $this->normalizeAssistantMode($assistantMode ?? ($profile['assistant_mode'] ?? null));
+
+        return $profile;
+    }
+
+    protected function normalizeAssistantMode(?string $assistantMode): string
+    {
+        return match ($assistantMode) {
+            'clarity', 'action', 'checkin' => $assistantMode,
+            default => 'supportive',
+        };
+    }
+
+    protected function enrichProfileFromConversation(Collection $messages, array $profile): array
+    {
+        $exactAge = null;
+
+        foreach ($messages as $message) {
+            if (($message['role'] ?? null) !== 'user') {
+                continue;
+            }
+
+            $detectedAge = $this->extractAgeFromUserMessage((string) ($message['content'] ?? ''));
+            if ($detectedAge !== null) {
+                $exactAge = $detectedAge;
+            }
+        }
+
+        if ($exactAge === null) {
+            return $profile;
+        }
+
+        $profile['exact_age'] = $exactAge;
+
+        if (empty($profile['age_range'])) {
+            $profile['age_range'] = $this->ageRangeForAge($exactAge);
+        }
+
+        return $profile;
+    }
+
+    protected function extractAgeFromUserMessage(string $message): ?int
+    {
+        $normalized = Str::of($message)->lower()->squish()->value();
+
+        if (preg_match('/^\d{1,2}$/', $normalized, $matches)) {
+            $age = (int) $matches[0];
+            return ($age >= 13 && $age <= 99) ? $age : null;
+        }
+
+        if (preg_match('/\b(?:am|fac|implinesc)\s+(\d{1,2})\s+de\s+ani\b/', $normalized, $matches)) {
+            $age = (int) $matches[1];
+            return ($age >= 13 && $age <= 99) ? $age : null;
+        }
+
+        if (preg_match('/\b(\d{1,2})\s+de\s+ani\b/', $normalized, $matches)) {
+            $age = (int) $matches[1];
+            return ($age >= 13 && $age <= 99) ? $age : null;
+        }
+
+        return null;
+    }
+
+    protected function ageRangeForAge(int $age): string
+    {
+        return match (true) {
+            $age <= 24 => '18-24',
+            $age <= 34 => '25-34',
+            $age <= 44 => '35-44',
+            $age <= 54 => '45-54',
+            default => '55+',
+        };
     }
 
     public function digestFrequency(?string $notificationFrequency): string
