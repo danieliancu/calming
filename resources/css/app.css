@@ -1197,6 +1197,7 @@ main {
           position: relative;
         }
         .assistant-pane {
+          grid-row: 2;
           flex: 1;
           display: flex;
           flex-direction: column;
@@ -1366,8 +1367,8 @@ main {
         .assistant-thread::-webkit-scrollbar-track {
           background: transparent;
         }
-        .assistant-form {
-          margin-top: var(--space-4);
+        .assistant-body .assistant-form {
+          margin-top: auto;
           margin-bottom: 15px;
         }
         .assistant-form .form-input {
