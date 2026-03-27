@@ -210,6 +210,31 @@ export default function Assistant() {
         element.style.height = `${element.scrollHeight}px`;
     }, [input]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined' || typeof document === 'undefined') {
+            return undefined;
+        }
+
+        const updateViewportHeight = () => {
+            const viewportHeight = Math.round(window.visualViewport?.height ?? window.innerHeight);
+            document.body.style.setProperty('--assistant-viewport-height', `${viewportHeight}px`);
+        };
+
+        updateViewportHeight();
+
+        const visualViewport = window.visualViewport;
+        window.addEventListener('resize', updateViewportHeight);
+        visualViewport?.addEventListener('resize', updateViewportHeight);
+        visualViewport?.addEventListener('scroll', updateViewportHeight);
+
+        return () => {
+            window.removeEventListener('resize', updateViewportHeight);
+            visualViewport?.removeEventListener('resize', updateViewportHeight);
+            visualViewport?.removeEventListener('scroll', updateViewportHeight);
+            document.body.style.removeProperty('--assistant-viewport-height');
+        };
+    }, []);
+
     const updateProfileField = (key, value) => {
         setProfile((current) => ({ ...current, [key]: value }));
     };
