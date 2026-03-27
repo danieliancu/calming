@@ -1,34 +1,19 @@
-import AccentCard from '@/Components/AccentCard';
 import AppLayout from '@/Layouts/AppLayout';
 import ProfileEditModal from '@/Components/ProfileEditModal';
 import SignOutAction from '@/Components/SignOutAction';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildGuestMilestones, getGuestState } from '@/lib/guestActivity';
 import { formatAppointmentStatus, formatPaymentStatus, partitionAppointments, REMINDER_OPTIONS } from '@/lib/appointments';
-import { FiActivity, FiAward, FiChevronRight, FiLock, FiTrash2, FiUser, ICON_BY_NAME } from '@/lib/icons';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { FiActivity, FiAward, FiChevronRight, ICON_BY_NAME } from '@/lib/icons';
+import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function Profile({ profile, profileDetails, stats, milestones, infoLinks, upcomingAppointments = [] }) {
     const { isAuthenticated, authResolved, promptAuth, signOut } = useAuth();
-    const page = usePage();
-    const authUser = page.props.auth?.user;
     const [profileData, setProfileData] = useState(profile ?? null);
     const [profileExtra, setProfileExtra] = useState(profileDetails ?? null);
     const [editOpen, setEditOpen] = useState(false);
     const [appointmentsOpen, setAppointmentsOpen] = useState(() => shouldOpenAppointmentsPanel());
-    const accountForm = useForm({
-        name: authUser?.name ?? '',
-        email: authUser?.email ?? '',
-    });
-    const passwordForm = useForm({
-        current_password: '',
-        password: '',
-        password_confirmation: '',
-    });
-    const deleteForm = useForm({
-        password: '',
-    });
     const shouldOpenEdit = useMemo(() => {
         if (typeof window === 'undefined') {
             return false;
@@ -119,8 +104,6 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
         return 'progress-low';
     }, [completionValue]);
     const { pendingAppointments, confirmedAppointments, historyAppointments } = partitionAppointments(upcomingAppointments);
-    const accountStatus = page.props.flash?.status;
-
     if (!authResolved) {
         return null;
     }
@@ -130,7 +113,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
             <>
                 <Head title="Profil guest - Calming" />
                 <main className="profile-layout">
-                    <AccentCard className="profile-card" dismissKey="guest-profile-summary">
+                    <section className="card accent profile-card">
                         <div className="profile-header">
                             <div className="profile-ident">
                                 <div className="avatar">G</div>
@@ -153,7 +136,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                                 <span className={`progress-fill ${guestMilestones.length >= 3 ? 'progress-good' : guestMilestones.length >= 1 ? 'progress-mid' : 'progress-low'}`} style={{ width: `${Math.min(100, guestMilestones.length * 20)}%` }} />
                             </div>
                         </div>
-                    </AccentCard>
+                    </section>
 
                     <section className="card stats-section">
                         <div className="section-title">Sesiunea ta locala</div>
@@ -206,7 +189,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
             <Head title="Profil - Calming" />
 
             <main className="profile-layout">
-                <AccentCard className="profile-card" dismissKey="profile-summary">
+                <section className="card accent profile-card" style={{ marginTop:"-30px" }}>
                     <div className="profile-header">
                         <div className="profile-ident">
                             <div className="avatar">{profileData?.avatar_initials ?? 'NA'}</div>
@@ -215,12 +198,13 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                                     {profileData?.display_name ?? 'Utilizator'}
                                     {profileData?.community_alias ? ` (${profileData.community_alias})` : ''}
                                 </div>
-                                <div className="muted">
-                                    {profileData?.member_since ? `Membru din ${formatMemberSince(profileData.member_since)}` : 'Membru Calming'}
-                                </div>
                             </div>
                         </div>
                         <button type="button" className="btn profile-edit" onClick={() => setEditOpen(true)}>Editeaza</button>
+                    </div>
+
+                    <div className="muted">
+                        {profileData?.member_since ? `Membru din ${formatMemberSince(profileData.member_since)}` : 'Membru Calming'}
                     </div>
 
                     <div className="profile-progress">
@@ -232,12 +216,13 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                             <span className={`progress-fill ${completionTone}`} style={{ width: `${completionValue}%` }} />
                         </div>
                     </div>
-                </AccentCard>
+                </section>
 
                 <div className="profile-actions">
+                    <Link href="/journal" className="list-item">Jurnalul meu</Link>
                     <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adauga in jurnal</a>
-                    <Link href="/journal" className="list-item profile-action primary">Jurnalul meu</Link>
-                    <SignOutAction className="list-item settings-signout-card" onClick={signOut} />
+                    <Link href={route('profile.edit')} className="list-item">Contul meu</Link>
+                    <SignOutAction className="list-item settings-signout-card profile-signout-action" onClick={signOut} />
                 </div>
 
                 <section className="card stats-section">
@@ -298,120 +283,11 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                     </div>
                 </section>
 
-                <section className="card">
-                    <div className="section-title">Cont</div>
-                    {accountStatus ? <div className="info u-mb-3">{accountStatus}</div> : null}
-
-                    <div className="account-panels">
-                        <form className="card subtle stack gap-3" onSubmit={(event) => {
-                            event.preventDefault();
-                            accountForm.patch(route('profile.update'), {
-                                preserveScroll: true,
-                            });
-                        }}>
-                            <div className="settings-item">
-                                <div className="settings-leading">
-                                    <span className="settings-icon-bubble"><FiUser /></span>
-                                    <div className="settings-item-content">
-                                        <span className="settings-item-title">Date profil</span>
-                                        <span className="settings-item-muted">Actualizeaza numele si adresa de email asociate contului.</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <label className="account-field">
-                                <span className="profile-label">Nume</span>
-                                <input className="form-input" value={accountForm.data.name} onChange={(event) => accountForm.setData('name', event.target.value)} />
-                            </label>
-                            <label className="account-field">
-                                <span className="profile-label">Email</span>
-                                <input className="form-input" type="email" value={accountForm.data.email} onChange={(event) => accountForm.setData('email', event.target.value)} />
-                            </label>
-                            {renderErrors(accountForm.errors)}
-                            <div className="row wrap gap-2">
-                                <button className="btn primary" type="submit" disabled={accountForm.processing}>
-                                    {accountForm.processing ? 'Se salveaza...' : 'Salveaza datele'}
-                                </button>
-                            </div>
-                        </form>
-
-                        <form className="card subtle stack gap-3" onSubmit={(event) => {
-                            event.preventDefault();
-                            passwordForm.put(route('password.update'), {
-                                preserveScroll: true,
-                                onSuccess: () => passwordForm.reset(),
-                            });
-                        }}>
-                            <div className="settings-item">
-                                <div className="settings-leading">
-                                    <span className="settings-icon-bubble"><FiLock /></span>
-                                    <div className="settings-item-content">
-                                        <span className="settings-item-title">Securitate</span>
-                                        <span className="settings-item-muted">Schimba parola pentru a pastra accesul la cont in siguranta.</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <label className="account-field">
-                                <span className="profile-label">Parola curenta</span>
-                                <input className="form-input" type="password" value={passwordForm.data.current_password} onChange={(event) => passwordForm.setData('current_password', event.target.value)} />
-                            </label>
-                            <label className="account-field">
-                                <span className="profile-label">Parola noua</span>
-                                <input className="form-input" type="password" value={passwordForm.data.password} onChange={(event) => passwordForm.setData('password', event.target.value)} />
-                            </label>
-                            <label className="account-field">
-                                <span className="profile-label">Confirma parola noua</span>
-                                <input className="form-input" type="password" value={passwordForm.data.password_confirmation} onChange={(event) => passwordForm.setData('password_confirmation', event.target.value)} />
-                            </label>
-                            {renderErrors(passwordForm.errors)}
-                            <div className="row wrap gap-2">
-                                <button className="btn primary" type="submit" disabled={passwordForm.processing}>
-                                    {passwordForm.processing ? 'Se actualizeaza...' : 'Actualizeaza parola'}
-                                </button>
-                            </div>
-                        </form>
-
-                        <form className="card subtle stack gap-3" onSubmit={(event) => {
-                            event.preventDefault();
-                            deleteForm.delete(route('profile.destroy'), {
-                                preserveScroll: true,
-                            });
-                        }}>
-                            <div className="settings-item">
-                                <div className="settings-leading">
-                                    <span className="settings-icon-bubble settings-icon-bubble--danger"><FiTrash2 /></span>
-                                    <div className="settings-item-content">
-                                        <span className="settings-item-title">Sterge contul</span>
-                                        <span className="settings-item-muted">Aceasta actiune este permanenta si va elimina accesul la profil.</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <label className="account-field">
-                                <span className="profile-label">Confirma cu parola curenta</span>
-                                <input className="form-input" type="password" value={deleteForm.data.password} onChange={(event) => deleteForm.setData('password', event.target.value)} />
-                            </label>
-                            {renderErrors(deleteForm.errors)}
-                            <div className="row wrap gap-2">
-                                <button className="btn danger" type="submit" disabled={deleteForm.processing}>
-                                    {deleteForm.processing ? 'Se sterge...' : 'Sterge contul'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </section>
             </main>
 
             {editOpen ? <ProfileEditModal initialProfile={profileData} initialDetails={profileExtra} onClose={closeEditModal} onSaved={handleProfileSaved} /> : null}
         </>
     );
-}
-
-function renderErrors(errors) {
-    const messages = Object.values(errors ?? {});
-    if (!messages.length) {
-        return null;
-    }
-
-    return <div className="error">{messages[0]}</div>;
 }
 
 function MilestoneCard({ milestone }) {

@@ -509,7 +509,7 @@ export default function AppLayout({ children }) {
                 {showAuthModal ? <AuthPromptModal onClose={handleCloseAuth} mode={authModalMode} /> : null}
 
                 {!hideFooter ? <Footer /> : null}
-                {pathname !== '/assistant' ? <BottomNav /> : null}
+                {pathname !== '/assistant' && !isCommunityInner ? <BottomNav /> : null}
 
                 {toastState && toastState.message ? (
                     <div className="toast-container" role="status" aria-live="polite">

@@ -73,7 +73,7 @@ export default function JournalPage({ entries, startDate }) {
         <>
             <Head title="Jurnalul meu - Calming" />
 
-            <main className="journal-page">
+            <main className="journal-page" style={{ marginTop:"-30px" }}>
                 <AccentCard className="journal-header" dismissKey="journal-header">
                     <div>
                         <h1 className="section-title">Jurnalul meu</h1>

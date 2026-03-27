@@ -125,6 +125,20 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
     }, []);
     const latestNotificationTime = useMemo(() => formatHomeNotificationTime(latestNotification?.created_at), [latestNotification?.created_at]);
     const LatestNotificationIcon = useMemo(() => ICON_BY_NAME[latestNotification?.icon] ?? BellIcon, [latestNotification?.icon]);
+    const quickNoteField = isAuthenticated ? (
+        <input
+            className="grow note-input"
+            placeholder="Adauga un gand in jurnal."
+            value={quickNote}
+            onChange={(event) => setQuickNote(event.target.value)}
+            maxLength={255}
+            disabled={quickSaving}
+        />
+    ) : (
+        <button type="button" className="grow note-input note-input-button" onClick={openJournal}>
+            Adauga un gand in jurnal.
+        </button>
+    );
 
     return (
         <>
@@ -161,7 +175,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                             ))}
                         </div>
                         <div className="row u-mt-3 home-mobile-auth__note-row">
-                            <input className="grow note-input" placeholder="Adauga un gand in jurnal." value={quickNote} onChange={(event) => setQuickNote(event.target.value)} maxLength={255} disabled={quickSaving} />
+                            {quickNoteField}
                             <button className="btn primary" type="button" onClick={handleQuickSave} disabled={quickSaving}>
                                 {quickSaving ? 'Se salveaza...' : 'Salveaza'}
                             </button>
@@ -265,7 +279,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                     ))}
                 </div>
                 <div className="row u-mt-3">
-                    <input className="grow note-input" placeholder="Adauga un gand in jurnal." value={quickNote} onChange={(event) => setQuickNote(event.target.value)} maxLength={255} disabled={quickSaving} />
+                    {quickNoteField}
                     <button className="btn primary" type="button" onClick={handleQuickSave} disabled={quickSaving}>
                         {quickSaving ? 'Se salveaza...' : 'Salveaza'}
                     </button>

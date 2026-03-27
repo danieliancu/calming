@@ -8,7 +8,7 @@ import {
     saveGuestAssistantState,
     clearGuestAssistantState,
 } from '@/lib/assistantGuestSession';
-import { FiMessageSquare, FiPlus, FiX, SettingsIcon } from '@/lib/icons';
+import { FiArrowLeft, FiMessageSquare, FiPlus, FiSend, FiX, SettingsIcon } from '@/lib/icons';
 import { Head, router } from '@inertiajs/react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -409,6 +409,24 @@ export default function Assistant() {
 
                     <section className="assistant-pane">
                         <div className="assistant-body">
+                            <div className="assistant-convo-nav">
+                                <button
+                                    type="button"
+                                    className="assistant-back-link"
+                                    onClick={() => {
+                                        if (typeof window !== 'undefined' && window.history.length > 1) {
+                                            window.history.back();
+                                            return;
+                                        }
+
+                                        router.visit('/');
+                                    }}
+                                >
+                                    <FiArrowLeft aria-hidden /> Inapoi
+                                </button>
+                                <div className="assistant-convo-mode">Asistent AI: <span style={{ color:"var(--text-900)" }}>{activeAssistantModeMeta.label}</span></div>
+                            </div>
+
                             {loading ? <div className="card muted">Se incarca Assistantul...</div> : null}
                             {error ? <div className="error">{error}</div> : null}
 
@@ -488,8 +506,8 @@ export default function Assistant() {
                                         rows={1}
                                     />
                                 </div>
-                                <button className="btn primary" type="submit" disabled={sending || loading || guestLimitReached}>
-                                    Trimite
+                                <button className="btn primary icon-only" type="submit" disabled={sending || loading || guestLimitReached} aria-label="Trimite">
+                                    <FiSend />
                                 </button>
                             </form>
                         </div>

@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { Head, Link } from '@inertiajs/react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { FiArrowLeft, FiLock, FiReply } from '@/lib/icons';
+import { FiArrowLeft, FiLock, FiReply, FiSend } from '@/lib/icons';
 
 export default function CommunityConversations({ group }) {
     const { isAuthenticated, isPsychAuthenticated, authResolved, promptAuth } = useAuth();
@@ -290,22 +290,24 @@ export default function CommunityConversations({ group }) {
                             <div ref={bottomAnchorRef} />
                         </div>
                     </section>
-                </div>
 
-                <form className={`assistant-form row u-mt-4 group-message-compose${replyTarget ? ' has-reply-target' : ''}`} onSubmit={handleMessageSubmit}>
-                    <div className="grow group-message-input-wrap">
-                        <input
-                            ref={messageInputRef}
-                            className="form-input grow"
-                            placeholder="Scrie un mesaj..."
-                            value={messageDraft}
-                            onChange={(event) => setMessageDraft(event.target.value)}
-                            onBlur={handleMessageBlur}
-                        />
-                        {replyTarget ? <div className="group-reply-context muted">Raspunzi catre {replyTarget.speaker} - {replyTarget.time}</div> : null}
-                    </div>
-                    <button className="btn primary" type="submit">Trimite</button>
-                </form>
+                    <form className={`assistant-form row u-mt-4 group-message-compose${replyTarget ? ' has-reply-target' : ''}`} onSubmit={handleMessageSubmit}>
+                        <div className="grow group-message-input-wrap">
+                            <input
+                                ref={messageInputRef}
+                                className="form-input grow group-compose-input"
+                                placeholder="Scrie un mesaj..."
+                                value={messageDraft}
+                                onChange={(event) => setMessageDraft(event.target.value)}
+                                onBlur={handleMessageBlur}
+                            />
+                            {replyTarget ? <div className="group-reply-context muted">Raspunzi catre {replyTarget.speaker} - {replyTarget.time}</div> : null}
+                        </div>
+                        <button className="btn primary icon-only" type="submit" aria-label="Trimite">
+                            <FiSend />
+                        </button>
+                    </form>
+                </div>
             </div>
         </>
     );
