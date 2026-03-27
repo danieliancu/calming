@@ -377,16 +377,20 @@ export default function SuperadminDashboard({
                                                             <td>{formatDate(application.submitted_at)}</td>
                                                             <td>
                                                                 <div className="superadmin-actions">
-                                                                    <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.validation.approve', application.id), {}, { preserveScroll: true })}>
-                                                                        Approve
-                                                                    </button>
-                                                                    <button
-                                                                        className="status-pill status-pill--pending superadmin-pill-compact"
-                                                                        type="button"
-                                                                        onClick={() => openMessageModal(application)}
-                                                                    >
-                                                                        Mesaj
-                                                                    </button>
+                                                                    {application.application_id ? (
+                                                                        <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.validation.approve', application.application_id), {}, { preserveScroll: true })}>
+                                                                            Approve
+                                                                        </button>
+                                                                    ) : null}
+                                                                    {application.application_id ? (
+                                                                        <button
+                                                                            className="status-pill status-pill--pending superadmin-pill-compact"
+                                                                            type="button"
+                                                                            onClick={() => openMessageModal(application)}
+                                                                        >
+                                                                            Mesaj
+                                                                        </button>
+                                                                    ) : null}
                                                                     <button
                                                                         className="status-pill status-pill--danger superadmin-pill-compact"
                                                                         type="button"
@@ -403,7 +407,9 @@ export default function SuperadminDashboard({
                                                                 <div className="superadmin-form-review">
                                                                     <div className="superadmin-form-review__section">
                                                                         <div className="superadmin-form-review__title">Mesaj specialist</div>
-                                                                        {application.messages?.length ? (
+                                                                        {!application.application_id ? (
+                                                                            <div className="muted">Specialistul nu are o cerere de validare salvata.</div>
+                                                                        ) : application.messages?.length ? (
                                                                             <div className="validation-documents">
                                                                                 {application.messages.map((message) => (
                                                                                     <div key={message.id} className="list-item">
@@ -415,7 +421,7 @@ export default function SuperadminDashboard({
                                                                                             className="btn icon-only danger"
                                                                                             type="button"
                                                                                             aria-label="Sterge mesajul"
-                                                                                            onClick={() => deleteValidationMessage(application.id, message.id)}
+                                                                                            onClick={() => deleteValidationMessage(application.application_id, message.id)}
                                                                                         >
                                                                                             <FiTrash2 size={14} />
                                                                                         </button>

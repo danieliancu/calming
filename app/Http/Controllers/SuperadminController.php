@@ -67,18 +67,25 @@ class SuperadminController extends Controller
             return $superadmin;
         }
 
-        $validationApplications = DB::table('psychologist_validation_applications as pva')
-            ->join('psychologists as p', 'p.id', '=', 'pva.psychologist_id')
+        $validationApplications = DB::table('psychologists as p')
+            ->leftJoin('psychologist_validation_applications as pva', 'pva.psychologist_id', '=', 'p.id')
             ->leftJoin('psychologists_address as pa', 'pa.psychologist_id', '=', 'p.id')
             ->leftJoin('validation_entity_types as vet', 'vet.id', '=', 'pva.entity_type_id')
             ->leftJoin('psychologist_validation_locations as pvl', 'pvl.application_id', '=', 'pva.id')
             ->leftJoin('psychologist_individual_profiles as pip', 'pip.psychologist_id', '=', 'p.id')
-            ->whereIn('pva.status', ['submitted', 'rejected'])
-            ->orderByRaw("CASE WHEN pva.status = 'submitted' THEN 0 ELSE 1 END")
+            ->orderByRaw("
+                CASE
+                    WHEN pva.status = 'submitted' THEN 0
+                    WHEN pva.status = 'rejected' THEN 1
+                    WHEN pva.status = 'approved' THEN 2
+                    WHEN pva.status = 'draft' THEN 3
+                    ELSE 4
+                END
+            ")
             ->orderByDesc('pva.submitted_at')
             ->orderByDesc('pva.id')
             ->get([
-                'pva.id',
+                'pva.id as application_id',
                 'pva.status',
                 'pva.submitted_at',
                 'pva.reviewed_at',
@@ -88,6 +95,7 @@ class SuperadminController extends Controller
                 'p.surname',
                 'p.email',
                 'p.phone',
+                'p.created_at as psychologist_created_at',
                 'pa.city',
                 'pa.county',
                 'pa.address',
@@ -102,77 +110,84 @@ class SuperadminController extends Controller
                 'pip.public_bio',
             ])
             ->map(function ($item) {
-                $attestations = DB::table('psychologist_validation_specialists as pvs')
-                    ->leftJoin('professional_roles as pr', 'pr.id', '=', 'pvs.professional_role_id')
-                    ->leftJoin('professional_grades as pg', 'pg.id', '=', 'pvs.professional_grade_id')
-                    ->where('pvs.application_id', $item->id)
-                    ->orderByDesc('pvs.is_primary')
-                    ->orderBy('pvs.id')
-                    ->get([
-                        'pvs.id',
-                        'pvs.is_primary',
-                        'pr.label as professional_role',
-                        'pg.label as professional_grade',
-                        'pvs.practice_regime',
-                        'pvs.license_number',
-                        'pvs.license_issue_date',
-                        'pvs.license_expiry_date',
-                        'pvs.specialty_commission',
-                        'pvs.clinical_competencies',
-                        'pvs.description',
-                    ])
-                    ->map(function ($attestation) {
-                        $specializations = DB::table('psychologist_validation_specialist_specializations')
-                            ->where('specialist_id', $attestation->id)
-                            ->orderBy('id')
-                            ->pluck('label')
-                            ->all();
+                $attestations = [];
+                $documents = [];
+                $messages = [];
 
-                        return [
-                            'id' => $attestation->id,
-                            'is_primary' => (bool) $attestation->is_primary,
-                            'professional_role' => $attestation->professional_role,
-                            'professional_grade' => $attestation->professional_grade,
-                            'practice_regime' => $attestation->practice_regime,
-                            'license_number' => $attestation->license_number,
-                            'license_issue_date' => $attestation->license_issue_date,
-                            'license_expiry_date' => $attestation->license_expiry_date,
-                            'specialty_commission' => $attestation->specialty_commission,
-                            'clinical_competencies' => $attestation->clinical_competencies,
-                            'description' => $attestation->description,
-                            'specializations' => $specializations,
-                        ];
-                    })
-                    ->all();
+                if ($item->application_id) {
+                    $attestations = DB::table('psychologist_validation_specialists as pvs')
+                        ->leftJoin('professional_roles as pr', 'pr.id', '=', 'pvs.professional_role_id')
+                        ->leftJoin('professional_grades as pg', 'pg.id', '=', 'pvs.professional_grade_id')
+                        ->where('pvs.application_id', $item->application_id)
+                        ->orderByDesc('pvs.is_primary')
+                        ->orderBy('pvs.id')
+                        ->get([
+                            'pvs.id',
+                            'pvs.is_primary',
+                            'pr.label as professional_role',
+                            'pg.label as professional_grade',
+                            'pvs.practice_regime',
+                            'pvs.license_number',
+                            'pvs.license_issue_date',
+                            'pvs.license_expiry_date',
+                            'pvs.specialty_commission',
+                            'pvs.clinical_competencies',
+                            'pvs.description',
+                        ])
+                        ->map(function ($attestation) {
+                            $specializations = DB::table('psychologist_validation_specialist_specializations')
+                                ->where('specialist_id', $attestation->id)
+                                ->orderBy('id')
+                                ->pluck('label')
+                                ->all();
 
-                $documents = DB::table('psychologist_validation_documents')
-                    ->where('application_id', $item->id)
-                    ->orderByDesc('id')
-                    ->get(['id', 'original_name', 'mime_type', 'size', 'disk', 'path'])
-                    ->map(fn ($document) => [
-                        'id' => $document->id,
-                        'name' => $document->original_name,
-                        'mime_type' => $document->mime_type,
-                        'size' => $document->size,
-                        'url' => \Illuminate\Support\Facades\Storage::disk($document->disk)->url($document->path),
-                    ])
-                    ->all();
+                            return [
+                                'id' => $attestation->id,
+                                'is_primary' => (bool) $attestation->is_primary,
+                                'professional_role' => $attestation->professional_role,
+                                'professional_grade' => $attestation->professional_grade,
+                                'practice_regime' => $attestation->practice_regime,
+                                'license_number' => $attestation->license_number,
+                                'license_issue_date' => $attestation->license_issue_date,
+                                'license_expiry_date' => $attestation->license_expiry_date,
+                                'specialty_commission' => $attestation->specialty_commission,
+                                'clinical_competencies' => $attestation->clinical_competencies,
+                                'description' => $attestation->description,
+                                'specializations' => $specializations,
+                            ];
+                        })
+                        ->all();
 
-                $messages = DB::table('psychologist_validation_messages')
-                    ->where('application_id', $item->id)
-                    ->orderByDesc('id')
-                    ->get(['id', 'message', 'created_at'])
-                    ->map(fn ($message) => [
-                        'id' => $message->id,
-                        'message' => $message->message,
-                        'created_at' => $message->created_at,
-                    ])
-                    ->all();
+                    $documents = DB::table('psychologist_validation_documents')
+                        ->where('application_id', $item->application_id)
+                        ->orderByDesc('id')
+                        ->get(['id', 'original_name', 'mime_type', 'size', 'disk', 'path'])
+                        ->map(fn ($document) => [
+                            'id' => $document->id,
+                            'name' => $document->original_name,
+                            'mime_type' => $document->mime_type,
+                            'size' => $document->size,
+                            'url' => \Illuminate\Support\Facades\Storage::disk($document->disk)->url($document->path),
+                        ])
+                        ->all();
+
+                    $messages = DB::table('psychologist_validation_messages')
+                        ->where('application_id', $item->application_id)
+                        ->orderByDesc('id')
+                        ->get(['id', 'message', 'created_at'])
+                        ->map(fn ($message) => [
+                            'id' => $message->id,
+                            'message' => $message->message,
+                            'created_at' => $message->created_at,
+                        ])
+                        ->all();
+                }
 
                 return [
-                    'id' => $item->id,
-                    'status' => $item->status,
-                    'submitted_at' => $item->submitted_at,
+                    'id' => $item->psychologist_id,
+                    'application_id' => $item->application_id,
+                    'status' => $item->status ?? 'draft',
+                    'submitted_at' => $item->submitted_at ?? $item->psychologist_created_at,
                     'reviewed_at' => $item->reviewed_at,
                     'reviewer_notes' => $item->reviewer_notes,
                     'psychologist_id' => $item->psychologist_id,
