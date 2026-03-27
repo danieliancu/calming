@@ -364,6 +364,35 @@ class AssistantService
         $assistantMode = $this->normalizeAssistantMode($profile['assistant_mode'] ?? null);
         $ageRange = trim((string) ($profile['age_range'] ?? ''));
         $exactAge = isset($profile['exact_age']) ? (int) $profile['exact_age'] : null;
+        $displayName = trim((string) ($profile['display_name'] ?? ''));
+
+        if (preg_match('/(zi-mi numele si varsta|spune-mi numele si varsta|care imi este numele si varsta|numele si varsta)/', $normalized)) {
+            $parts = [];
+
+            if ($displayName !== '') {
+                $parts[] = "numele tau este {$displayName}";
+            }
+
+            if ($exactAge && $exactAge >= 13 && $exactAge <= 99) {
+                $parts[] = "ai {$exactAge} ani";
+            } elseif ($ageRange !== '') {
+                $parts[] = "intervalul tau de varsta este {$ageRange}";
+            }
+
+            if ($parts !== []) {
+                return ucfirst(implode(', iar ', $parts)).'.';
+            }
+
+            return 'Nu am suficiente date salvate aici ca sa-ti spun numele si varsta.';
+        }
+
+        if (preg_match('/(zi-mi numele|spune-mi numele|care imi este numele|stii cum ma cheama|cum ma cheama)/', $normalized)) {
+            if ($displayName !== '') {
+                return "Te cheama {$displayName}.";
+            }
+
+            return 'Nu am numele tau salvat in contextul acesta.';
+        }
 
         if (preg_match('/(stii cati ani am|stii ce varsta am|ce varsta am|ce varsta crezi ca am|cati ani am)/', $normalized)) {
             if ($exactAge && $exactAge >= 13 && $exactAge <= 99) {
@@ -500,6 +529,7 @@ class AssistantService
         $hasPreferredLanguage = Schema::hasColumn('user_profile_details', 'preferred_language');
 
         return [
+            'display_name' => $profile->display_name ?? null,
             'community_alias' => $profile->community_alias ?? null,
             'age_range' => $details->age_range ?? null,
             'focus_topics' => json_decode($details->focus_topics ?? '[]', true) ?: [],
@@ -554,6 +584,7 @@ class AssistantService
     protected function defaultGuestProfile(): array
     {
         return [
+            'display_name' => '',
             'community_alias' => '',
             'age_range' => '',
             'focus_topics' => [],
@@ -584,6 +615,7 @@ class AssistantService
             ->all();
 
         return [
+            'display_name' => trim((string) ($profile['display_name'] ?? $profile['displayName'] ?? '')),
             'community_alias' => trim((string) ($profile['community_alias'] ?? $profile['communityAlias'] ?? '')),
             'age_range' => trim((string) ($profile['age_range'] ?? $profile['ageRange'] ?? '')),
             'focus_topics' => $topics,

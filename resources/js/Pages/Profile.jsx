@@ -75,7 +75,14 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
             return;
         }
 
+        const returnTo = url.searchParams.get('returnTo');
+        if (returnTo && returnTo.startsWith('/')) {
+            router.visit(returnTo, { preserveScroll: true });
+            return;
+        }
+
         url.searchParams.delete('edit');
+        url.searchParams.delete('returnTo');
         const nextSearch = url.searchParams.toString();
         window.history.replaceState(window.history.state, '', `${url.pathname}${nextSearch ? `?${nextSearch}` : ''}${url.hash}`);
     }, []);

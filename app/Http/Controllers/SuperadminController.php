@@ -506,6 +506,38 @@ class SuperadminController extends Controller
         return back()->with('status', 'Mesajul a fost sters.');
     }
 
+    public function destroyPsychologist(Request $request, int $psychologistId): RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        $psychologist = DB::table('psychologists')
+            ->where('id', $psychologistId)
+            ->first(['id', 'name', 'surname', 'email']);
+
+        abort_unless($psychologist, 404);
+
+        DB::transaction(function () use ($psychologistId) {
+            $groupIds = DB::table('community_groups')
+                ->where('author', $psychologistId)
+                ->pluck('id');
+
+            if ($groupIds->isNotEmpty()) {
+                DB::table('community_group_invitations')->whereIn('group_id', $groupIds)->delete();
+                DB::table('community_groups_validation')->whereIn('group_id', $groupIds)->delete();
+            }
+
+            DB::table('psychologists')->where('id', $psychologistId)->delete();
+        });
+
+        $displayName = trim(implode(' ', array_filter([$psychologist->name, $psychologist->surname]))) ?: $psychologist->email;
+
+        return back()->with('status', "Contul specialistului {$displayName} a fost sters.");
+    }
+
     public function approveArticle(Request $request, int $articleId): RedirectResponse
     {
         $superadmin = $this->requireSuperadminSession($request);

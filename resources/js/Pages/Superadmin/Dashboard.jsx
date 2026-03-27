@@ -264,6 +264,18 @@ export default function SuperadminDashboard({
         });
     };
 
+    const deletePsychologist = (application) => {
+        const specialistLabel = application.name || application.email || `#${application.psychologist_id}`;
+
+        if (!window.confirm(`Esti sigur ca vrei sa stergi contul specialistului ${specialistLabel}? Actiunea este definitiva.`)) {
+            return;
+        }
+
+        router.delete(route('superadmin.psychologists.destroy', application.psychologist_id), {
+            preserveScroll: true,
+        });
+    };
+
     return (
         <>
             <Head title="Dashboard Superadmin - Calming" />
@@ -374,6 +386,13 @@ export default function SuperadminDashboard({
                                                                         onClick={() => openMessageModal(application)}
                                                                     >
                                                                         Mesaj
+                                                                    </button>
+                                                                    <button
+                                                                        className="status-pill status-pill--danger superadmin-pill-compact"
+                                                                        type="button"
+                                                                        onClick={() => deletePsychologist(application)}
+                                                                    >
+                                                                        Sterge cont
                                                                     </button>
                                                                 </div>
                                                             </td>

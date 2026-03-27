@@ -1368,7 +1368,7 @@ main {
           background: transparent;
         }
         .assistant-body .assistant-form {
-          margin-top: auto;
+          margin-top: 15px;
           margin-bottom: 15px;
         }
         .assistant-form .form-input {

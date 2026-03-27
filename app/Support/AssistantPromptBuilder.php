@@ -48,6 +48,10 @@ class AssistantPromptBuilder
             $parts[] = 'Interval de varsta: '.$profile['age_range'].'.';
         }
 
+        if (! empty($profile['display_name'])) {
+            $parts[] = 'Numele utilizatorului este: '.$profile['display_name'].'.';
+        }
+
         if ($focusTopics !== '') {
             $parts[] = 'Arii de interes: '.$focusTopics.'.';
         }

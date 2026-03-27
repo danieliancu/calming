@@ -343,7 +343,7 @@ export default function Assistant() {
             return;
         }
 
-        router.visit('/profile?edit=1', { preserveScroll: true });
+        router.visit('/profile?edit=1&returnTo=%2Fassistant', { preserveScroll: true });
     }, [guestMode]);
 
     const handleModeSelect = useCallback((mode) => {

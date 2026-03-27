@@ -64,6 +64,7 @@ Route::post('/superadmin/validation-applications/{applicationId}/approve', [Supe
 Route::post('/superadmin/validation-applications/{applicationId}/reject', [SuperadminController::class, 'rejectValidationApplication'])->name('superadmin.validation.reject');
 Route::post('/superadmin/validation-applications/{applicationId}/messages', [SuperadminController::class, 'storeValidationMessage'])->name('superadmin.validation.messages.store');
 Route::delete('/superadmin/validation-applications/{applicationId}/messages/{messageId}', [SuperadminController::class, 'destroyValidationMessage'])->name('superadmin.validation.messages.destroy');
+Route::delete('/superadmin/psychologists/{psychologistId}', [SuperadminController::class, 'destroyPsychologist'])->name('superadmin.psychologists.destroy');
 Route::post('/superadmin/articles/{articleId}/approve', [SuperadminController::class, 'approveArticle'])->name('superadmin.articles.approve');
 Route::post('/superadmin/articles/{articleId}/reject', [SuperadminController::class, 'rejectArticle'])->name('superadmin.articles.reject');
 Route::post('/superadmin/community-groups/{groupId}/approve', [SuperadminController::class, 'approveCommunityGroup'])->name('superadmin.community-groups.approve');
