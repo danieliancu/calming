@@ -1,10 +1,10 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { clearGuestArticleReminder, recordGuestArticleView, setGuestArticleReminder, toggleGuestSavedArticle } from '@/lib/guestActivity';
+import { recordGuestArticleView } from '@/lib/guestActivity';
 import { apiFetch } from '@/lib/http';
 import { Head, Link, router } from '@inertiajs/react';
 import { FiArrowLeft, FiBookmark, FiChevronRight, FiClock, FiShare2, FiUser } from '@/lib/icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function hasHtmlContent(value) {
     return /<\/?[a-z][\s\S]*>/i.test(value ?? '');
@@ -13,7 +13,6 @@ function hasHtmlContent(value) {
 export default function Article({ article, related }) {
     const { isAuthenticated, promptAuth, refreshAuth } = useAuth();
     const [saved, setSaved] = useState(Boolean(article?.is_saved));
-    const [reminderFrequency, setReminderFrequency] = useState(article?.reminder_frequency ?? null);
     const [busy, setBusy] = useState(false);
 
     useEffect(() => {
@@ -21,8 +20,6 @@ export default function Article({ article, related }) {
             recordGuestArticleView({ id: article.id, slug: article.slug, title: article.title });
         }
     }, [article?.id, article?.slug, article?.title]);
-
-    const reminderLabel = useMemo(() => reminderFrequency ? `Reminder ${reminderFrequency}` : 'Seteaza reminder lunar', [reminderFrequency]);
 
     if (!article) {
         return null;
@@ -53,65 +50,23 @@ export default function Article({ article, related }) {
             return;
         }
 
-        setBusy(true);
-        try {
-            if (isAuthenticated) {
-                if (saved) {
-                    await apiFetch(`/api/articles/${article.id}/save`, { method: 'DELETE' });
-                    setSaved(false);
-                } else {
-                    await apiFetch(`/api/articles/${article.id}/save`, { method: 'POST' });
-                    setSaved(true);
-                    await refreshAuth();
-                }
-            } else {
-                setSaved(toggleGuestSavedArticle({ id: article.id, slug: article.slug, title: article.title }, !saved));
-            }
-        } catch (error) {
-            if (!isAuthenticated && !saved) {
-                promptAuth();
-            }
-        } finally {
-            setBusy(false);
-        }
-    };
-
-    const handleReminder = async () => {
-        if (busy) {
+        if (!isAuthenticated) {
+            promptAuth();
             return;
         }
 
         setBusy(true);
         try {
-            if (isAuthenticated) {
-                if (reminderFrequency) {
-                    await apiFetch(`/api/articles/${article.id}/reminder`, { method: 'DELETE' });
-                    setReminderFrequency(null);
-                } else {
-                    const payload = await apiFetch(`/api/articles/${article.id}/reminder`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ frequency: 'monthly' }),
-                    });
-                    setReminderFrequency(payload.frequency ?? 'monthly');
-                    setSaved(true);
-                    await refreshAuth();
-                }
+            if (saved) {
+                await apiFetch(`/api/articles/${article.id}/save`, { method: 'DELETE' });
+                setSaved(false);
             } else {
-                if (reminderFrequency) {
-                    clearGuestArticleReminder(article.id);
-                    setReminderFrequency(null);
-                } else {
-                    setGuestArticleReminder({ id: article.id, slug: article.slug, title: article.title }, 'monthly');
-                    toggleGuestSavedArticle({ id: article.id, slug: article.slug, title: article.title }, true);
-                    setSaved(true);
-                    setReminderFrequency('monthly');
-                }
+                await apiFetch(`/api/articles/${article.id}/save`, { method: 'POST' });
+                setSaved(true);
+                await refreshAuth();
             }
         } catch (error) {
-            if (!isAuthenticated) {
-                promptAuth();
-            }
+            console.error('Article save failed', error);
         } finally {
             setBusy(false);
         }
@@ -180,9 +135,6 @@ export default function Article({ article, related }) {
                 <div className="grid grid-single u-gap-2-5 u-mt-4">
                     <button className="btn primary pill full" type="button" onClick={handleSave} disabled={busy}>
                         {saved ? 'Articol salvat' : 'Save article'}
-                    </button>
-                    <button className="btn pill full" type="button" onClick={handleReminder} disabled={busy}>
-                        {reminderLabel}
                     </button>
                 </div>
             </div>

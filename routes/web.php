@@ -20,6 +20,7 @@ Route::get('/profile', [CalmPageController::class, 'profile'])->name('product.pr
 Route::get('/settings', [CalmPageController::class, 'settings'])->name('settings');
 Route::get('/assistant', [CalmPageController::class, 'assistant'])->name('assistant');
 Route::get('/journal', [CalmPageController::class, 'journal'])->name('journal');
+Route::get('/favorite-articles', [CalmPageController::class, 'favoriteArticles'])->name('favorite-articles');
 Route::get('/psychologists', [CalmPageController::class, 'psychologists'])->name('psychologists');
 Route::get('/psychologists/signup', [PsychologistController::class, 'signupPage'])->name('psychologists.signup');
 Route::post('/psychologists/signup', [PsychologistController::class, 'signup'])->name('psychologists.signup.store');

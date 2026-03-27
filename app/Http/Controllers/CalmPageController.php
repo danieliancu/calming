@@ -422,6 +422,41 @@ class CalmPageController extends Controller
         ]);
     }
 
+    public function favoriteArticles(Request $request): Response
+    {
+        $user = $request->user();
+
+        return Inertia::render('FavoriteArticles', [
+            'articles' => $user
+                ? DB::table('saved_articles as sa')
+                    ->join('articles as a', 'a.id', '=', 'sa.article_id')
+                    ->leftJoin('psychologists as p', 'p.id', '=', 'a.author')
+                    ->where('sa.user_id', $user->id)
+                    ->where('sa.status', 'active')
+                    ->orderByDesc('sa.saved_at')
+                    ->select(
+                        'a.id',
+                        'a.slug',
+                        'a.title',
+                        'a.hero_image',
+                        'sa.saved_at',
+                        'p.title as author_title',
+                        'p.name as author_name',
+                        'p.surname as author_surname'
+                    )
+                    ->get()
+                    ->map(fn ($article) => [
+                        'id' => $article->id,
+                        'slug' => $article->slug,
+                        'title' => $article->title,
+                        'hero_image' => $article->hero_image,
+                        'saved_at' => $this->serializeDateValue($article->saved_at),
+                        'author' => trim(collect([$article->author_title, $article->author_name, $article->author_surname])->filter()->implode(' ')) ?: 'Specialist Calming',
+                    ])
+                : [],
+        ]);
+    }
+
     public function assistant(Request $request): Response
     {
         if ($request->user()) {

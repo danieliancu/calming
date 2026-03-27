@@ -4,7 +4,7 @@ import SignOutAction from '@/Components/SignOutAction';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildGuestMilestones, getGuestState } from '@/lib/guestActivity';
 import { formatAppointmentStatus, formatPaymentStatus, partitionAppointments, REMINDER_OPTIONS } from '@/lib/appointments';
-import { FiActivity, FiAward, FiChevronRight, ICON_BY_NAME } from '@/lib/icons';
+import { FiActivity, FiAward, FiChevronRight, FiEdit2, ICON_BY_NAME } from '@/lib/icons';
 import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -191,6 +191,9 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
             <main className="profile-layout">
                 <section className="card accent profile-card" style={{ marginTop:"-30px" }}>
                     <div className="profile-header">
+                        <button type="button" className="btn profile-edit profile-edit-icon" onClick={() => setEditOpen(true)} aria-label="Editeaza profilul">
+                            <FiEdit2 />
+                        </button>
                         <div className="profile-ident">
                             <div className="avatar">{profileData?.avatar_initials ?? 'NA'}</div>
                             <div>
@@ -200,7 +203,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                                 </div>
                             </div>
                         </div>
-                        <button type="button" className="btn profile-edit" onClick={() => setEditOpen(true)}>Editeaza</button>
+                        <button type="button" className="btn profile-edit profile-edit-text" onClick={() => setEditOpen(true)}>Editeaza</button>
                     </div>
 
                     <div className="muted">
@@ -274,12 +277,26 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                             </div>
                         ) : null}
 
-                        {infoLinks.filter((link) => link.label !== 'Sesiuni programate').map((link) => (
-                            <button className="info-item" key={link.id} type="button">
-                                <span>{link.label}</span>
-                                <FiChevronRight aria-hidden />
-                            </button>
-                        ))}
+                        {infoLinks.filter((link) => link.label !== 'Sesiuni programate').map((link) => {
+                            const isFavoriteArticles = link.label === 'Despre tine';
+                            const label = isFavoriteArticles ? 'Articole favorite' : link.label;
+
+                            if (isFavoriteArticles) {
+                                return (
+                                    <Link className="info-item" key={link.id} href={route('favorite-articles')}>
+                                        <span>{label}</span>
+                                        <FiChevronRight aria-hidden />
+                                    </Link>
+                                );
+                            }
+
+                            return (
+                                <button className="info-item" key={link.id} type="button">
+                                    <span>{label}</span>
+                                    <FiChevronRight aria-hidden />
+                                </button>
+                            );
+                        })}
                     </div>
                 </section>
 
