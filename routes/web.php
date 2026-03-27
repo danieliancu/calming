@@ -55,6 +55,7 @@ Route::post('/psychologists/dashboard/appointments/{appointmentId}/reminder', [P
 Route::post('/psychologists/dashboard/articles', [PsychologistController::class, 'storeArticle'])->name('psychologists.articles.store');
 Route::put('/psychologists/dashboard/articles/{articleId}', [PsychologistController::class, 'updateArticle'])->name('psychologists.articles.update');
 Route::delete('/psychologists/dashboard/articles/{articleId}', [PsychologistController::class, 'destroyArticle'])->name('psychologists.articles.destroy');
+Route::get('/psychologists/{slug}', [CalmPageController::class, 'psychologistProfile'])->name('psychologists.show');
 Route::get('/superadmin/signin', [SuperadminController::class, 'signinPage'])->name('superadmin.signin');
 Route::post('/superadmin/signin', [SuperadminController::class, 'signin'])->name('superadmin.signin.store');
 Route::post('/superadmin/signout', [SuperadminController::class, 'signout'])->name('superadmin.signout');

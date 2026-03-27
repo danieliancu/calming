@@ -11,6 +11,7 @@ import {
     FaChartSimple,
     FaChevronRight,
     FaCircleCheck,
+    FaCircleInfo,
     FaCircleQuestion,
     FaClock,
     FaComments,
@@ -83,6 +84,7 @@ export const FiGrid = FaTableCellsLarge;
 export const FiHelpCircle = FaCircleQuestion;
 export const FiHeart = FaHeart;
 export const FiHome = FaHouse;
+export const FiInfo = FaCircleInfo;
 export const FiItalic = FaItalic;
 export const FiLayers = FaLayerGroup;
 export const FiList = FaListUl;

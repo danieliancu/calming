@@ -3,7 +3,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import SignOutAction from '@/Components/SignOutAction';
 import { Head, Link, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
-import { FiCheck, FiClock, FiMail, FiMapPin, FiPhone, FiSearch, FiSend } from '@/lib/icons';
+import { FiCheck, FiClock, FiInfo, FiMail, FiMapPin, FiPhone, FiSearch, FiSend } from '@/lib/icons';
 
 export default function Psychologists({ psychologists, activePsychologist }) {
     const [q, setQ] = useState('');
@@ -122,6 +122,11 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                 </div>
                                 {p.validationStatus === 1 ? (
                                     <div className="psychologists-actions">
+                                        {p.slug ? (
+                                            <Link className="btn icon-only" href={route('psychologists.show', p.slug)} aria-label={`Detalii despre ${displayName}`}>
+                                                <FiInfo />
+                                            </Link>
+                                        ) : null}
                                         {phoneHref ? (
                                             <a className="btn icon-only" href={phoneHref} aria-label={`Suna ${displayName}`}>
                                                 <FiPhone />

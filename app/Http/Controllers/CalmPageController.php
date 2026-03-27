@@ -557,6 +557,79 @@ class CalmPageController extends Controller
         ]);
     }
 
+    public function psychologistProfile(string $slug): Response|\Illuminate\Http\RedirectResponse
+    {
+        $psychologist = DB::table('psychologists as p')
+            ->leftJoin('psychologists_address as pa', 'pa.psychologist_id', '=', 'p.id')
+            ->leftJoin('psychologist_individual_profiles as pip', 'pip.psychologist_id', '=', 'p.id')
+            ->leftJoin('psychologist_validation_applications as pva', 'pva.psychologist_id', '=', 'p.id')
+            ->where('p.slug', $slug)
+            ->where('pva.status', 'approved')
+            ->select(
+                'p.id',
+                'p.slug',
+                'p.title',
+                'p.name',
+                'p.surname',
+                'p.supports_online',
+                'p.phone',
+                'p.email',
+                'pa.address',
+                'pa.city',
+                'pa.county',
+                'pip.public_bio',
+                'pip.clinical_competencies'
+            )
+            ->first();
+
+        if (! $psychologist) {
+            return redirect()->route('psychologists')->with('status', 'Specialistul cautat nu este disponibil.');
+        }
+
+        $specialties = DB::table('psychologist_specialties')
+            ->where('psychologist_id', $psychologist->id)
+            ->orderBy('id')
+            ->pluck('label')
+            ->map(fn ($label) => $this->sanitizeProfessionalText($label))
+            ->filter()
+            ->values()
+            ->all();
+
+        $details = collect([
+            [
+                'label' => 'Specializari',
+                'values' => $specialties,
+            ],
+            [
+                'label' => 'Descriere profesionala',
+                'value' => $this->sanitizeProfessionalText($psychologist->public_bio),
+            ],
+            [
+                'label' => 'Competente clinice',
+                'value' => $this->sanitizeProfessionalText($psychologist->clinical_competencies),
+            ],
+        ])->filter(fn ($item) => ! empty($item['value'] ?? null) || ! empty($item['values'] ?? []))
+            ->values()
+            ->all();
+
+        return Inertia::render('PsychologistProfile', [
+            'psychologist' => [
+                'id' => $psychologist->id,
+                'slug' => $psychologist->slug,
+                'title' => $psychologist->title,
+                'name' => $psychologist->name,
+                'surname' => $psychologist->surname,
+                'supports_online' => (bool) $psychologist->supports_online,
+                'phone' => $psychologist->phone,
+                'email' => $psychologist->email,
+                'address' => $psychologist->address,
+                'city' => $psychologist->city,
+                'county' => $psychologist->county,
+                'details' => $details,
+            ],
+        ]);
+    }
+
     public function appointments(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $slug = (string) $request->query('psychologist', '');
@@ -999,5 +1072,16 @@ class CalmPageController extends Controller
         $wordCount = str_word_count($text);
 
         return max(1, min(240, (int) ceil($wordCount / 200)));
+    }
+
+    protected function sanitizeProfessionalText(?string $value): ?string
+    {
+        $normalized = trim(preg_replace('/\s+/', ' ', (string) $value));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        return preg_match('/\d/', $normalized) ? null : $normalized;
     }
 }

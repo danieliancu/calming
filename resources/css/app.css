@@ -1198,7 +1198,6 @@ main {
           display: grid;
           grid-template-rows: auto minmax(0, 1fr);
           align-content: start;
-          gap: var(--space-4);
           min-height: 0;
           width: 100%;
           max-width: 860px;
@@ -3600,6 +3599,57 @@ main.community-container {
   gap: var(--space-2);
 }
 
+.psychologist-detail-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.psychologist-detail-card {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.psychologist-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.psychologist-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.psychologist-detail-sections {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.psychologist-detail-section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.psychologist-detail-label {
+  font-weight: 700;
+  color: var(--text-900);
+}
+
+.psychologist-detail-copy {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.psychologist-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -3659,6 +3709,10 @@ main.community-container {
 
   .psychologists-actions {
     flex-direction: row-reverse;
+  }
+
+  .psychologist-detail-actions {
+    flex-direction: row;
   }
 }
 
