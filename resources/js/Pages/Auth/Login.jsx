@@ -49,10 +49,12 @@ export default function Login({ status, canResetPassword, redirectTo = null }) {
                                 {form.processing ? 'Se conecteaza...' : 'Conecteaza-te'}
                             </button>
                         </form>
-                        <div className="auth-footer u-mt-3">
+                        <div className="auth-footer auth-footer--split u-mt-3">
                             {canResetPassword ? <Link className="link-button" href={route('password.request')}>Ai uitat parola?</Link> : null}
+                            <p className="muted auth-inline-text">
+                                Nu ai cont? <Link href={route('register', redirectTo ? { redirectTo } : {})}>Creeaza unul aici</Link>.
+                            </p>
                         </div>
-                        <p className="muted u-mt-3">Nu ai cont? <Link href={route('register', redirectTo ? { redirectTo } : {})}>Creeaza unul aici</Link>.</p>
                     </section>
                 </div>
             </div>

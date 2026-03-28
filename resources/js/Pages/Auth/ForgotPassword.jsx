@@ -1,55 +1,62 @@
-import InputError from '@/Components/InputError';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export default function ForgotPassword({ status }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const form = useForm({
         email: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
-
-        post(route('password.email'));
+    const submit = (event) => {
+        event.preventDefault();
+        form.post(route('password.email'));
     };
 
+    useEffect(() => {
+        document.body.classList.add('auth-page');
+        return () => document.body.classList.remove('auth-page');
+    }, []);
+
     return (
-        <GuestLayout>
-            <Head title="Forgot Password" />
-
-            <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Forgot your password? No problem. Just let us know your email
-                address and we will email you a password reset link that will
-                allow you to choose a new one.
+        <>
+            <Head title="Recuperare parola - Calming" />
+            <div className="auth-screen auth-screen--recovery">
+                <div className="auth-shell">
+                    <div>
+                        <Link href="/" className="brand"><span className="brand-mark" /> Calming</Link>
+                        <section className="card auth-card auth-card--recovery">
+                            <div className="section-title">Trimite link de resetare</div>
+                            <p className="muted">
+                                Dupa trimitere, verifica inboxul si folderul spam.
+                            </p>
+                            {status ? <div className="info u-mt-3">{status}</div> : null}
+                            {form.errors.email ? <div className="error u-mt-3">{form.errors.email}</div> : null}
+                            <form className="auth-form u-mt-4" onSubmit={submit}>
+                                <label className="auth-field">
+                                    <span>Email</span>
+                                    <input
+                                        type="email"
+                                        value={form.data.email}
+                                        onChange={(event) => form.setData('email', event.target.value)}
+                                        required
+                                        autoFocus
+                                        autoComplete="email"
+                                        placeholder="nume@exemplu.ro"
+                                    />
+                                </label>
+                                <button className="btn primary u-mt-2" type="submit" disabled={form.processing}>
+                                    {form.processing ? 'Se trimite...' : 'Trimite emailul de resetare'}
+                                </button>
+                            </form>
+                            <div className="auth-footer auth-footer--split u-mt-4">
+                                <p className="small-text">Ti-ai amintit parola?</p>
+                                <Link className="link-button" href={route('login')}>
+                                    Inapoi la autentificare
+                                </Link>
+                            </div>
+                        </section>
+                    </div>
+                </div>
             </div>
-
-            {status && (
-                <div className="mb-4 text-sm font-medium text-green-600 dark:text-green-400">
-                    {status}
-                </div>
-            )}
-
-            <form onSubmit={submit}>
-                <TextInput
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={data.email}
-                    className="mt-1 block w-full"
-                    isFocused={true}
-                    onChange={(e) => setData('email', e.target.value)}
-                />
-
-                <InputError message={errors.email} className="mt-2" />
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Email Password Reset Link
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+        </>
     );
 }
