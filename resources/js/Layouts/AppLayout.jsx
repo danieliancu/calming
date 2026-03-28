@@ -577,13 +577,15 @@ function Footer() {
                         <li><Link href="/learn">Biblioteca</Link></li>
                         <li><Link href="/community">Comunitate</Link></li>
                         <li><Link href="/psychologists">Programari</Link></li>
+                        <li><a href="mailto:contact@calming.ro">Contact</a></li>
                     </ul>
                 </div>
                 <div>
                     <div className="footer-title">Legal</div>
                     <ul>
-                        <li><a href="#">Termeni &amp; Confidentialitate</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><Link href={route('legal.show', 'termeni-si-conditii')}>Termeni si Conditii</Link></li>
+                        <li><Link href={route('legal.show', 'confidentialitate')}>Confidentialitate</Link></li>
+                        <li><Link href={route('legal.show', 'cookies')}>Cookies</Link></li>
                     </ul>
                 </div>
             </div>

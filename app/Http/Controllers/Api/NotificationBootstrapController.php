@@ -21,6 +21,17 @@ class NotificationBootstrapController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $userId = $request->user()?->id;
+        $notificationsEnabled = $request->user()
+            ? (bool) ($request->user()->notifications_enabled ?? true)
+            : (bool) $request->session()->get('notifications_enabled', true);
+
+        if (! $notificationsEnabled) {
+            return response()->json([
+                'publicNotifications' => [],
+                'unreadCount' => 0,
+            ]);
+        }
+
         if ($request->user()) {
             $this->assistant->syncNotificationsForUser($request->user());
         }

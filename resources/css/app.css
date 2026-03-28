@@ -566,6 +566,125 @@ main {
   font-size: 14px;
 }
 
+.footer-legal-company {
+  margin-top: var(--space-4);
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-700);
+}
+
+.legal-page {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-7) 0;
+}
+
+.legal-hero {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.legal-eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(74, 144, 226, 0.12);
+  color: var(--primary-700);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legal-title {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.05;
+  color: var(--text-900);
+}
+
+.legal-description,
+.legal-meta {
+  margin: 0;
+}
+
+.legal-description {
+  max-width: 68ch;
+  color: var(--text-700);
+  line-height: 1.65;
+}
+
+.legal-meta {
+  font-size: 14px;
+  color: var(--text-500);
+}
+
+.legal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.legal-content {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.legal-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.legal-section h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--text-900);
+}
+
+.legal-section p {
+  margin: 0;
+  color: var(--text-700);
+  line-height: 1.75;
+}
+
+.legal-sidebar {
+  display: grid;
+  gap: var(--space-3);
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-4));
+}
+
+.legal-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.legal-nav a {
+  color: var(--primary-600);
+  font-weight: 600;
+}
+
+.legal-nav a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 960px) {
+  .legal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .legal-sidebar {
+    position: static;
+  }
+}
+
 @media (max-width: 768px) {
   .footer-grid {
     grid-template-columns: 1fr;
@@ -915,11 +1034,23 @@ main {
   cursor: pointer;
 }
 
+.search-card-sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-4));
+  z-index: 25;
+  display: block;
+  margin-top: var(--space-4);
+  padding-bottom: var(--space-3);
+  background: linear-gradient(to bottom, var(--bg) 0%, var(--bg) 78%, rgba(245, 248, 252, 0) 100%);
+  isolation: isolate;
+}
+
 .search-card {
   position: relative;
-  background: none;
-    padding: 0;
-    border: none;
+  background: var(--surface);
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .search-card__icon {

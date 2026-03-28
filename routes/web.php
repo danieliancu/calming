@@ -18,6 +18,9 @@ Route::get('/community/{groupSlug}/conversatii', [CalmPageController::class, 'co
 Route::get('/notifications', [CalmPageController::class, 'notifications'])->name('notifications');
 Route::get('/profile', [CalmPageController::class, 'profile'])->name('product.profile');
 Route::get('/settings', [CalmPageController::class, 'settings'])->name('settings');
+Route::get('/legal/{slug}', [CalmPageController::class, 'legalPage'])->name('legal.show');
+Route::get('/tehnic', [CalmPageController::class, 'technical'])->name('technical');
+Route::get('/help', [CalmPageController::class, 'help'])->name('help');
 Route::get('/assistant', [CalmPageController::class, 'assistant'])->name('assistant');
 Route::get('/journal', [CalmPageController::class, 'journal'])->name('journal');
 Route::get('/favorite-articles', [CalmPageController::class, 'favoriteArticles'])->name('favorite-articles');

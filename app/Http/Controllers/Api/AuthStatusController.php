@@ -23,11 +23,13 @@ class AuthStatusController extends Controller
             $generalCount = $this->notifications->unreadCountFor(null);
 
             if (! $user) {
+                $guestNotificationsEnabled = (bool) $request->session()->get('notifications_enabled', true);
+
                 return response()->json([
                     'userId' => null,
                     'initials' => null,
                     'name' => null,
-                    'newNotifications' => $generalCount,
+                    'newNotifications' => $guestNotificationsEnabled ? $generalCount : 0,
                 ]);
             }
 
@@ -38,7 +40,7 @@ class AuthStatusController extends Controller
                 'initials' => $profile->avatar_initials ?? null,
                 'name' => $profile->display_name ?? $user->name,
                 'firstName' => $user->first_name ?: str($user->name)->before(' ')->toString(),
-                'newNotifications' => $this->notifications->unreadCountFor($user->id),
+                'newNotifications' => $user->notifications_enabled ? $this->notifications->unreadCountFor($user->id) : 0,
             ]);
         } catch (\Throwable $error) {
             report($error);

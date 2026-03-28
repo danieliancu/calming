@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CalmPageController extends Controller
 {
@@ -34,6 +35,10 @@ class CalmPageController extends Controller
 
     public function home(Request $request): Response
     {
+        $notificationsEnabled = $request->user()
+            ? (bool) ($request->user()->notifications_enabled ?? true)
+            : (bool) $request->session()->get('notifications_enabled', true);
+
         $recommendedArticles = DB::table('articles')
             ->select('slug', 'title', 'minutes', 'body')
             ->where('is_recommended', 1)
@@ -56,11 +61,14 @@ class CalmPageController extends Controller
             ->orderBy('messages.sort_order')
             ->get()
             ->groupBy('group_id');
-        $feed = collect($this->notifications->serializeFeed(
-            $this->notifications->feedFor($request->user()?->id),
-            []
-        ));
-        $latestNotification = $feed->first() ?: collect($this->notificationDigest->defaultGuestNotifications())->first();
+        $feed = $notificationsEnabled
+            ? collect($this->notifications->serializeFeed(
+                $this->notifications->feedFor($request->user()?->id),
+                []
+            ))
+            : collect();
+        $latestNotification = $feed->first()
+            ?: ($notificationsEnabled ? collect($this->notificationDigest->defaultGuestNotifications())->first() : null);
 
         return Inertia::render('Home', [
             'moodOptions' => DB::table('mood_options')->select('id', 'label', 'emoji')->orderBy('id')->get(),
@@ -364,15 +372,22 @@ class CalmPageController extends Controller
 
     public function notifications(Request $request): Response
     {
-        $notifications = $this->notifications->serializeFeed(
-            $this->notifications->feedFor($request->user()?->id),
-            []
-        );
+        $notificationsEnabled = $request->user()
+            ? (bool) ($request->user()->notifications_enabled ?? true)
+            : (bool) $request->session()->get('notifications_enabled', true);
+
+        $notifications = $notificationsEnabled
+            ? $this->notifications->serializeFeed(
+                $this->notifications->feedFor($request->user()?->id),
+                []
+            )
+            : [];
 
         return Inertia::render('Notifications', [
             'notifications' => $notifications,
-            'guestDefaults' => $this->notificationDigest->defaultGuestNotifications(),
-            'unreadCount' => $this->notifications->unreadCountFor($request->user()?->id),
+            'guestDefaults' => $notificationsEnabled ? $this->notificationDigest->defaultGuestNotifications() : [],
+            'unreadCount' => $notificationsEnabled ? $this->notifications->unreadCountFor($request->user()?->id) : 0,
+            'notificationsEnabled' => $notificationsEnabled,
         ]);
     }
 
@@ -419,6 +434,57 @@ class CalmPageController extends Controller
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
             ] : config('calm.profile_demo'),
+        ]);
+    }
+
+    public function legalPage(string $slug): Response
+    {
+        $pages = $this->legalPages();
+        $page = $pages[$slug] ?? null;
+
+        if (! $page) {
+            throw new NotFoundHttpException();
+        }
+
+        return Inertia::render('Legal/Show', [
+            'slug' => $slug,
+            'eyebrow' => $page['eyebrow'] ?? 'Legal',
+            'title' => $page['title'],
+            'description' => $page['description'],
+            'updatedAt' => $page['updatedAt'],
+            'sections' => $page['sections'],
+            'company' => $page['company'],
+            'navItems' => $this->documentNavItems(includeHelp: true),
+        ]);
+    }
+
+    public function help(): Response
+    {
+        return Inertia::render('Legal/Show', [
+            'slug' => 'help',
+            'eyebrow' => 'Help',
+            'title' => 'Centru de ajutor',
+            'description' => 'Intrebari si raspunsuri despre paginile, functionalitatile si avantajele principale ale aplicatiei Calming.',
+            'updatedAt' => '28 martie 2026',
+            'sections' => $this->helpSections(),
+            'company' => null,
+            'navItems' => $this->documentNavItems(includeHelp: true),
+        ]);
+    }
+
+    public function technical(): Response
+    {
+        $page = $this->legalPages()['tehnic'];
+
+        return Inertia::render('Legal/Show', [
+            'slug' => 'tehnic',
+            'eyebrow' => $page['eyebrow'] ?? 'Tehnic',
+            'title' => $page['title'],
+            'description' => $page['description'],
+            'updatedAt' => $page['updatedAt'],
+            'sections' => $page['sections'],
+            'company' => $page['company'],
+            'navItems' => $this->documentNavItems(includeHelp: true),
         ]);
     }
 
@@ -1118,5 +1184,346 @@ class CalmPageController extends Controller
         }
 
         return preg_match('/\d/', $normalized) ? null : $normalized;
+    }
+
+    protected function legalPages(): array
+    {
+        $company = [
+            'name' => 'GREEN HORIZON CONCEPTS S.R.L.',
+            'cui' => '51006687',
+            'trade_register' => 'J2024047618008',
+            'address' => 'Municipiul Bucuresti, Sector 3, Str. Idealului, nr. 40',
+        ];
+
+        return [
+            'termeni-si-conditii' => [
+                'eyebrow' => 'Legal',
+                'title' => 'Termeni si Conditii',
+                'description' => 'Termenii si conditiile de utilizare pentru platforma Calming.',
+                'updatedAt' => '28 martie 2026',
+                'company' => $company,
+                'sections' => [
+                    [
+                        'heading' => '1. Despre platforma',
+                        'paragraphs' => [
+                            'Acest document reglementeaza accesul si utilizarea platformei Calming, operata de GREEN HORIZON CONCEPTS S.R.L. Platforma ofera continut informational, functii de suport digital, articole, comunitate si instrumente pentru organizarea interactiunii dintre utilizatori si specialisti.',
+                            'Prin accesarea sau utilizarea platformei, confirmi ca ai citit si accepti acesti termeni si conditii. Daca nu esti de acord cu continutul lor, nu utiliza serviciile disponibile in platforma.',
+                        ],
+                    ],
+                    [
+                        'heading' => '2. Rolul platformei',
+                        'paragraphs' => [
+                            'Calming este o platforma digitala care faciliteaza accesul la resurse de informare si la servicii oferite de specialisti. Platforma nu inlocuieste serviciile medicale de urgenta, evaluarea clinica individuala sau relatia profesionala directa dintre utilizator si specialist.',
+                            'Informatiile disponibile in aplicatie au scop orientativ si educational. Pentru situatii urgente sau riscuri imediate pentru sanatate ori siguranta, utilizatorul trebuie sa contacteze de urgenta serviciile competente.',
+                        ],
+                    ],
+                    [
+                        'heading' => '3. Contul utilizatorului',
+                        'paragraphs' => [
+                            'Pentru accesul la anumite functii poate fi necesara crearea unui cont. Utilizatorul este responsabil pentru corectitudinea datelor furnizate, securitatea credentialelor si utilizarea contului in conformitate cu legea si cu prezentii termeni.',
+                            'Este interzisa folosirea identitatii altei persoane, distribuirea neautorizata a datelor de acces sau utilizarea platformei pentru activitati frauduloase, abuzive ori contrare scopului ei.',
+                        ],
+                    ],
+                    [
+                        'heading' => '4. Programari, continut si interactiuni',
+                        'paragraphs' => [
+                            'Programarile, mesajele, reminderele si alte functionalitati sunt oferite in masura disponibilitatii tehnice a platformei. Calming poate modifica, suspenda sau actualiza functii, formulare sau fluxuri de lucru pentru a mentine securitatea si functionarea serviciului.',
+                            'Utilizatorii trebuie sa foloseasca limbaj adecvat si sa nu publice ori transmita continut ilegal, ofensator, defaimator, amenintator, discriminatoriu sau care incalca drepturile altor persoane.',
+                        ],
+                    ],
+                    [
+                        'heading' => '5. Drepturi de proprietate intelectuala',
+                        'paragraphs' => [
+                            'Designul platformei, textele, elementele grafice, structura, marcile, bazele de date si alte materiale disponibile in platforma sunt protejate de legislatia aplicabila privind drepturile de autor si proprietatea intelectuala.',
+                            'Fara acordul scris al operatorului, este interzisa copierea, republicarea, distribuirea, comercializarea sau reutilizarea substantiala a continutului platformei in alte scopuri decat folosirea personala, legala si necomerciala.',
+                        ],
+                    ],
+                    [
+                        'heading' => '6. Limitarea raspunderii',
+                        'paragraphs' => [
+                            'Platforma este furnizata asa cum este si in limita disponibilitatii sale tehnice. Desi sunt depuse eforturi rezonabile pentru actualitate, securitate si functionare, operatorul nu garanteaza lipsa absoluta a erorilor, intreruperilor sau indisponibilitatii temporare.',
+                            'Operatorul nu raspunde pentru prejudicii indirecte, pierderi de date, pierderi comerciale sau consecinte rezultate din utilizarea improprie a platformei ori din decizii luate exclusiv pe baza informatiilor publicate in aplicatie.',
+                        ],
+                    ],
+                    [
+                        'heading' => '7. Suspendare si incetare',
+                        'paragraphs' => [
+                            'Accesul la cont sau la anumite functii poate fi limitat, suspendat sau inchis daca exista suspiciuni rezonabile de utilizare abuziva, frauda, incalcare a legii, incalcare a prezentilor termeni ori afectare a securitatii platformei.',
+                        ],
+                    ],
+                    [
+                        'heading' => '8. Lege aplicabila si contact',
+                        'paragraphs' => [
+                            'Acesti termeni sunt guvernati de legislatia romana. Pentru intrebari legate de prezentul document sau de utilizarea platformei, ne poti contacta folosind datele societatii mentionate mai jos.',
+                        ],
+                    ],
+                ],
+            ],
+            'confidentialitate' => [
+                'eyebrow' => 'Legal',
+                'title' => 'Confidentialitate',
+                'description' => 'Informatii privind prelucrarea datelor cu caracter personal in platforma Calming.',
+                'updatedAt' => '28 martie 2026',
+                'company' => $company,
+                'sections' => [
+                    [
+                        'heading' => '1. Operatorul datelor',
+                        'paragraphs' => [
+                            'GREEN HORIZON CONCEPTS S.R.L. actioneaza ca operator de date pentru prelucrarile efectuate prin platforma Calming, in masura in care stabileste scopurile si mijloacele prelucrarii datelor cu caracter personal ale utilizatorilor.',
+                        ],
+                    ],
+                    [
+                        'heading' => '2. Ce date putem prelucra',
+                        'paragraphs' => [
+                            'In functie de modul in care folosesti platforma, putem prelucra date de identificare si contact, date de cont, preferinte de utilizare, continut introdus de utilizator, date tehnice despre dispozitiv si interactiuni legate de notificari, articole, comunitate, programari si asistenta digitala.',
+                            'Nu solicitam mai multe date decat sunt necesare pentru furnizarea functionalitatilor active in platforma si pentru respectarea obligatiilor legale aplicabile.',
+                        ],
+                    ],
+                    [
+                        'heading' => '3. Scopurile prelucrarii',
+                        'paragraphs' => [
+                            'Prelucram date pentru crearea si administrarea contului, oferirea functionalitatilor platformei, personalizarea experientei, gestionarea notificarilor, organizarea programarilor, securitate, suport tehnic, prevenirea abuzurilor si imbunatatirea serviciilor.',
+                            'In anumite situatii, prelucrarea este necesara pentru executarea relatiei contractuale, pentru respectarea obligatiilor legale sau pentru interese legitime precum securitatea si functionarea platformei.',
+                        ],
+                    ],
+                    [
+                        'heading' => '4. Temeiurile legale',
+                        'paragraphs' => [
+                            'Prelucrarea se poate baza, dupa caz, pe executarea unui contract, consimtamant, obligatii legale sau interes legitim. Atunci cand un anumit flux necesita consimtamant, acesta poate fi retras pentru viitor in conditiile legii si in limitele tehnice ale serviciului.',
+                        ],
+                    ],
+                    [
+                        'heading' => '5. Cui putem divulga date',
+                        'paragraphs' => [
+                            'Datele pot fi accesate de personal autorizat, furnizori de servicii tehnice, parteneri implicati in functionarea platformei sau autoritati competente, numai in masura necesara si cu masuri adecvate de confidentialitate si securitate.',
+                            'Nu vindem datele personale ale utilizatorilor si nu le folosim in afara scopurilor rezonabile asociate functionarii serviciului.',
+                        ],
+                    ],
+                    [
+                        'heading' => '6. Durata stocarii',
+                        'paragraphs' => [
+                            'Datele sunt pastrate pe durata necesara scopurilor pentru care au fost colectate, pe durata existentei contului sau pentru perioadele impuse de lege, dupa caz. La expirarea acestor perioade, datele sunt sterse, anonimizate sau arhivate conform cerintelor legale.',
+                        ],
+                    ],
+                    [
+                        'heading' => '7. Drepturile tale',
+                        'paragraphs' => [
+                            'Ai dreptul de acces, rectificare, stergere, restrictionare, opozitie, portabilitate, precum si dreptul de a depune plangere la autoritatea competenta, in conditiile legislatiei aplicabile privind protectia datelor.',
+                            'Pentru exercitarea acestor drepturi, ne poti contacta folosind datele societatii mentionate pe aceasta pagina.',
+                        ],
+                    ],
+                    [
+                        'heading' => '8. Securitate',
+                        'paragraphs' => [
+                            'Aplicam masuri tehnice si organizatorice rezonabile pentru protejarea datelor, inclusiv controale de acces, segregarea rolurilor si monitorizarea functionarii sistemului. Nicio masura nu poate garanta securitate absoluta, insa urmarim reducerea riscurilor la un nivel adecvat.',
+                        ],
+                    ],
+                ],
+            ],
+            'cookies' => [
+                'eyebrow' => 'Legal',
+                'title' => 'Cookies',
+                'description' => 'Informatii despre modulele cookie si tehnologiile similare folosite de platforma Calming.',
+                'updatedAt' => '28 martie 2026',
+                'company' => $company,
+                'sections' => [
+                    [
+                        'heading' => '1. Ce sunt cookie-urile',
+                        'paragraphs' => [
+                            'Cookie-urile sunt fisiere de mici dimensiuni sau tehnologii similare care pot fi stocate pe dispozitivul utilizatorului pentru a sustine functionarea platformei, memorarea preferintelor si analiza utilizarii serviciului.',
+                        ],
+                    ],
+                    [
+                        'heading' => '2. Ce tipuri de cookie-uri putem folosi',
+                        'paragraphs' => [
+                            'Putem utiliza cookie-uri strict necesare pentru autentificare, securitate, sesiune si functionarea esentiala a platformei.',
+                            'Putem utiliza si cookie-uri functionale pentru memorarea preferintelor, precum tema vizuala sau anumite setari de utilizare. In masura in care sunt utilizate tehnologii de analiza sau masurare, acestea au rolul de a imbunatati performanta si experienta generala in aplicatie.',
+                        ],
+                    ],
+                    [
+                        'heading' => '3. Scopurile utilizarii',
+                        'paragraphs' => [
+                            'Cookie-urile si tehnologiile similare ne ajuta sa mentinem sesiunea activa, sa securizam conturile, sa retinem optiuni precum limba si preferintele de notificare si sa intelegem modul in care sunt utilizate diferitele sectiuni ale platformei.',
+                        ],
+                    ],
+                    [
+                        'heading' => '4. Controlul cookie-urilor',
+                        'paragraphs' => [
+                            'Poti controla sau sterge cookie-urile din setarile browserului tau. Dezactivarea anumitor cookie-uri poate afecta functionarea unor elemente ale platformei, inclusiv autentificarea, preferintele memorate sau alte functionalitati dependente de sesiune.',
+                        ],
+                    ],
+                    [
+                        'heading' => '5. Actualizari',
+                        'paragraphs' => [
+                            'Aceasta politica poate fi actualizata periodic pentru a reflecta schimbari tehnice, legislative sau operationale. Te incurajam sa revii periodic pentru a verifica versiunea curenta.',
+                        ],
+                    ],
+                ],
+            ],
+            'tehnic' => [
+                'eyebrow' => 'Tehnic',
+                'title' => 'Date si stocare',
+                'description' => 'Informatii despre gazduire, securitate, stocare si masurile tehnice folosite de platforma Calming.',
+                'updatedAt' => '28 martie 2026',
+                'company' => $company,
+                'sections' => [
+                    [
+                        'heading' => '1. Gazduire si infrastructura',
+                        'paragraphs' => [
+                            'Platforma Calming este gazduita pe infrastructura VPS din Romania furnizata de ROMARG. Conform informatiilor publice publicate de furnizor pentru gama de servere VPS, infrastructura foloseste stocare NVMe si SSD, configuratii RAID 10, memorie DDR4, conectivitate uplink de 1000 Mbps si un centru de date Tier 3 cu uptime publicat de 99.982%.',
+                            'Alegerea unei gazduiri VPS permite alocarea controlata a resurselor de procesare, memorie si stocare pentru aplicatie, cu separarea mediului de executie fata de alte proiecte gazduite pe platforme shared.',
+                        ],
+                    ],
+                    [
+                        'heading' => '2. Stocare si disponibilitate',
+                        'paragraphs' => [
+                            'Datele aplicatiei sunt operate intr-un mediu de server virtualizat, cu stocare rapida si redundanta la nivel de disc prin configuratii RAID, pentru a reduce riscurile asociate defectiunilor hardware punctuale.',
+                            'Arhitectura tehnica este gandita pentru continuitate operationala, monitorizare si mentenanta periodica, in limita configuratiei si a serviciilor contractate de operator.',
+                        ],
+                    ],
+                    [
+                        'heading' => '3. Criptare si transmiterea datelor',
+                        'paragraphs' => [
+                            'Accesul la platforma trebuie realizat exclusiv prin conexiuni securizate HTTPS/TLS, pentru a proteja datele aflate in tranzit intre browserul utilizatorului si server.',
+                            'Credentialele conturilor sunt pastrate folosind mecanisme de hash dedicate parolelor, iar datele sensibile sunt accesibile numai in masura necesara functionarii aplicatiei si exclusiv de catre rolurile autorizate.',
+                        ],
+                    ],
+                    [
+                        'heading' => '4. Control de acces si securitate aplicativa',
+                        'paragraphs' => [
+                            'Platforma foloseste controale de autentificare, separarea rolurilor, verificari de sesiune, protectii impotriva accesului neautorizat si masuri pentru limitarea utilizarii abuzive a functionalitatilor.',
+                            'Accesul la datele utilizatorilor este restrictionat pe baza de rol si nevoie operationala, iar fluxurile critice sunt protejate prin validare de input, sesiuni controlate si mecanisme anti-CSRF la nivelul aplicatiei web.',
+                        ],
+                    ],
+                    [
+                        'heading' => '5. Jurnale, monitorizare si recuperare',
+                        'paragraphs' => [
+                            'Pentru operare si securitate pot fi generate jurnale tehnice privind erori, autentificare, executie si evenimente relevante pentru functionarea serviciului. Acestea sunt utilizate pentru diagnostic, audit operational si raspuns la incidente.',
+                            'Operatorul urmareste mentinerea unui nivel adecvat de backup, recuperare si continuitate, proportional cu natura serviciului si cu configuratia tehnica folosita la momentul respectiv.',
+                        ],
+                    ],
+                    [
+                        'heading' => '6. Limite si actualizari',
+                        'paragraphs' => [
+                            'Nicio infrastructura online nu poate garanta securitate absoluta sau disponibilitate permanenta. Configuratiile tehnice, furnizorii, politicile de backup si masurile operationale pot fi actualizate periodic pentru a raspunde nevoilor platformei si riscurilor identificate.',
+                            'Pentru detalii comerciale despre infrastructura VPS folosita ca referinta de gazduire, operatorul poate consulta in mod public pagina ROMARG dedicata serverelor VPS.',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    protected function documentNavItems(bool $includeHelp = false): array
+    {
+        $items = [
+            ['label' => 'Termeni si Conditii', 'href' => route('legal.show', 'termeni-si-conditii')],
+            ['label' => 'Confidentialitate', 'href' => route('legal.show', 'confidentialitate')],
+            ['label' => 'Cookies', 'href' => route('legal.show', 'cookies')],
+            ['label' => 'Date si stocare', 'href' => route('technical')],
+        ];
+
+        if ($includeHelp) {
+            $items[] = ['label' => 'Ajutor', 'href' => route('help')];
+        }
+
+        return $items;
+    }
+
+    protected function helpSections(): array
+    {
+        return [
+            [
+                'heading' => 'Acasa: la ce foloseste aceasta pagina?',
+                'paragraphs' => [
+                    'Pagina Acasa este punctul de pornire in aplicatie. Aici vezi rapid acces catre articole, comunitate, asistent, psihologi si cele mai utile zone ale platformei.',
+                    'Avantajul principal este orientarea rapida: utilizatorul poate intra in cateva secunde in zona de continut, suport sau programare care il intereseaza.',
+                ],
+            ],
+            [
+                'heading' => 'Assistant: ce face si la ce ma ajuta?',
+                'paragraphs' => [
+                    'Assistantul este zona de conversatie ghidata a aplicatiei. Poate sustine check-in-uri emotionale, clarificarea unei stari, organizarea gandurilor si identificarea unui urmator pas util.',
+                    'Assistantul nu inlocuieste interventia profesionala sau serviciile de urgenta, dar ofera suport rapid, contextual si usor accesibil direct din platforma.',
+                ],
+            ],
+            [
+                'heading' => 'Articole: de ce exista biblioteca de continut?',
+                'paragraphs' => [
+                    'Biblioteca de articole este construita pentru informare si educatie. Utilizatorul poate explora teme de sanatate emotionala, autoreglare, relatii, stres si alte subiecte relevante.',
+                    'Avantajul este accesul la continut usor de parcurs si la recomandari suplimentare, astfel incat fiecare tema sa poata fi aprofundata in ritmul propriu.',
+                ],
+            ],
+            [
+                'heading' => 'Favorite Articles: la ce foloseste salvarea articolelor?',
+                'paragraphs' => [
+                    'Articolele favorite permit construirea unei biblioteci personale. Utilizatorul poate reveni rapid la materialele pe care le considera importante sau utile pentru momentul sau.',
+                    'Aceasta functie este utila mai ales pentru continutul la care utilizatorul vrea sa revina ulterior, fara sa il caute din nou in toata platforma.',
+                ],
+            ],
+            [
+                'heading' => 'Comunitate: ce se intampla in aceasta zona?',
+                'paragraphs' => [
+                    'Zona Comunitate reuneste conversatii si grupuri in jurul unor interese sau nevoi comune. Aici utilizatorii pot urmari schimburi de experienta si interactiuni moderate la nivel de grup.',
+                    'Avantajul major este sentimentul de apartenenta si accesul la dialog, fara a depinde exclusiv de interactiuni unu la unu.',
+                ],
+            ],
+            [
+                'heading' => 'Comunitate / Conversatii: cum functioneaza dialogurile?',
+                'paragraphs' => [
+                    'Pagina de conversatii afiseaza mesajele dintr-un grup si permite trimiterea de raspunsuri intr-un flux ordonat. Exista facilitati pentru reply, filtrare vizuala si citire usoara a dialogului.',
+                    'Scopul este mentinerea unei comunicari clare si usor de urmarit, inclusiv pe mobil.',
+                ],
+            ],
+            [
+                'heading' => 'Psihologi: cum ma ajuta aceasta pagina?',
+                'paragraphs' => [
+                    'Pagina Psihologi este locul in care utilizatorul descopera specialistii disponibili si poate evalua optiunile relevante pentru nevoile sale.',
+                    'Avantajul este ca platforma centralizeaza intr-un singur loc specialisti, profiluri si traseul catre programare.',
+                ],
+            ],
+            [
+                'heading' => 'Programari: ce pot face aici?',
+                'paragraphs' => [
+                    'Pagina Programari este destinata administrarii interactiunilor cu specialistii. Aici pot aparea disponibilitati, solicitari, statusuri si remindere legate de intalniri.',
+                    'Beneficiul este organizarea intr-un singur loc a etapelor legate de programari, fara fragmentarea informatiei.',
+                ],
+            ],
+            [
+                'heading' => 'Jurnal: de ce este util?',
+                'paragraphs' => [
+                    'Jurnalul permite notarea starilor, contextelor si observatiilor personale. Este util pentru urmarirea evolutiei in timp si pentru clarificarea tiparelor emotionale sau de comportament.',
+                    'Avantajul major este continuitatea: utilizatorul poate observa schimbari, poate reveni la intrari mai vechi si isi poate construi o imagine mai clara despre propriul parcurs.',
+                ],
+            ],
+            [
+                'heading' => 'Notificari: ce rol au in aplicatie?',
+                'paragraphs' => [
+                    'Pagina Notificari centralizeaza remindere, evenimente relevante si alte informari generate de sistem. Ea ajuta utilizatorul sa nu piarda repere importante legate de activitatea sa in platforma.',
+                    'Daca notificările sunt dezactivate din Settings, aceasta zona nu mai afiseaza feed-ul activ.',
+                ],
+            ],
+            [
+                'heading' => 'Profil: ce gasesc in aceasta pagina?',
+                'paragraphs' => [
+                    'Pagina Profil concentreaza informatii despre utilizator, activitatea sa in aplicatie si legaturi utile catre zone precum articole favorite, remindere sau alte repere personale.',
+                    'Scopul ei este sa ofere un punct central pentru identitate, progres si acces rapid la functionalitatile cele mai personale.',
+                ],
+            ],
+            [
+                'heading' => 'Settings: ce pot controla din Setari?',
+                'paragraphs' => [
+                    'Din Settings utilizatorul poate controla preferinte precum tema, notificarile si accesul la documentele despre confidentialitate, tehnic, termeni sau suport.',
+                    'Avantajul este controlul clar asupra experientei in aplicatie si accesul rapid la documentatia explicativa.',
+                ],
+            ],
+            [
+                'heading' => 'Autentificare si recuperare parola: de ce exista aceste fluxuri?',
+                'paragraphs' => [
+                    'Fluxurile de autentificare, inregistrare, recuperare parola si verificare a accesului au rolul de a proteja contul si de a pastra continuitatea datelor utilizatorului.',
+                    'Ele sunt esentiale pentru sincronizare intre dispozitive, siguranta accesului si pastrarea istoricului personal in platforma.',
+                ],
+            ],
+        ];
     }
 }

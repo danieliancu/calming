@@ -7,11 +7,16 @@ use App\Models\NotificationTemplate;
 use Carbon\CarbonInterval;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class NotificationService
 {
     public function publishToUser(int $userId, string $templateKey, array $overrides = []): ?Notification
     {
+        if (! $this->notificationsEnabledForUser($userId)) {
+            return null;
+        }
+
         $template = NotificationTemplate::query()->where('key', $templateKey)->where('is_active', true)->first();
 
         return $this->publish([
@@ -84,6 +89,10 @@ class NotificationService
 
     public function feedFor(?int $userId = null): Collection
     {
+        if ($userId && ! $this->notificationsEnabledForUser($userId)) {
+            return collect();
+        }
+
         $public = Notification::query()
             ->where('recipient_type', 'guest')
             ->whereNull('guest_token')
@@ -136,6 +145,10 @@ class NotificationService
 
     public function unreadCountFor(?int $userId = null): int
     {
+        if ($userId && ! $this->notificationsEnabledForUser($userId)) {
+            return 0;
+        }
+
         $publicCount = Notification::query()
             ->where('recipient_type', 'guest')
             ->whereNull('guest_token')
@@ -233,6 +246,11 @@ class NotificationService
             'article_id' => $payload['article_id'] ?? null,
             'frequency' => $payload['frequency'] ?? null,
         ];
+    }
+
+    protected function notificationsEnabledForUser(int $userId): bool
+    {
+        return (bool) (DB::table('users')->where('id', $userId)->value('notifications_enabled') ?? true);
     }
 
     protected function relativeTime(CarbonInterface $date, CarbonInterface $now): string

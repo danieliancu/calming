@@ -60,15 +60,17 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 )}
             </div>
 
-            <section className="card u-mt-4 search-card">
-                <FiSearch className="section-icon search-card__icon" />
-                <input
-                    value={q}
-                    onChange={(event) => setQ(event.target.value)}
-                    placeholder="Cauta specialisti, servicii, adrese..."
-                    className="form-input search-card__input"
-                />
-            </section>
+            <div className="search-card-sticky">
+                <section className="card search-card">
+                    <FiSearch className="section-icon search-card__icon" />
+                    <input
+                        value={q}
+                        onChange={(event) => setQ(event.target.value)}
+                        placeholder="Cauta specialisti, servicii, adrese..."
+                        className="form-input search-card__input"
+                    />
+                </section>
+            </div>
 
             <div className="grid psychologists-grid">
                 {list.map((p) => {

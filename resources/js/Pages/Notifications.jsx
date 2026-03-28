@@ -11,13 +11,31 @@ import { FiBell, FiCheck, FiReply, ICON_BY_NAME } from '@/lib/icons';
 import { Head, Link } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
 
-export default function Notifications({ notifications, guestDefaults, unreadCount }) {
+export default function Notifications({ notifications, guestDefaults, unreadCount, notificationsEnabled = true }) {
     const { isAuthenticated, refreshAuth } = useAuth();
     const [items, setItems] = useState(() => (
+        !notificationsEnabled
+            ? []
+            : (
         isAuthenticated
             ? notifications
             : buildGuestNotifications([...(notifications ?? []), ...(guestDefaults ?? [])])
+            )
     ));
+
+    if (!notificationsEnabled) {
+        return (
+            <>
+                <Head title="Notificari - Calming" />
+                <section className="notification-page">
+                    <div className="card">
+                        <div className="section-title">Notificari</div>
+                        <p className="muted">Notificarile sunt dezactivate din setari.</p>
+                    </div>
+                </section>
+            </>
+        );
+    }
     const handleToggleRead = useCallback(async (item) => {
         const nextReadState = !item.is_read;
 

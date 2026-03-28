@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import SignOutAction from '@/Components/SignOutAction';
 import { useAuth } from '@/contexts/AuthContext';
-import { Head } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { FiBell, FiChevronRight, FiDatabase, FiFileText, FiGlobe, FiHelpCircle, FiLock, FiMoon } from '@/lib/icons';
 
@@ -15,31 +15,42 @@ function Toggle({ checked, onChange, id }) {
     );
 }
 
-export default function Settings() {
-    const [theme, setTheme] = useState('light');
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+export default function Settings({ preferences }) {
+    const [theme, setTheme] = useState(preferences?.theme ?? 'light');
+    const [notificationsEnabled, setNotificationsEnabled] = useState(Boolean(preferences?.notifications_enabled ?? true));
+    const [language] = useState(preferences?.language ?? 'Romana');
     const { isAuthenticated, promptAuth, signOut } = useAuth();
 
     useEffect(() => {
-        const storedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(storedTheme);
-        document.documentElement.dataset.theme = storedTheme;
+        document.documentElement.dataset.theme = theme;
+    }, [theme]);
 
-        const storedNotifications = localStorage.getItem('notifications-enabled');
-        if (storedNotifications) {
-            setNotificationsEnabled(storedNotifications === 'on');
-        }
-    }, []);
+    useEffect(() => {
+        setTheme(preferences?.theme ?? 'light');
+        setNotificationsEnabled(Boolean(preferences?.notifications_enabled ?? true));
+    }, [preferences?.theme, preferences?.notifications_enabled]);
+
+    const persistPreferences = (nextTheme, nextNotificationsEnabled) => {
+        router.post(route('preferences.update'), {
+            theme: nextTheme,
+            notifications_enabled: nextNotificationsEnabled,
+            language,
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
 
     const applyTheme = (value) => {
         setTheme(value);
         document.documentElement.dataset.theme = value;
         localStorage.setItem('theme', value);
+        persistPreferences(value, notificationsEnabled);
     };
 
     const toggleNotifications = (nextState) => {
         setNotificationsEnabled(nextState);
-        localStorage.setItem('notifications-enabled', nextState ? 'on' : 'off');
+        persistPreferences(theme, nextState);
     };
 
     return (
@@ -88,7 +99,7 @@ export default function Settings() {
                 <div className="card">
                     <span className="section-title">Confidentialitate &amp; Securitate</span>
                     <div className="grid community-group-grid">
-                        <div className="list-item">
+                        <Link href={route('legal.show', 'confidentialitate')} className="list-item">
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiLock /></span>
                                 <div className="settings-item-content">
@@ -96,9 +107,9 @@ export default function Settings() {
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
-                        </div>
+                        </Link>
 
-                        <div className="list-item">
+                        <Link href={route('technical')} className="list-item">
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiDatabase /></span>
                                 <div className="settings-item-content">
@@ -106,14 +117,14 @@ export default function Settings() {
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
-                        </div>
+                        </Link>
                     </div>
                 </div>
 
                 <div className="card">
                     <span className="section-title">Suport</span>
                     <div className="grid community-group-grid">
-                        <div className="list-item">
+                        <Link href={route('help')} className="list-item">
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiHelpCircle /></span>
                                 <div className="settings-item-content">
@@ -121,17 +132,17 @@ export default function Settings() {
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
-                        </div>
+                        </Link>
 
-                        <div className="list-item">
+                        <Link href={route('legal.show', 'termeni-si-conditii')} className="list-item">
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiFileText /></span>
                                 <div className="settings-item-content">
-                                    <span className="settings-item-title">Termeni &amp; Politici</span>
+                                    <span className="settings-item-title">Termeni si Conditii</span>
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
-                        </div>
+                        </Link>
                     </div>
                 </div>
 

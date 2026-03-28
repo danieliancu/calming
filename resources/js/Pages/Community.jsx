@@ -55,10 +55,12 @@ export default function Community({ groups }) {
                 <div className="muted">Toate conversatiile sunt moderate. Cele private nu permit accesul decat pe baza de invitatie.</div>
             </AccentCard>
 
-            <section className="card u-mt-4 search-card">
-                <FiSearch className="section-icon search-card__icon" />
-                <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Cauta grupuri, moderatori, membri..." className="form-input search-card__input" />
-            </section>
+            <div className="search-card-sticky">
+                <section className="card search-card">
+                    <FiSearch className="section-icon search-card__icon" />
+                    <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Cauta grupuri, moderatori, membri..." className="form-input search-card__input" />
+                </section>
+            </div>
 
             <section className="card u-mt-4">
                 <div className="section-title">
