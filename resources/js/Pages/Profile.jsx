@@ -222,8 +222,8 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                 </section>
 
                 <div className="profile-actions">
-                    <Link href="/journal" className="list-item">Jurnalul meu</Link>
-                    <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adauga in jurnal</a>
+                    <Link href="/journal" className="list-item">Vezi jurnal</Link>
+                    <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adauga jurnal</a>
                     <Link href={route('profile.edit')} className="list-item">Contul meu</Link>
                     <SignOutAction className="list-item settings-signout-card profile-signout-action" onClick={signOut} />
                 </div>

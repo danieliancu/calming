@@ -3,6 +3,8 @@ import {
     FaArrowRight,
     FaAward,
     FaBell,
+    FaFacebookF,
+    FaBookmark,
     FaBold,
     FaBoltLightning,
     FaBookOpen,
@@ -27,6 +29,7 @@ import {
     FaHouse,
     FaItalic,
     FaLayerGroup,
+    FaLinkedinIn,
     FaListUl,
     FaLocationDot,
     FaLock,
@@ -49,12 +52,14 @@ import {
     FaShieldHalved,
     FaStar,
     FaTableCellsLarge,
+    FaTiktok,
     FaTrash,
     FaUnderline,
     FaUpload,
     FaUser,
     FaUserCheck,
     FaUsers,
+    FaWhatsapp,
     FaXmark,
 } from 'react-icons/fa6';
 import { FiCheck as FiCheckIcon, FiCornerUpLeft } from 'react-icons/fi';
@@ -64,9 +69,11 @@ export const FiArrowLeft = FaArrowLeft;
 export const FiArrowRight = FaArrowRight;
 export const FiAward = FaAward;
 export const FiBell = FaBell;
+export const FiFacebook = FaFacebookF;
 export const FiBookOpen = FaBookOpen;
 export const FiBold = FaBold;
 export const FiBookmark = FaRegBookmark;
+export const FiBookmarkFilled = FaBookmark;
 export const FiCalendar = FaCalendarDays;
 export const FiCheck = FiCheckIcon;
 export const FiCheckCircle = FaCircleCheck;
@@ -87,6 +94,7 @@ export const FiHome = FaHouse;
 export const FiInfo = FaCircleInfo;
 export const FiItalic = FaItalic;
 export const FiLayers = FaLayerGroup;
+export const FiLinkedin = FaLinkedinIn;
 export const FiList = FaListUl;
 export const FiLock = FaLock;
 export const FiLogOut = FaRightFromBracket;
@@ -105,6 +113,7 @@ export const FiSend = FaPaperPlane;
 export const FiShare2 = FaShareNodes;
 export const FiShield = FaShieldHalved;
 export const FiStar = FaStar;
+export const FiTiktok = FaTiktok;
 export const FiTrendingUp = FaChartLine;
 export const FiTrash2 = FaTrash;
 export const FiType = FaFont;
@@ -113,6 +122,7 @@ export const FiUpload = FaUpload;
 export const FiUser = FaUser;
 export const FiUserCheck = FaUserCheck;
 export const FiUsers = FaUsers;
+export const FiWhatsapp = FaWhatsapp;
 export const FiX = FaXmark;
 export const FiZap = FaBoltLightning;
 

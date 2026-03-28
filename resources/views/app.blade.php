@@ -4,8 +4,17 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="description" content="Îndrumare confidențială pentru echilibrul tău. Explorează articole, instrumente și resurse pentru stare de bine emoțională.">
+        <meta property="og:title" content="{{ config('app.name', 'Îndrumare confidențială pentru echilibrul tău') }}">
+        <meta property="og:description" content="Îndrumare confidențială pentru echilibrul tău. Explorează articole, instrumente și resurse pentru stare de bine emoțională.">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Calming">
+        <meta property="og:locale" content="ro_RO">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ config('app.name', 'Îndrumare confidențială pentru echilibrul tău') }}">
+        <meta name="twitter:description" content="Îndrumare confidențială pentru echilibrul tău. Explorează articole, instrumente și resurse pentru stare de bine emoțională.">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ config('app.name', 'Îndrumare confidențială pentru echilibrul tău') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
