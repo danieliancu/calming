@@ -38,17 +38,15 @@ export default function Learn({ topics, articles }) {
                 </div>
             </AccentCard>
 
-            <div className="search-card-sticky">
-                <section className="card search-card">
-                    <FiSearch className="section-icon search-card__icon" />
-                    <input
-                        value={q}
-                        onChange={(event) => setQ(event.target.value)}
-                        placeholder="Cauta in categorii si articole"
-                        className="form-input search-card__input"
-                    />
-                </section>
-            </div>
+            <section className="card search-card u-mt-4">
+                <FiSearch className="section-icon search-card__icon" />
+                <input
+                    value={q}
+                    onChange={(event) => setQ(event.target.value)}
+                    placeholder="Cauta in categorii si articole"
+                    className="form-input search-card__input"
+                />
+            </section>
 
             <section className="card u-mt-4">
                 <div className="section-title">
