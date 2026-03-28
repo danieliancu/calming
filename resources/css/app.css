@@ -1403,6 +1403,14 @@ main {
         .assistant-body .assistant-form {
           margin-top: 15px;
           margin-bottom: 15px;
+          /*
+          padding: 10px;
+          border: 1px solid rgba(74, 144, 226, 0.14);
+          border-radius: calc(var(--radius-md) + 2px);
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+          backdrop-filter: blur(12px);
+          */
         }
         .assistant-form .form-input {
           min-height: 48px;
@@ -1463,7 +1471,11 @@ main {
         }
         .assistant-compose-input {
           width: 100%;
+          min-height: 48px;
+          border-radius: var(--radius-md);
+          background: #fafafa;
           padding-left: 96px;
+          padding-right: 16px;
           padding-top: 13px;
           padding-bottom: 13px;
           line-height: 1.45;
@@ -1509,18 +1521,17 @@ main {
           text-align:right;
         }
         @media (max-width: 900px) {
+          .assistant-thread {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 28px);
+            scroll-padding-bottom: calc(env(safe-area-inset-bottom) + 28px);
+          }
+
           .assistant-body .assistant-form {
             position: sticky;
             bottom: max(8px, calc(env(safe-area-inset-bottom) + 8px));
             z-index: 20;
             margin-top: auto;
             margin-bottom: 0;
-            padding: 10px;
-            border: 1px solid rgba(74, 144, 226, 0.14);
-            border-radius: calc(var(--radius-md) + 2px);
-            background: rgba(255, 255, 255, 0.96);
-            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
-            backdrop-filter: blur(12px);
           }
           .assistant-convo-nav {
             position: sticky;
