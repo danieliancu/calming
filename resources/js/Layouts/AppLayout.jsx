@@ -14,6 +14,7 @@ export default function AppLayout({ children }) {
     const { url } = page;
     const sharedAuthUser = page.props.auth?.user ?? null;
     const sharedPsychUser = page.props.psychAuth?.user ?? null;
+    const notificationsEnabled = Boolean(page.props.preferences?.notifications_enabled ?? true);
     const currentPath = useMemo(() => url.split('?')[0], [url]);
     const search = useMemo(() => new URLSearchParams(url.split('?')[1] ?? ''), [url]);
     const pathname = currentPath;
@@ -385,10 +386,12 @@ export default function AppLayout({ children }) {
 
                                         if (link.href === '/notifications') {
                                             const Icon = link.icon;
-                                            const count = isHydrated ? (isAuthenticated ? authUser.newNotifications ?? 0 : guestNotificationCount) : 0;
+                                            const count = notificationsEnabled
+                                                ? (isHydrated ? (isAuthenticated ? authUser.newNotifications ?? 0 : guestNotificationCount) : 0)
+                                                : 0;
                                             const displayCount = count > 99 ? '99+' : count;
                                             const classes = ['icon-link'];
-                                            if (isHydrated && count > 0) {
+                                            if (notificationsEnabled && isHydrated && count > 0) {
                                                 classes.push('has-badge');
                                             }
                                             if (active) {
