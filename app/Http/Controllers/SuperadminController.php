@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -395,6 +396,99 @@ class SuperadminController extends Controller
             'notificationEvents' => $notificationEvents,
             'notificationSummary' => $notificationSummary,
         ]);
+    }
+
+    public function createDirectArticlePage(Request $request): Response|RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        return Inertia::render('AssistantArticleNew', [
+            'topics' => $this->articleTopics(),
+        ]);
+    }
+
+    public function storeDirectArticle(Request $request): RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        $validated = $request->validate([
+            'author_name' => ['required', 'string', 'max:150'],
+            'title' => ['required', 'string', 'max:255'],
+            'tag' => ['required', 'string', 'max:120'],
+            'topic_id' => ['required', 'integer', 'exists:article_topics,id'],
+            'body' => ['required', 'string'],
+            'hero_image' => ['required', 'image', 'max:5120'],
+        ]);
+
+        $imagePath = $request->file('hero_image')->store('article-images', 'public');
+        $slug = $this->uniqueArticleSlug($validated['title']);
+        $minutes = $this->estimateArticleReadingMinutes($validated['body']);
+
+        $articleId = DB::table('articles')->insertGetId([
+            'title' => $validated['title'],
+            'slug' => $slug,
+            'tag' => $validated['tag'],
+            'minutes' => $minutes,
+            'hero_image' => Storage::disk('public')->url($imagePath),
+            'author' => $this->encodeGuestArticleAuthor($validated['author_name']),
+            'body' => json_encode($validated['body']),
+            'is_recommended' => true,
+            'topic_id' => $validated['topic_id'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('articles_validation')->updateOrInsert(
+            ['article_id' => $articleId],
+            ['is_valid' => true, 'validated_at' => now()]
+        );
+
+        $article = DB::table('articles')->where('id', $articleId)->first(['id', 'slug', 'title']);
+        if ($article) {
+            NotificationTemplate::query()->updateOrCreate(
+                ['key' => 'article_published'],
+                [
+                    'audience' => 'general',
+                    'actor_type' => 'both',
+                    'category' => 'article',
+                    'title' => 'Articol nou',
+                    'message' => 'A aparut un articol nou in biblioteca Calming.',
+                    'default_title' => 'Articol nou',
+                    'default_body' => 'A aparut un articol nou in biblioteca Calming.',
+                    'icon' => 'FiBookOpen',
+                    'icon_color' => 'lilac',
+                    'accent' => 'lilac',
+                    'priority' => 3,
+                    'cta_kind' => 'open',
+                    'cta_label' => 'Citeste acum',
+                    'deep_link' => '/learn',
+                    'is_repeatable' => true,
+                    'published_at' => now(),
+                ]
+            );
+
+            app(NotificationService::class)->publishBroadcast('article_published', [
+                'title' => 'Articol nou in biblioteca',
+                'body' => $article->title,
+                'trigger_type' => 'article',
+                'trigger_id' => (string) $article->id,
+                'dedupe_key' => "article_published:{$article->id}",
+                'cta_kind' => 'open',
+                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citeste articolul'],
+            ]);
+        }
+
+        return redirect()
+            ->route('article.show', ['slug' => $slug])
+            ->with('status', 'Articolul a fost publicat.');
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -831,6 +925,43 @@ class SuperadminController extends Controller
         }
 
         return trim(str(strip_tags($body))->limit(180, '...')->toString());
+    }
+
+    protected function articleTopics()
+    {
+        return DB::table('article_topics')->orderBy('name')->get(['id', 'name']);
+    }
+
+    protected function uniqueArticleSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title) ?: 'articol';
+        $slug = $base;
+        $suffix = 2;
+
+        while (
+            DB::table('articles')
+                ->where('slug', $slug)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = "{$base}-{$suffix}";
+            $suffix++;
+        }
+
+        return $slug;
+    }
+
+    protected function estimateArticleReadingMinutes(string $body): int
+    {
+        $text = trim(strip_tags($body));
+        $wordCount = str_word_count($text);
+
+        return max(1, min(240, (int) ceil($wordCount / 200)));
+    }
+
+    protected function encodeGuestArticleAuthor(string $authorName): string
+    {
+        return 'guest:'.trim($authorName);
     }
 
     protected function uniqueArticleCategorySlug(string $value, ?int $ignoreId = null): string

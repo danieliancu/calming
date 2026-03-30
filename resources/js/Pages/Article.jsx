@@ -263,7 +263,7 @@ export default function Article({ article, related }) {
                         </div>
                         <div>
                             <div className="muted">{article.author}</div>
-                            <div>Specialist Psihologie</div>
+                            <div>{article.author_role || 'Specialist Psihologie'}</div>
                         </div>
                     </div>
                 </div>

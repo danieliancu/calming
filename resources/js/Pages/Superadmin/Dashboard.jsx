@@ -324,6 +324,9 @@ export default function SuperadminDashboard({
                                     <button type="button" className={`superadmin-tab ${activeTab === 'articles' ? 'active' : ''}`} onClick={() => setActiveTab('articles')}>
                                         Articole
                                     </button>
+                                    <Link className="superadmin-tab" href={route('superadmin.articles.direct.create')} style={{ background: '#b42318', color: '#fff', borderColor: '#b42318' }}>
+                                        Articol nou
+                                    </Link>
                                     <button type="button" className={`superadmin-tab ${activeTab === 'groups' ? 'active' : ''}`} onClick={() => setActiveTab('groups')}>
                                         Grupuri
                                     </button>

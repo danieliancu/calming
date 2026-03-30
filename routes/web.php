@@ -64,6 +64,8 @@ Route::get('/superadmin/signin', [SuperadminController::class, 'signinPage'])->n
 Route::post('/superadmin/signin', [SuperadminController::class, 'signin'])->name('superadmin.signin.store');
 Route::post('/superadmin/signout', [SuperadminController::class, 'signout'])->name('superadmin.signout');
 Route::get('/superadmin/dashboard', [SuperadminController::class, 'dashboard'])->name('superadmin.dashboard');
+Route::get('/superadmin/dashboard/articles/new', [SuperadminController::class, 'createDirectArticlePage'])->name('superadmin.articles.direct.create');
+Route::post('/superadmin/dashboard/articles', [SuperadminController::class, 'storeDirectArticle'])->name('superadmin.articles.direct.store');
 Route::post('/superadmin/profile', [SuperadminController::class, 'updateProfile'])->name('superadmin.profile.update');
 Route::post('/superadmin/validation-applications/{applicationId}/approve', [SuperadminController::class, 'approveValidationApplication'])->name('superadmin.validation.approve');
 Route::post('/superadmin/validation-applications/{applicationId}/reject', [SuperadminController::class, 'rejectValidationApplication'])->name('superadmin.validation.reject');

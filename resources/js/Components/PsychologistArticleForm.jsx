@@ -17,11 +17,16 @@ export default function PsychologistArticleForm({
     title,
     description,
     submitLabel,
+    backHref = null,
+    cancelHref = null,
+    authorNameEnabled = false,
+    authorNameLabel = 'Nume autor',
 }) {
     const editorRef = useRef(null);
     const editorWrapperRef = useRef(null);
     const toolbarRef = useRef(null);
     const form = useForm({
+        author_name: article?.author_name ?? '',
         title: article?.title ?? '',
         tag: article?.tag ?? '',
         topic_id: article?.topic_id?.toString() ?? topics[0]?.id?.toString() ?? '',
@@ -202,11 +207,14 @@ export default function PsychologistArticleForm({
         setLocalError(null);
 
         const titleValue = form.data.title.trim();
+        const authorNameValue = form.data.author_name.trim();
         const tagValue = form.data.tag.trim();
         const bodyText = stripHtml(editorHtml).trim();
 
-        if (!titleValue || !tagValue || !form.data.topic_id || !bodyText) {
-            setLocalError('Completeaza titlul, tag-ul, rubrica si continutul articolului.');
+        if ((authorNameEnabled && !authorNameValue) || !titleValue || !tagValue || !form.data.topic_id || !bodyText) {
+            setLocalError(authorNameEnabled
+                ? 'Completeaza numele autorului, titlul, tag-ul, rubrica si continutul articolului.'
+                : 'Completeaza titlul, tag-ul, rubrica si continutul articolului.');
             return;
         }
 
@@ -217,6 +225,7 @@ export default function PsychologistArticleForm({
 
         form.transform((data) => ({
             ...data,
+            author_name: data.author_name.trim(),
             title: data.title.trim(),
             tag: data.tag.trim(),
             body: editorHtml,
@@ -235,7 +244,7 @@ export default function PsychologistArticleForm({
     return (
         <>
             <div className="group-convo-nav">
-                <Link href={route('psychologists.dashboard', { section: 'articles' })} className="group-back-link">
+                <Link href={backHref ?? route('psychologists.dashboard', { section: 'articles' })} className="group-back-link">
                     &larr; Inapoi
                 </Link>
             </div>
@@ -249,6 +258,19 @@ export default function PsychologistArticleForm({
                 ) : null}
                 {firstError ? <div className="info-banner u-mt-2">{firstError}</div> : null}
                 <form className="form-grid u-mt-3" onSubmit={handleSubmit}>
+                    {authorNameEnabled ? (
+                        <label className="span-2">
+                            <span>{authorNameLabel}</span>
+                            <input
+                                name="author_name"
+                                value={form.data.author_name}
+                                onChange={handleFieldChange}
+                                required
+                                disabled={editorDisabled}
+                            />
+                        </label>
+                    ) : null}
+
                     <label className="span-2">
                         <span>Titlu articol</span>
                         <input name="title" value={form.data.title} onChange={handleFieldChange} required disabled={editorDisabled} />
@@ -330,7 +352,7 @@ export default function PsychologistArticleForm({
                         <button className="btn primary" type="submit" disabled={editorDisabled}>
                             {form.processing ? 'Se trimite...' : submitLabel}
                         </button>
-                        <Link className="btn" href={route('psychologists.dashboard', { section: 'articles' })}>
+                        <Link className="btn" href={cancelHref ?? route('psychologists.dashboard', { section: 'articles' })}>
                             Renunta
                         </Link>
                     </div>

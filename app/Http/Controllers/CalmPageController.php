@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\NotificationTemplate;
 use App\Models\SavedArticle;
 use App\Support\CommunityVisibilityService;
 use App\Support\MilestoneService;
@@ -13,9 +14,12 @@ use App\Support\UserAppointmentPresenter;
 use App\Support\UserProfileBootstrapper;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -532,6 +536,87 @@ class CalmPageController extends Controller
         return Inertia::render('Assistant');
     }
 
+    public function createAssistantArticlePage(): Response
+    {
+        return Inertia::render('AssistantArticleNew', [
+            'topics' => $this->articleTopics(),
+        ]);
+    }
+
+    public function storeAssistantArticle(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'author_name' => ['required', 'string', 'max:150'],
+            'title' => ['required', 'string', 'max:255'],
+            'tag' => ['required', 'string', 'max:120'],
+            'topic_id' => ['required', 'integer', 'exists:article_topics,id'],
+            'body' => ['required', 'string'],
+            'hero_image' => ['required', 'image', 'max:5120'],
+        ]);
+
+        $imagePath = $request->file('hero_image')->store('article-images', 'public');
+        $slug = $this->uniqueArticleSlug($validated['title']);
+        $minutes = $this->estimateArticleReadingMinutes($validated['body']);
+
+        $articleId = DB::table('articles')->insertGetId([
+            'title' => $validated['title'],
+            'slug' => $slug,
+            'tag' => $validated['tag'],
+            'minutes' => $minutes,
+            'hero_image' => Storage::disk('public')->url($imagePath),
+            'author' => $this->encodeGuestArticleAuthor($validated['author_name']),
+            'body' => json_encode($validated['body']),
+            'is_recommended' => true,
+            'topic_id' => $validated['topic_id'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('articles_validation')->updateOrInsert(
+            ['article_id' => $articleId],
+            ['is_valid' => true, 'validated_at' => now()]
+        );
+
+        $article = DB::table('articles')->where('id', $articleId)->first(['id', 'slug', 'title']);
+        if ($article) {
+            NotificationTemplate::query()->updateOrCreate(
+                ['key' => 'article_published'],
+                [
+                    'audience' => 'general',
+                    'actor_type' => 'both',
+                    'category' => 'article',
+                    'title' => 'Articol nou',
+                    'message' => 'A aparut un articol nou in biblioteca Calming.',
+                    'default_title' => 'Articol nou',
+                    'default_body' => 'A aparut un articol nou in biblioteca Calming.',
+                    'icon' => 'FiBookOpen',
+                    'icon_color' => 'lilac',
+                    'accent' => 'lilac',
+                    'priority' => 3,
+                    'cta_kind' => 'open',
+                    'cta_label' => 'Citeste acum',
+                    'deep_link' => '/learn',
+                    'is_repeatable' => true,
+                    'published_at' => now(),
+                ]
+            );
+
+            $this->notifications->publishBroadcast('article_published', [
+                'title' => 'Articol nou in biblioteca',
+                'body' => $article->title,
+                'trigger_type' => 'article',
+                'trigger_id' => (string) $article->id,
+                'dedupe_key' => "article_published:{$article->id}",
+                'cta_kind' => 'open',
+                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citeste articolul'],
+            ]);
+        }
+
+        return redirect()
+            ->route('article.show', ['slug' => $slug])
+            ->with('status', 'Articolul a fost publicat.');
+    }
+
     public function journal(Request $request): Response
     {
         $entries = [];
@@ -785,12 +870,13 @@ class CalmPageController extends Controller
             ->leftJoin('psychologists as p', 'p.id', '=', 'a.author')
             ->leftJoin('article_topics as at', 'at.id', '=', 'a.topic_id')
             ->where('a.slug', $slug)
-            ->select('a.id', 'a.slug', 'a.title', 'a.tag', 'a.minutes', 'a.hero_image', 'a.body', 'at.name as category', 'p.title as author_title', 'p.name as author_name', 'p.surname as author_surname')
+            ->select('a.id', 'a.slug', 'a.title', 'a.tag', 'a.minutes', 'a.hero_image', 'a.body', 'a.author as author_value', 'at.name as category', 'p.title as author_title', 'p.name as author_name', 'p.surname as author_surname')
             ->first();
 
         abort_unless($article, 404);
 
-        $author = trim(collect([$article->author_title, $article->author_name, $article->author_surname])->filter()->implode(' '));
+        $guestAuthor = $this->decodeGuestArticleAuthor($article->author_value);
+        $author = $guestAuthor ?: trim(collect([$article->author_title, $article->author_name, $article->author_surname])->filter()->implode(' '));
         $articleId = $article->id;
 
         if ($request->user()) {
@@ -810,6 +896,7 @@ class CalmPageController extends Controller
                 'hero_image' => $article->hero_image,
                 'body' => $this->normalizeArticleBody($article->body),
                 'author' => $author ?: 'Specialist Calming',
+                'author_role' => $guestAuthor ? 'Autor invitat' : 'Specialist Psihologie',
                 'is_saved' => $request->user()
                     ? SavedArticle::query()->where('user_id', $request->user()->id)->where('article_id', $article->id)->where('status', 'active')->exists()
                     : false,
@@ -876,6 +963,54 @@ class CalmPageController extends Controller
         }
 
         return $value;
+    }
+
+    protected function articleTopics()
+    {
+        return DB::table('article_topics')->orderBy('name')->get(['id', 'name']);
+    }
+
+    protected function uniqueArticleSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title) ?: 'articol';
+        $slug = $base;
+        $suffix = 2;
+
+        while (
+            DB::table('articles')
+                ->where('slug', $slug)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = "{$base}-{$suffix}";
+            $suffix++;
+        }
+
+        return $slug;
+    }
+
+    protected function estimateArticleReadingMinutes(string $body): int
+    {
+        $text = trim(strip_tags($body));
+        $wordCount = str_word_count($text);
+
+        return max(1, min(240, (int) ceil($wordCount / 200)));
+    }
+
+    protected function encodeGuestArticleAuthor(string $authorName): string
+    {
+        return 'guest:'.trim($authorName);
+    }
+
+    protected function decodeGuestArticleAuthor(?string $author): ?string
+    {
+        if (! is_string($author) || ! str_starts_with($author, 'guest:')) {
+            return null;
+        }
+
+        $decoded = trim(Str::after($author, 'guest:'));
+
+        return $decoded !== '' ? $decoded : null;
     }
 
     protected function normalizeArticleBody(?string $body): string
