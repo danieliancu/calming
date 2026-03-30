@@ -66,6 +66,8 @@ Route::post('/superadmin/signout', [SuperadminController::class, 'signout'])->na
 Route::get('/superadmin/dashboard', [SuperadminController::class, 'dashboard'])->name('superadmin.dashboard');
 Route::get('/superadmin/dashboard/articles/new', [SuperadminController::class, 'createDirectArticlePage'])->name('superadmin.articles.direct.create');
 Route::post('/superadmin/dashboard/articles', [SuperadminController::class, 'storeDirectArticle'])->name('superadmin.articles.direct.store');
+Route::get('/superadmin/articles/{articleId}/edit', [SuperadminController::class, 'editArticlePage'])->name('superadmin.articles.edit');
+Route::put('/superadmin/articles/{articleId}', [SuperadminController::class, 'updateArticle'])->name('superadmin.articles.update');
 Route::post('/superadmin/profile', [SuperadminController::class, 'updateProfile'])->name('superadmin.profile.update');
 Route::post('/superadmin/validation-applications/{applicationId}/approve', [SuperadminController::class, 'approveValidationApplication'])->name('superadmin.validation.approve');
 Route::post('/superadmin/validation-applications/{applicationId}/reject', [SuperadminController::class, 'rejectValidationApplication'])->name('superadmin.validation.reject');
@@ -74,6 +76,7 @@ Route::delete('/superadmin/validation-applications/{applicationId}/messages/{mes
 Route::delete('/superadmin/psychologists/{psychologistId}', [SuperadminController::class, 'destroyPsychologist'])->name('superadmin.psychologists.destroy');
 Route::post('/superadmin/articles/{articleId}/approve', [SuperadminController::class, 'approveArticle'])->name('superadmin.articles.approve');
 Route::post('/superadmin/articles/{articleId}/reject', [SuperadminController::class, 'rejectArticle'])->name('superadmin.articles.reject');
+Route::delete('/superadmin/articles/{articleId}', [SuperadminController::class, 'destroyArticle'])->name('superadmin.articles.destroy');
 Route::post('/superadmin/community-groups/{groupId}/approve', [SuperadminController::class, 'approveCommunityGroup'])->name('superadmin.community-groups.approve');
 Route::post('/superadmin/community-groups/{groupId}/reject', [SuperadminController::class, 'rejectCommunityGroup'])->name('superadmin.community-groups.reject');
 Route::post('/superadmin/article-categories', [SuperadminController::class, 'storeArticleCategory'])->name('superadmin.article-categories.store');

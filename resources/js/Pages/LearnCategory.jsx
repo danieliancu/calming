@@ -1,4 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
+import { normalizeMediaUrl } from '@/lib/mediaUrl';
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { FiArrowLeft, FiArrowRight, FiSearch } from '@/lib/icons';
@@ -48,7 +49,7 @@ export default function LearnCategory({ category, articles }) {
                     {filteredArticles.map((article) => (
                         <Link href={`/article/${article.slug}`} key={article.slug} className="article-card">
                             <div className="thumb" aria-hidden>
-                                <img src={article.hero_image} alt={article.title} />
+                                <img src={normalizeMediaUrl(article.hero_image)} alt={article.title} />
                             </div>
                             <div className="ac-body">
                                 <div className="row justify-between">

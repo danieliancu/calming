@@ -214,12 +214,9 @@ class SuperadminController extends Controller
             ->all();
 
         $pendingArticles = DB::table('articles as a')
-            ->join('psychologists as p', 'p.id', '=', 'a.author')
+            ->leftJoin('psychologists as p', 'p.id', '=', 'a.author')
             ->leftJoin('article_topics as at', 'at.id', '=', 'a.topic_id')
             ->leftJoin('articles_validation as av', 'av.article_id', '=', 'a.id')
-            ->where(function ($query) {
-                $query->whereNull('av.article_id')->orWhere('av.is_valid', false);
-            })
             ->orderByDesc('a.updated_at')
             ->orderByDesc('a.id')
             ->get([
@@ -230,7 +227,9 @@ class SuperadminController extends Controller
                 'a.hero_image',
                 'a.body',
                 'a.updated_at',
+                'a.guest_author_name',
                 'at.name as topic_name',
+                'av.is_valid',
                 'p.name as author_name',
                 'p.surname as author_surname',
             ])
@@ -243,7 +242,9 @@ class SuperadminController extends Controller
                 'body_preview' => $this->articlePreview($item->body),
                 'updated_at' => $item->updated_at,
                 'topic_name' => $item->topic_name,
-                'author_name' => trim(implode(' ', array_filter([$item->author_name, $item->author_surname]))),
+                'author_name' => trim((string) ($item->guest_author_name ?: trim(implode(' ', array_filter([$item->author_name, $item->author_surname]))))) ?: 'Autor necunoscut',
+                'author_type' => $item->guest_author_name ? 'guest' : 'specialist',
+                'status' => is_null($item->is_valid) || ! (bool) $item->is_valid ? 'pending' : 'approved',
             ])
             ->all();
 
@@ -437,8 +438,9 @@ class SuperadminController extends Controller
             'slug' => $slug,
             'tag' => $validated['tag'],
             'minutes' => $minutes,
-            'hero_image' => Storage::disk('public')->url($imagePath),
-            'author' => $this->encodeGuestArticleAuthor($validated['author_name']),
+            'hero_image' => $this->articleImagePath($imagePath),
+            'author' => null,
+            'guest_author_name' => trim($validated['author_name']),
             'body' => json_encode($validated['body']),
             'is_recommended' => true,
             'topic_id' => $validated['topic_id'],
@@ -489,6 +491,88 @@ class SuperadminController extends Controller
         return redirect()
             ->route('article.show', ['slug' => $slug])
             ->with('status', 'Articolul a fost publicat.');
+    }
+
+    public function editArticlePage(Request $request, int $articleId): Response|RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        $article = DB::table('articles')
+            ->where('id', $articleId)
+            ->whereNotNull('guest_author_name')
+            ->first(['id', 'title', 'tag', 'body', 'hero_image', 'topic_id', 'guest_author_name']);
+
+        abort_unless($article, 404);
+
+        return Inertia::render('Superadmin/Articles/Edit', [
+            'topics' => $this->articleTopics(),
+            'article' => [
+                'id' => $article->id,
+                'author_name' => $article->guest_author_name,
+                'title' => $article->title,
+                'tag' => $article->tag,
+                'body' => $this->normalizeArticleEditorBody($article->body),
+                'hero_image' => $article->hero_image,
+                'topic_id' => $article->topic_id,
+            ],
+        ]);
+    }
+
+    public function updateArticle(Request $request, int $articleId): RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        $article = DB::table('articles')
+            ->where('id', $articleId)
+            ->whereNotNull('guest_author_name')
+            ->first();
+        abort_unless($article, 404);
+
+        $validated = $request->validate([
+            'author_name' => ['required', 'string', 'max:150'],
+            'title' => ['required', 'string', 'max:255'],
+            'tag' => ['required', 'string', 'max:120'],
+            'topic_id' => ['required', 'integer', 'exists:article_topics,id'],
+            'body' => ['required', 'string'],
+            'hero_image' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $heroImageUrl = $article->hero_image;
+
+        if ($request->hasFile('hero_image')) {
+            $imagePath = $request->file('hero_image')->store('article-images', 'public');
+            $heroImageUrl = $this->articleImagePath($imagePath);
+        }
+
+        DB::table('articles')->where('id', $articleId)->update([
+            'title' => $validated['title'],
+            'slug' => $this->uniqueArticleSlug($validated['title'], $articleId),
+            'tag' => $validated['tag'],
+            'minutes' => $this->estimateArticleReadingMinutes($validated['body']),
+            'hero_image' => $heroImageUrl,
+            'guest_author_name' => trim($validated['author_name']),
+            'body' => json_encode($validated['body']),
+            'is_recommended' => true,
+            'topic_id' => $validated['topic_id'],
+            'updated_at' => now(),
+        ]);
+
+        DB::table('articles_validation')->updateOrInsert(
+            ['article_id' => $articleId],
+            ['is_valid' => true, 'validated_at' => now()]
+        );
+
+        return redirect()
+            ->route('superadmin.articles.edit', ['articleId' => $articleId])
+            ->with('status', 'Modificarile au fost salvate.');
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -786,6 +870,29 @@ class SuperadminController extends Controller
         return back()->with('status', 'Articolul a fost lasat in asteptare.');
     }
 
+    public function destroyArticle(Request $request, int $articleId): RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        $article = DB::table('articles')->where('id', $articleId)->first(['id', 'title']);
+        abort_unless($article, 404);
+
+        DB::transaction(function () use ($articleId) {
+            DB::table('notifications')
+                ->where('trigger_type', 'article')
+                ->where('trigger_id', (string) $articleId)
+                ->delete();
+
+            DB::table('articles')->where('id', $articleId)->delete();
+        });
+
+        return back()->with('status', "Articolul \"{$article->title}\" a fost sters.");
+    }
+
     public function approveCommunityGroup(Request $request, int $groupId): RedirectResponse
     {
         $superadmin = $this->requireSuperadminSession($request);
@@ -927,6 +1034,29 @@ class SuperadminController extends Controller
         return trim(str(strip_tags($body))->limit(180, '...')->toString());
     }
 
+    protected function normalizeArticleEditorBody(?string $body): string
+    {
+        if (! $body) {
+            return '';
+        }
+
+        $decoded = json_decode($body, true);
+
+        if (is_array($decoded)) {
+            $items = array_values(array_filter($decoded, fn ($item) => is_string($item) && trim($item) !== ''));
+
+            return $items === []
+                ? ''
+                : '<p>'.implode('</p><p>', array_map(fn ($item) => trim($item), $items)).'</p>';
+        }
+
+        if (is_string($decoded)) {
+            return $decoded;
+        }
+
+        return $body;
+    }
+
     protected function articleTopics()
     {
         return DB::table('article_topics')->orderBy('name')->get(['id', 'name']);
@@ -959,9 +1089,9 @@ class SuperadminController extends Controller
         return max(1, min(240, (int) ceil($wordCount / 200)));
     }
 
-    protected function encodeGuestArticleAuthor(string $authorName): string
+    protected function articleImagePath(string $path): string
     {
-        return 'guest:'.trim($authorName);
+        return '/storage/'.ltrim($path, '/');
     }
 
     protected function uniqueArticleCategorySlug(string $value, ?int $ignoreId = null): string

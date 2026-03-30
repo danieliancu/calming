@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { recordGuestArticleView } from '@/lib/guestActivity';
 import { apiFetch } from '@/lib/http';
+import { normalizeMediaUrl } from '@/lib/mediaUrl';
 import { Head, Link, router } from '@inertiajs/react';
 import { FiArrowLeft, FiBookmark, FiBookmarkFilled, FiChevronRight, FiClock, FiCopy, FiFacebook, FiLinkedin, FiShare2, FiTiktok, FiUser, FiWhatsapp, FiX } from '@/lib/icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -92,6 +93,8 @@ export default function Article({ article, related }) {
         170,
     );
 
+    const heroImageUrl = normalizeMediaUrl(article.hero_image);
+
     const renderBody = () => {
         if (!article.body) {
             return null;
@@ -181,16 +184,21 @@ export default function Article({ article, related }) {
     return (
         <>
             <Head title={`${article.title} - Calming`}>
+                <link rel="canonical" href={articleUrl} />
                 <meta name="description" content={articleDescription} />
                 <meta property="og:title" content={`${article.title} - Calming`} />
                 <meta property="og:description" content={articleDescription} />
                 <meta property="og:type" content="article" />
-                <meta property="og:image" content={article.hero_image} />
+                <meta property="og:site_name" content="Calming" />
+                <meta property="og:locale" content="ro_RO" />
+                <meta property="og:image" content={heroImageUrl} />
+                <meta property="og:image:alt" content={article.title} />
                 <meta property="og:url" content={articleUrl} />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={`${article.title} - Calming`} />
                 <meta name="twitter:description" content={articleDescription} />
-                <meta name="twitter:image" content={article.hero_image} />
+                <meta name="twitter:image" content={heroImageUrl} />
+                <meta name="twitter:image:alt" content={article.title} />
             </Head>
 
             <article className="card article-shell">
@@ -247,7 +255,7 @@ export default function Article({ article, related }) {
                         </div>
                     </div>
                 </div>
-                <img className="article-image" src={article.hero_image} alt="Ilustratie articol" />
+                <img className="article-image" src={heroImageUrl} alt="Ilustratie articol" />
 
                 <div className="article-header">
                     <div className="row gap-tight u-mb-2">

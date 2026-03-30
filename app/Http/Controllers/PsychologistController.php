@@ -1186,7 +1186,7 @@ class PsychologistController extends Controller
             'slug' => $slug,
             'tag' => $validated['tag'],
             'minutes' => $minutes,
-            'hero_image' => Storage::disk('public')->url($imagePath),
+            'hero_image' => $this->articleImagePath($imagePath),
             'author' => $psychologistId,
             'body' => json_encode($validated['body']),
             'is_recommended' => true,
@@ -1230,7 +1230,7 @@ class PsychologistController extends Controller
 
         if ($request->hasFile('hero_image')) {
             $imagePath = $request->file('hero_image')->store('article-images', 'public');
-            $heroImageUrl = Storage::disk('public')->url($imagePath);
+            $heroImageUrl = $this->articleImagePath($imagePath);
         }
 
         DB::table('articles')->where('id', $articleId)->update([
@@ -1487,6 +1487,11 @@ class PsychologistController extends Controller
         $wordCount = str_word_count($text);
 
         return max(1, min(240, (int) ceil($wordCount / 200)));
+    }
+
+    protected function articleImagePath(string $path): string
+    {
+        return '/storage/'.ltrim($path, '/');
     }
 
     public function updateValidation(Request $request): RedirectResponse

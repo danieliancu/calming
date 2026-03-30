@@ -1,6 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { FiArrowLeft } from '@/lib/icons';
+import { normalizeMediaUrl } from '@/lib/mediaUrl';
 import { Head, Link } from '@inertiajs/react';
 import { useEffect } from 'react';
 
@@ -47,7 +48,7 @@ export default function FavoriteArticles({ articles = [] }) {
                 <section className="favorite-articles-list">
                     {articles.map((article) => (
                         <Link key={article.id} href={`/article/${article.slug}`} className="card favorite-article-card">
-                            <img className="favorite-article-image" src={article.hero_image} alt={`Ilustratie pentru ${article.title}`} />
+                            <img className="favorite-article-image" src={normalizeMediaUrl(article.hero_image)} alt={`Ilustratie pentru ${article.title}`} />
                             <div className="favorite-article-copy">
                                 <div className="favorite-article-heading">{article.title}</div>
                                 <div className="muted">{article.author}</div>

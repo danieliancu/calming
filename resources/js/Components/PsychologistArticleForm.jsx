@@ -3,10 +3,72 @@ import { useEffect, useRef, useState } from 'react';
 import { FiBold, FiItalic, FiList, FiScissors, FiType, FiUnderline } from '@/lib/icons';
 
 const MAX_FILE_SIZE_MB = 5;
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+const MAX_IMAGE_WIDTH_PX = 1200;
+const WEBP_EXPORT_QUALITY = 0.8;
 
 function stripHtml(html) {
     return html.replace(/<[^>]*>/g, ' ');
+}
+
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result?.toString() ?? '');
+        reader.onerror = () => reject(new Error('Nu am putut citi imaginea selectata.'));
+        reader.readAsDataURL(file);
+    });
+}
+
+function loadImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('Nu am putut procesa imaginea selectata.'));
+        image.src = dataUrl;
+    });
+}
+
+function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                reject(new Error('Nu am putut pregati imaginea pentru upload.'));
+                return;
+            }
+
+            resolve(blob);
+        }, type, quality);
+    });
+}
+
+async function normalizeImageFile(file) {
+    const sourceDataUrl = await readFileAsDataUrl(file);
+    const image = await loadImage(sourceDataUrl);
+    const targetWidth = Math.min(image.naturalWidth || image.width, MAX_IMAGE_WIDTH_PX);
+    const ratio = targetWidth / Math.max(1, image.naturalWidth || image.width);
+    const targetHeight = Math.max(1, Math.round((image.naturalHeight || image.height) * ratio));
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+        throw new Error('Editorul nu a putut pregati imaginea pentru upload.');
+    }
+
+    context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+    const exportType = 'image/webp';
+    const blob = await canvasToBlob(canvas, exportType, WEBP_EXPORT_QUALITY);
+    const extension = 'webp';
+    const normalizedFile = new File([blob], file.name.replace(/\.[^.]+$/, '') + `.${extension}`, { type: exportType });
+    const preview = canvas.toDataURL(exportType, WEBP_EXPORT_QUALITY);
+
+    return {
+        file: normalizedFile,
+        preview,
+    };
 }
 
 export default function PsychologistArticleForm({
@@ -174,7 +236,7 @@ export default function PsychologistArticleForm({
         form.setData('body', html);
     };
 
-    const handleFileChange = (event) => {
+    const handleFileChange = async (event) => {
         const file = event.target.files?.[0];
 
         if (!file) {
@@ -184,22 +246,27 @@ export default function PsychologistArticleForm({
         }
 
         if (!ACCEPTED_TYPES.includes(file.type)) {
-            setLocalError('Imaginea trebuie sa fie JPG sau PNG.');
+            setLocalError('Imaginea trebuie sa fie JPG, PNG sau WEBP.');
             event.target.value = '';
             return;
         }
 
-        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-            setLocalError(`Imaginea trebuie sa fie mai mica de ${MAX_FILE_SIZE_MB}MB.`);
-            event.target.value = '';
-            return;
-        }
+        try {
+            const normalized = await normalizeImageFile(file);
 
-        setLocalError(null);
-        form.setData('hero_image', file);
-        const reader = new FileReader();
-        reader.onload = () => setImagePreview(reader.result?.toString() ?? null);
-        reader.readAsDataURL(file);
+            if (normalized.file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                setLocalError(`Imaginea optimizata trebuie sa fie mai mica de ${MAX_FILE_SIZE_MB}MB.`);
+                event.target.value = '';
+                return;
+            }
+
+            setLocalError(null);
+            form.setData('hero_image', normalized.file);
+            setImagePreview(normalized.preview);
+        } catch (error) {
+            setLocalError(error instanceof Error ? error.message : 'Nu am putut procesa imaginea.');
+            event.target.value = '';
+        }
     };
 
     const handleSubmit = (event) => {
@@ -339,8 +406,8 @@ export default function PsychologistArticleForm({
                     </div>
 
                     <label className="span-2">
-                        <span>Imagine reprezentativa (JPG/PNG, maxim 1200px latime)</span>
-                        <input type="file" accept=".jpg,.jpeg,.png" onChange={handleFileChange} disabled={editorDisabled} />
+                        <span>Imagine reprezentativa (JPG/PNG/WEBP, export automat in WEBP lossy 80% si max 1200px latime)</span>
+                        <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={handleFileChange} disabled={editorDisabled} />
                         {imagePreview ? (
                             <div className="image-preview">
                                 <img src={imagePreview} alt="Previzualizare imagine articol" />

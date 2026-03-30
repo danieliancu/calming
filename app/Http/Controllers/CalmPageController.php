@@ -563,8 +563,9 @@ class CalmPageController extends Controller
             'slug' => $slug,
             'tag' => $validated['tag'],
             'minutes' => $minutes,
-            'hero_image' => Storage::disk('public')->url($imagePath),
-            'author' => $this->encodeGuestArticleAuthor($validated['author_name']),
+            'hero_image' => $this->articleImagePath($imagePath),
+            'author' => null,
+            'guest_author_name' => trim($validated['author_name']),
             'body' => json_encode($validated['body']),
             'is_recommended' => true,
             'topic_id' => $validated['topic_id'],
@@ -870,12 +871,12 @@ class CalmPageController extends Controller
             ->leftJoin('psychologists as p', 'p.id', '=', 'a.author')
             ->leftJoin('article_topics as at', 'at.id', '=', 'a.topic_id')
             ->where('a.slug', $slug)
-            ->select('a.id', 'a.slug', 'a.title', 'a.tag', 'a.minutes', 'a.hero_image', 'a.body', 'a.author as author_value', 'at.name as category', 'p.title as author_title', 'p.name as author_name', 'p.surname as author_surname')
+            ->select('a.id', 'a.slug', 'a.title', 'a.tag', 'a.minutes', 'a.hero_image', 'a.body', 'a.guest_author_name', 'at.name as category', 'p.title as author_title', 'p.name as author_name', 'p.surname as author_surname')
             ->first();
 
         abort_unless($article, 404);
 
-        $guestAuthor = $this->decodeGuestArticleAuthor($article->author_value);
+        $guestAuthor = trim((string) ($article->guest_author_name ?? '')) ?: null;
         $author = $guestAuthor ?: trim(collect([$article->author_title, $article->author_name, $article->author_surname])->filter()->implode(' '));
         $articleId = $article->id;
 
@@ -903,6 +904,18 @@ class CalmPageController extends Controller
                 'reminder_frequency' => $request->user()
                     ? SavedArticle::query()->where('user_id', $request->user()->id)->where('article_id', $article->id)->value('reminder_frequency')
                     : null,
+            ],
+            'meta' => [
+                'title' => "{$article->title} - Calming",
+                'description' => $this->articleMetaDescription($article->body),
+                'type' => 'article',
+                'url' => $request->fullUrl(),
+                'image' => $this->absoluteMediaUrl($article->hero_image, $request),
+                'image_alt' => $article->title,
+                'site_name' => 'Calming',
+                'locale' => 'ro_RO',
+                'canonical' => $request->fullUrl(),
+                'twitter_card' => 'summary_large_image',
             ],
             'related' => DB::table('related_articles as ra')
                 ->join('articles as a', 'a.id', '=', 'ra.related_article_id')
@@ -997,21 +1010,33 @@ class CalmPageController extends Controller
         return max(1, min(240, (int) ceil($wordCount / 200)));
     }
 
-    protected function encodeGuestArticleAuthor(string $authorName): string
+    protected function articleImagePath(string $path): string
     {
-        return 'guest:'.trim($authorName);
+        return '/storage/'.ltrim($path, '/');
     }
 
-    protected function decodeGuestArticleAuthor(?string $author): ?string
+    protected function articleMetaDescription(?string $body): string
     {
-        if (! is_string($author) || ! str_starts_with($author, 'guest:')) {
+        $text = trim(preg_replace('/\s+/', ' ', strip_tags($this->normalizeArticleBody($body))));
+
+        return $text !== ''
+            ? str($text)->limit(170, '...')->toString()
+            : 'Indrumare confidentiala pentru echilibrul tau. Exploreaza articole si resurse Calming.';
+    }
+
+    protected function absoluteMediaUrl(?string $value, Request $request): ?string
+    {
+        if (! $value) {
             return null;
         }
 
-        $decoded = trim(Str::after($author, 'guest:'));
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
 
-        return $decoded !== '' ? $decoded : null;
+        return rtrim($request->getSchemeAndHttpHost(), '/').'/'.ltrim($value, '/');
     }
+
 
     protected function normalizeArticleBody(?string $body): string
     {

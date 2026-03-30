@@ -534,20 +534,46 @@ export default function SuperadminDashboard({
                                                             <div className="superadmin-cell-title">{article.title}</div>
                                                             <div className="superadmin-cell-subtle">{article.body_preview || '-'}</div>
                                                         </td>
-                                                        <td>{article.author_name}</td>
+                                                        <td>
+                                                            <div>{article.author_name}</div>
+                                                            <div className="superadmin-cell-subtle">{article.author_type === 'guest' ? 'Autor invitat' : 'Specialist'}</div>
+                                                        </td>
                                                         <td>
                                                             <div>{article.topic_name || '-'}</div>
                                                             <div className="superadmin-cell-subtle">{article.tag || '-'}</div>
                                                         </td>
                                                         <td>{formatDate(article.updated_at)}</td>
-                                                        <td><span className="status-pill status-pill--pending">PENDING</span></td>
+                                                        <td>
+                                                            <span className={`status-pill ${article.status === 'approved' ? 'status-pill--valid' : 'status-pill--pending'}`}>
+                                                                {article.status === 'approved' ? 'APPROVED' : 'PENDING'}
+                                                            </span>
+                                                        </td>
                                                         <td>
                                                             <div className="superadmin-actions superadmin-actions--inline">
                                                                 <Link className="status-pill status-pill--pending superadmin-pill-compact" href={article.slug ? `/article/${article.slug}` : '#'} target="_blank">
                                                                     Preview
                                                                 </Link>
-                                                                <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.articles.approve', article.id), {}, { preserveScroll: true })}>
-                                                                    Approve
+                                                                {article.author_type === 'guest' ? (
+                                                                    <Link className="status-pill status-pill--pending superadmin-pill-compact" href={route('superadmin.articles.edit', article.id)}>
+                                                                        Editeaza
+                                                                    </Link>
+                                                                ) : null}
+                                                                {article.status !== 'approved' ? (
+                                                                    <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.articles.approve', article.id), {}, { preserveScroll: true })}>
+                                                                        Approve
+                                                                    </button>
+                                                                ) : null}
+                                                                <button
+                                                                    className="status-pill status-pill--danger superadmin-pill-compact"
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (!window.confirm(`Esti sigur ca vrei sa stergi articolul "${article.title}"?`)) {
+                                                                            return;
+                                                                        }
+                                                                        router.delete(route('superadmin.articles.destroy', article.id), { preserveScroll: true });
+                                                                    }}
+                                                                >
+                                                                    Sterge
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -556,7 +582,7 @@ export default function SuperadminDashboard({
                                             </tbody>
                                         </table>
                                     </div>
-                                ) : <div className="muted">Nu exista articole in asteptare.</div>
+                                ) : <div className="muted">Nu exista articole disponibile.</div>
                             ) : activeTab === 'groups' ? (
                                 pendingSupportGroups.length ? (
                                     <div className="superadmin-table-wrap">
