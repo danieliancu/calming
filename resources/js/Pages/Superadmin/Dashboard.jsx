@@ -612,12 +612,18 @@ export default function SuperadminDashboard({
                                                             <div className="superadmin-cell-subtle">{group.schedule || '-'}</div>
                                                         </td>
                                                         <td>{formatDate(group.queued_at)}</td>
-                                                        <td><span className="status-pill status-pill--pending">PENDING</span></td>
+                                                        <td>
+                                                            <span className={`status-pill ${group.status === 'approved' ? 'status-pill--valid' : 'status-pill--pending'}`}>
+                                                                {group.status === 'approved' ? 'APPROVED' : 'PENDING'}
+                                                            </span>
+                                                        </td>
                                                         <td>
                                                             <div className="superadmin-actions superadmin-actions--inline">
-                                                                <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.community-groups.approve', group.id), {}, { preserveScroll: true })}>
-                                                                    Approve
-                                                                </button>
+                                                                {group.status !== 'approved' ? (
+                                                                    <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.community-groups.approve', group.id), {}, { preserveScroll: true })}>
+                                                                        Approve
+                                                                    </button>
+                                                                ) : null}
                                                                 <button className="status-pill status-pill--pending superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.community-groups.reject', group.id), {}, { preserveScroll: true })}>
                                                                     Keep pending
                                                                 </button>
@@ -628,7 +634,7 @@ export default function SuperadminDashboard({
                                             </tbody>
                                         </table>
                                     </div>
-                                ) : <div className="muted">Nu exista grupuri de sprijin in asteptare.</div>
+                                ) : <div className="muted">Nu exista grupuri de sprijin disponibile.</div>
                             ) : activeTab === 'categories' ? (
                                 <div className="superadmin-table-wrap">
                                     <div className="superadmin-panel__head">

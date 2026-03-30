@@ -406,7 +406,7 @@ export default function PsychologistArticleForm({
                     </div>
 
                     <label className="span-2">
-                        <span>Imagine reprezentativa (JPG/PNG/WEBP, export automat in WEBP lossy 80% si max 1200px latime)</span>
+                        <span>Imagine reprezentativa (imaginea va fi exportata automat in WEBP cu max 1200px latime)</span>
                         <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={handleFileChange} disabled={editorDisabled} />
                         {imagePreview ? (
                             <div className="image-preview">

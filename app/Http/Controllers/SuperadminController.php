@@ -248,8 +248,8 @@ class SuperadminController extends Controller
             ])
             ->all();
 
-        $pendingSupportGroups = $this->communityVisibility
-            ->applyPendingReviewScope(DB::table('community_groups as cg'), 'cg')
+        $pendingSupportGroups = DB::table('community_groups as cg')
+            ->leftJoin('community_groups_validation as cgv', 'cgv.group_id', '=', 'cg.id')
             ->join('psychologists as p', 'p.id', '=', 'cg.author')
             ->orderByDesc('cg.id')
             ->get([
@@ -260,6 +260,7 @@ class SuperadminController extends Controller
                 'cg.schedule',
                 'cg.is_private',
                 'cgv.updated_at as queued_at',
+                'cgv.is_valid',
                 'cgv.reviewer_notes',
                 'p.name as author_name',
                 'p.surname as author_surname',
@@ -274,6 +275,7 @@ class SuperadminController extends Controller
                 'queued_at' => $item->queued_at,
                 'reviewer_notes' => $item->reviewer_notes,
                 'author_name' => trim(implode(' ', array_filter([$item->author_name, $item->author_surname]))),
+                'status' => is_null($item->is_valid) || ! (bool) $item->is_valid ? 'pending' : 'approved',
             ])
             ->all();
 
