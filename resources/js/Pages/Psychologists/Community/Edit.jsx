@@ -4,9 +4,9 @@ import AppLayout from '@/Layouts/AppLayout';
 export default function PsychologistCommunityEdit({ group }) {
     return (
         <PsychologistCommunityGroupForm
-            title="Editeaza grup - Calming Partners"
-            heading="Editeaza grupul de sprijin"
-            description="Actualizeaza descrierea, accesul, intalnirile live si lista de invitatii pentru grupul tau."
+            title="Editează grup - Calming Partners"
+            heading="Editează grupul de sprijin"
+            description="Actualizează descrierea, accesul, întâlnirile live și lista de invitații pentru grupul tău."
             submitLabel="Salveaza modificarile"
             submitProcessingLabel="Se salveaza..."
             submitMethod="put"

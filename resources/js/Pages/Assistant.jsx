@@ -13,47 +13,47 @@ import { Head, router } from '@inertiajs/react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 const FOCUS_TOPICS = [
-    'Gestionarea anxietatii',
-    'Echilibru munca-viata',
-    'Relatii si conexiune',
-    'Stima de sine si auto-compasiune',
+    'Gestionarea anxietății',
+    'Echilibru muncă-viață',
+    'Relații și conexiune',
+    'Stimă de sine și auto-compasiune',
     'Gestionarea stresului',
-    'Somn si recuperare',
-    'Trauma si vindecare',
-    'Claritate in obiective',
+    'Somn și recuperare',
+    'Traumă și vindecare',
+    'Claritate în obiective',
 ];
 const AGE_RANGES = ['18-24', '25-34', '35-44', '45-54', '55+'];
 const GUIDANCE_STYLES = [
-    { value: 'calm-empathetic', label: 'Calm si empatic' },
-    { value: 'solution-focused', label: 'Direct si orientat pe solutii' },
-    { value: 'motivational', label: 'Motivant si pragmatic' },
+    { value: 'calm-empathetic', label: 'Calm și empatic' },
+    { value: 'solution-focused', label: 'Direct și orientat pe soluții' },
+    { value: 'motivational', label: 'Motivant și pragmatic' },
 ];
 const THERAPY_STATUS = [
-    { value: 'none', label: 'Nu merg la terapie in prezent' },
-    { value: 'considering', label: 'Ma gandesc sa incep' },
-    { value: 'active', label: 'Sunt in terapie activa' },
-    { value: 'completed', label: 'Am incheiat recent un proces terapeutic' },
+    { value: 'none', label: 'Nu merg la terapie ?n prezent' },
+    { value: 'considering', label: 'Mă gândesc să încep' },
+    { value: 'active', label: 'Sunt ?n terapie activ?' },
+    { value: 'completed', label: 'Am ?ncheiat recent un proces terapeutic' },
 ];
 const ASSISTANT_MODES = [
     {
         value: 'supportive',
-        label: 'Sustinere',
-        description: 'Cald, empatic, bun pentru descarcare emotionala',
+        label: 'Sus?inere',
+        description: 'Cald, empatic, bun pentru descărcare emoțională',
     },
     {
         value: 'clarity',
         label: 'Claritate',
-        description: 'Pune ordine in ganduri si separa esentialul',
+        description: 'Pune ordine în gânduri și separă esențialul',
     },
     {
         value: 'action',
-        label: 'Actiune',
-        description: 'Mai direct, orientat spre pasul urmator',
+        label: 'Ac?iune',
+        description: 'Mai direct, orientat spre pasul următor',
     },
     {
         value: 'checkin',
         label: 'Check-in',
-        description: 'Scurt, linistit, bun pentru reglare si ritm zilnic',
+        description: 'Scurt, liniștit, bun pentru reglare și ritm zilnic',
     },
 ];
 
@@ -147,7 +147,7 @@ export default function Assistant() {
             }
         } catch (err) {
             console.error('Assistant bootstrap failed', err);
-            setError('Nu am putut incarca Assistantul acum.');
+            setError('Nu am putut ?nc?rca Assistantul acum.');
         }
 
         guestStateHydratedRef.current = true;
@@ -285,7 +285,7 @@ export default function Assistant() {
 
                 const assistantMessage = payload?.message
                     ? payload.message
-                    : createLocalMessage('assistant', 'Momentan nu am putut genera un raspuns.');
+                    : createLocalMessage('assistant', 'Momentan nu am putut genera un r?spuns.');
 
                 setMessages((current) => {
                     const filtered = current.filter(m => m.id !== userLocalMsg.id);
@@ -307,7 +307,7 @@ export default function Assistant() {
                     return [
                         ...filtered,
                         payload?.user_message ?? userLocalMsg,
-                        payload?.message ?? createLocalMessage('assistant', 'Momentan nu am putut genera un raspuns.'),
+                        payload?.message ?? createLocalMessage('assistant', 'Momentan nu am putut genera un r?spuns.'),
                     ];
                 });
             }
@@ -355,7 +355,7 @@ export default function Assistant() {
             }
         } catch (err) {
             console.error('Assistant new conversation failed', err);
-            setError('Nu am putut porni o conversatie noua acum.');
+            setError('Nu am putut porni o conversație nouă acum.');
         }
 
         setResetting(false);
@@ -402,8 +402,8 @@ export default function Assistant() {
                         </div>
                         <div className="muted">
                             {guestMode
-                                ? 'Spune ce te preocupa acum si Assistantul va raspunde tinand cont de setarile sesiunii.'
-                                : 'Assistantul porneste de la profilul tau si te poate ajuta cu un check-in, clarificare sau urmatorul pas.'}
+                                ? 'Spune ce te preocup? acum ?i Assistantul va r?spunde ?in?nd cont de set?rile sesiunii.'
+                                : 'Assistantul porne?te de la profilul t?u ?i te poate ajuta cu un check-in, clarificare sau urm?torul pas.'}
                         </div>
                     </AccentCard>
 
@@ -422,12 +422,12 @@ export default function Assistant() {
                                         router.visit('/');
                                     }}
                                 >
-                                    <FiArrowLeft aria-hidden /> Inapoi
+                                    <FiArrowLeft aria-hidden /> Înapoi
                                 </button>
                                 <div className="assistant-convo-mode">Asistent AI: <span style={{ color:"var(--text-900)" }}>{activeAssistantModeMeta.label}</span></div>
                             </div>
 
-                            {loading ? <div className="card muted">Se incarca Assistantul...</div> : null}
+                            {loading ? <div className="card muted">Se ?ncarc? Assistantul...</div> : null}
                             {error ? <div className="error">{error}</div> : null}
 
                             <div ref={threadRef} className="assistant-thread" role="log" aria-live="polite">
@@ -440,14 +440,14 @@ export default function Assistant() {
 
                             {guestLimitReached ? (
                                 <div className="assistant-limit card">
-                                    <div className="section-title">Limita sesiunii a fost atinsa</div>
-                                    <div className="muted">Creeaza-ti un cont pentru a continua conversatia si pentru a salva istoricul Assistantului.</div>
-                                    <button className="btn primary u-mt-2" type="button" onClick={promptAuth}>Creeaza cont</button>
+                                    <div className="section-title">Limita sesiunii a fost atins?</div>
+                                    <div className="muted">Creează-ți un cont pentru a continua conversația și pentru a salva istoricul Assistantului.</div>
+                                    <button className="btn primary u-mt-2" type="button" onClick={promptAuth}>Creează cont</button>
                                 </div>
                             ) : null}
 
                             {sending ? (
-                                <div className="assistant-typing-indicator" aria-live="polite" aria-label="Asistentul raspunde">
+                                <div className="assistant-typing-indicator" aria-live="polite" aria-label="Asistentul r?spunde">
                                     <LoadingDots />
                                     <span>{activeAssistantModeMeta.label}</span>
                                 </div>
@@ -477,8 +477,8 @@ export default function Assistant() {
                                             className="assistant-fab assistant-new-conversation"
                                             onClick={() => setModeMenuOpen((current) => !current)}
                                             disabled={resetting || loading || sending}
-                                            aria-label="Alege modelul pentru o conversatie noua"
-                                            title="Alege modelul pentru o conversatie noua"
+                                            aria-label="Alege modelul pentru o conversație nouă"
+                                            title="Alege modelul pentru o conversație nouă"
                                             aria-haspopup="menu"
                                             aria-expanded={modeMenuOpen}
                                         >
@@ -488,8 +488,8 @@ export default function Assistant() {
                                             type="button"
                                             className="assistant-fab assistant-title-settings"
                                             onClick={handleSettingsClick}
-                                            aria-label={guestMode ? 'Setari assistant' : 'Editeaza profilul'}
-                                            title={guestMode ? 'Setari assistant' : 'Editeaza profilul'}
+                                            aria-label={guestMode ? 'Setări assistant' : 'Editează profilul'}
+                                            title={guestMode ? 'Setări assistant' : 'Editează profilul'}
                                         >
                                             <SettingsIcon />
                                         </button>
@@ -518,10 +518,10 @@ export default function Assistant() {
                 <aside className={`assistant-settings-panel${settingsOpen ? ' is-open' : ''}${guestMode ? ' is-guest' : ''}`}>
                     <div className="assistant-settings-head">
                         <div>
-                            <div className="title">Setari sesiune</div>
-                            <div className="muted">Aceste setari se pierd la iesirea din sesiune.</div>
+                            <div className="title">Setări sesiune</div>
+                            <div className="muted">Aceste set?ri se pierd la ie?irea din sesiune.</div>
                         </div>
-                        <button type="button" className="close assistant-settings-close" onClick={() => setSettingsOpen(false)} aria-label="Inchide setarile">
+                        <button type="button" className="close assistant-settings-close" onClick={() => setSettingsOpen(false)} aria-label="?nchide set?rile">
                             <FiX />
                         </button>
                     </div>
@@ -547,9 +547,9 @@ function GuestAssistantSettings({
 }) {
     return (
         <div className="assistant-settings-body">
-            <label className="profile-label" htmlFor="guestAgeRange">Interval de varsta</label>
+            <label className="profile-label" htmlFor="guestAgeRange">Interval de v?rst?</label>
             <select id="guestAgeRange" className="form-input" value={profile.ageRange ?? ''} onChange={(event) => onFieldChange('ageRange', event.target.value)}>
-                <option value="">Selecteaza</option>
+                <option value="">Selecteaz?</option>
                 {AGE_RANGES.map((item) => <option key={item} value={item}>{item} ani</option>)}
             </select>
 
@@ -558,7 +558,7 @@ function GuestAssistantSettings({
                 {GUIDANCE_STYLES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
 
-            <div className="profile-label">Pe ce arii vrei sa lucram</div>
+            <div className="profile-label">Pe ce arii vrei s? lucr?m</div>
             <div className="tags">
                 {FOCUS_TOPICS.map((topic) => (
                     <button type="button" key={topic} className={`tag ${focusTopicSet.has(topic) ? 'sel' : ''}`} onClick={() => onToggleTopic(topic)}>
@@ -567,9 +567,9 @@ function GuestAssistantSettings({
                 ))}
             </div>
 
-            <label className="profile-label" htmlFor="guestTherapyStatus">Situatia ta legata de terapie</label>
+            <label className="profile-label" htmlFor="guestTherapyStatus">Situa?ia ta legat? de terapie</label>
             <select id="guestTherapyStatus" className="form-input" value={profile.therapyStatus ?? ''} onChange={(event) => onFieldChange('therapyStatus', event.target.value)}>
-                <option value="">Selecteaza</option>
+                <option value="">Selecteaz?</option>
                 {THERAPY_STATUS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
         </div>

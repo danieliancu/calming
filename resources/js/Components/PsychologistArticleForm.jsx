@@ -280,13 +280,13 @@ export default function PsychologistArticleForm({
 
         if ((authorNameEnabled && !authorNameValue) || !titleValue || !tagValue || !form.data.topic_id || !bodyText) {
             setLocalError(authorNameEnabled
-                ? 'Completeaza numele autorului, titlul, tag-ul, rubrica si continutul articolului.'
-                : 'Completeaza titlul, tag-ul, rubrica si continutul articolului.');
+                ? 'Completează numele autorului, titlul, tag-ul, rubrica și conținutul articolului.'
+                : 'Completează titlul, tag-ul, rubrica și conținutul articolului.');
             return;
         }
 
         if (!article && !form.data.hero_image) {
-            setLocalError('Adauga o imagine pentru articol.');
+            setLocalError('Adaugă o imagine pentru articol.');
             return;
         }
 
@@ -312,7 +312,7 @@ export default function PsychologistArticleForm({
         <>
             <div className="group-convo-nav">
                 <Link href={backHref ?? route('psychologists.dashboard', { section: 'articles' })} className="group-back-link">
-                    &larr; Inapoi
+                    &larr; Înapoi
                 </Link>
             </div>
             <section className="card psych-card">
@@ -361,7 +361,7 @@ export default function PsychologistArticleForm({
                     </div>
 
                     <div className="span-2 form-field-block">
-                        <span className="field-label">Continut</span>
+                        <span className="field-label">Conținut</span>
                         <div className="editor-wrapper" ref={editorWrapperRef}>
                             {toolbarFixedStyle ? <div aria-hidden className="editor-toolbar-spacer" style={{ height: `${toolbarHeight}px` }} /> : null}
                             <div
@@ -420,7 +420,7 @@ export default function PsychologistArticleForm({
                             {form.processing ? 'Se trimite...' : submitLabel}
                         </button>
                         <Link className="btn" href={cancelHref ?? route('psychologists.dashboard', { section: 'articles' })}>
-                            Renunta
+                            Renunță
                         </Link>
                     </div>
                 </form>

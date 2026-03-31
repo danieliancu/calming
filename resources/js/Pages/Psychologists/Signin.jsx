@@ -35,7 +35,7 @@ export default function PsychologistSignin() {
                     <Link href="/" className="brand"><span className="brand-mark" /> Calming</Link>
                     <section className="card auth-card">
                         <div className="section-title">Intra in dashboard</div>
-                        <p className="muted">Introdu datele contului tau de partener. Dupa parola vei confirma accesul cu un cod de verificare pentru autentificare in doi pasi trimis pe email.</p>
+                        <p className="muted">Introdu datele contului tău de partener. După parolă vei confirma accesul cu un cod de verificare pentru autentificare în doi pași trimis pe email.</p>
                         {page.props.flash?.status ? <div className="info u-mt-2">{page.props.flash.status}</div> : null}
                         {form.errors.email ? <div className="error u-mt-2">{form.errors.email}</div> : null}
                         <form className="auth-form u-mt-4" onSubmit={submit}>

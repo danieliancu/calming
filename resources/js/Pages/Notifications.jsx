@@ -7,6 +7,7 @@ import {
     markGuestNotificationUnread,
 } from '@/lib/guestActivity';
 import { apiFetch } from '@/lib/http';
+import { emitNotificationSync } from '@/lib/notificationSync';
 import { FiBell, FiCheck, FiReply, ICON_BY_NAME } from '@/lib/icons';
 import { Head, Link } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
@@ -26,11 +27,11 @@ export default function Notifications({ notifications, guestDefaults, unreadCoun
     if (!notificationsEnabled) {
         return (
             <>
-                <Head title="Notificari - Calming" />
+                <Head title="Notificări - Calming" />
                 <section className="notification-page">
                     <div className="card">
-                        <div className="section-title">Notificari</div>
-                        <p className="muted">Notificarile sunt dezactivate din setari.</p>
+                        <div className="section-title">Notificări</div>
+                        <p className="muted">Notificările sunt dezactivate din setări.</p>
                     </div>
                 </section>
             </>
@@ -54,6 +55,7 @@ export default function Notifications({ notifications, guestDefaults, unreadCoun
                 });
             }
             await refreshAuth();
+            emitNotificationSync({ source: 'notifications-page', action: nextReadState ? 'read' : 'unread' });
         } else if (nextReadState) {
             markGuestNotificationRead(item.id);
         } else {
@@ -67,6 +69,7 @@ export default function Notifications({ notifications, guestDefaults, unreadCoun
         if (isAuthenticated) {
             await apiFetch('/api/notifications/read-all', { method: 'POST' });
             await refreshAuth();
+            emitNotificationSync({ source: 'notifications-page', action: 'read-all' });
         } else {
             markAllGuestNotificationsRead(items.map((item) => item.id));
         }
@@ -103,11 +106,11 @@ export default function Notifications({ notifications, guestDefaults, unreadCoun
     if (!items.length) {
         return (
             <>
-                <Head title="Notificari - Calming" />
+                <Head title="Notificări - Calming" />
                 <section className="notification-page">
                     <div className="card">
-                        <div className="section-title">Notificari</div>
-                        <p className="muted">Nu ai notificari noi in acest moment.</p>
+                        <div className="section-title">Notificări</div>
+                        <p className="muted">Nu ai notificări noi în acest moment.</p>
                     </div>
                 </section>
             </>
@@ -116,10 +119,10 @@ export default function Notifications({ notifications, guestDefaults, unreadCoun
 
     return (
         <>
-            <Head title="Notificari - Calming" />
+            <Head title="Notificări - Calming" />
             <section className="notification-page">
                 <div className="card notification-toolbar">
-                    <div className="section-title">Notificari</div>
+                    <div className="section-title">Notificări</div>
                     <button className="notification-toolbar__action" type="button" onClick={handleMarkAllRead}>
                         <span className="notification-toolbar__icon" aria-hidden>
                             <FiCheck size={12} />
@@ -127,7 +130,7 @@ export default function Notifications({ notifications, guestDefaults, unreadCoun
                         <span>Bifeaza toate citite</span>
                     </button>
                 </div>
-                <NotificationBlock title="Astazi" highlight items={todayItems} onToggleRead={handleToggleRead} />
+                <NotificationBlock title="Astăzi" highlight items={todayItems} onToggleRead={handleToggleRead} />
                 <NotificationBlock title="Mai devreme" items={earlierItems} onToggleRead={handleToggleRead} />
                 <NotificationBlock title="Citite" items={readItems} onToggleRead={handleToggleRead} />
             </section>

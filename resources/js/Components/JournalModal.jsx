@@ -244,7 +244,7 @@ export default function JournalModal({ onClose, onSaved }) {
 
                             <div className="actions">
                                 <button type="button" className="btn" onClick={onClose}>
-                                    Renunta
+                                    Renunță
                                 </button>
                                 <button type="button" className="btn primary" onClick={saveEntry} disabled={saving}>
                                     {saving ? 'Se salveaza...' : 'Salveaza intrarea'}

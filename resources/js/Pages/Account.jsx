@@ -33,7 +33,7 @@ export default function AccountPage() {
                 </AccentCard>
 
                 <div className="journal-footer">
-                    <Link className="profile-action secondary" href="/profile">&larr; Inapoi la profil</Link>
+                    <Link className="profile-action secondary" href="/profile">&larr; Înapoi la profil</Link>
                 </div>
 
                 <section className="card">
@@ -52,7 +52,7 @@ export default function AccountPage() {
                                     <span className="settings-icon-bubble"><FiUser /></span>
                                     <div className="settings-item-content">
                                         <span className="settings-item-title">Date profil</span>
-                                        <span className="settings-item-muted">Actualizeaza numele si adresa de email asociate contului.</span>
+                                        <span className="settings-item-muted">Actualizează numele și adresa de email asociate contului.</span>
                                     </div>
                                 </div>
                             </div>
@@ -103,7 +103,7 @@ export default function AccountPage() {
                             {renderErrors(passwordForm.errors)}
                             <div className="row wrap gap-2 account-action-row">
                                 <button className="btn primary" type="submit" disabled={passwordForm.processing}>
-                                    {passwordForm.processing ? 'Se actualizeaza...' : 'Actualizeaza parola'}
+                                    {passwordForm.processing ? 'Se actualizează...' : 'Actualizează parola'}
                                 </button>
                             </div>
                         </form>
@@ -118,7 +118,7 @@ export default function AccountPage() {
                                 <div className="settings-leading">
                                     <span className="settings-icon-bubble settings-icon-bubble--danger"><FiTrash2 /></span>
                                     <div className="settings-item-content">
-                                        <span className="settings-item-title">Sterge contul</span>
+                                        <span className="settings-item-title">Șterge contul</span>
                                         <span className="settings-item-muted">Aceasta actiune este permanenta si va elimina accesul la profil.</span>
                                     </div>
                                 </div>
@@ -130,7 +130,7 @@ export default function AccountPage() {
                             {renderErrors(deleteForm.errors)}
                             <div className="row wrap gap-2 account-action-row">
                                 <button className="btn danger account-delete-button" type="submit" disabled={deleteForm.processing}>
-                                    {deleteForm.processing ? 'Se sterge...' : 'Sterge contul'}
+                                    {deleteForm.processing ? 'Se șterge...' : 'Șterge contul'}
                                 </button>
                             </div>
                         </form>

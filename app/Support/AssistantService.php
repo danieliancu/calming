@@ -241,7 +241,7 @@ class AssistantService
                 'message' => [
                     'id' => 'guest-limit',
                     'role' => 'assistant',
-                    'content' => 'Ai ajuns la limita acestei sesiuni. Creeaza-ti un cont pentru a pastra istoricul si pentru a continua cu un assistant personalizat.',
+                    'content' => 'Ai ajuns la limita acestei sesiuni. Creează-ți un cont pentru a păstra istoricul și pentru a continua cu un assistant personalizat.',
                     'status' => 'completed',
                     'safety_state' => 'limit_reached',
                     'created_at' => now()->toIso8601String(),
@@ -400,10 +400,10 @@ class AssistantService
             }
 
             if ($ageRange !== '') {
-                return "Da, in setarile sesiunii apare intervalul de varsta {$ageRange}. Trec prin raspunsuri tinand cont de etapa asta de viata.";
+                return "Da, în setările sesiunii apare intervalul de vârstă {$ageRange}. Trec prin răspunsuri ținând cont de etapa asta de viață.";
             }
 
-            return 'Nu am in setarile sesiunii un interval de varsta salvat acum. Daca vrei, il poti selecta si tin cont de el in raspunsuri.';
+            return 'Nu am în setările sesiunii un interval de vârstă salvat acum. Dacă vrei, îl poți selecta și țin cont de el în răspunsuri.';
         }
 
         if ($exactAge && preg_match('/^\d{1,2}$/', $normalized)) {
@@ -411,7 +411,7 @@ class AssistantService
         }
 
         if ($exactAge && preg_match('/\b(am|implinesc|fac)\s+(\d{1,2})\s+de\s+ani\b/', $normalized)) {
-            return "Am retinut, ai {$exactAge} ani. Tin cont de etapa asta de viata in raspunsurile mele. Ce te preocupa cel mai mult acum?";
+            return "Am reținut, ai {$exactAge} ani. Țin cont de etapa asta de viață în răspunsurile mele. Ce te preocupă cel mai mult acum?";
         }
 
         if ($normalized === '' || preg_match('/^(salut|hello|hei|buna|buna ziua|good morning|good evening)$/', $normalized)) {
@@ -468,7 +468,7 @@ class AssistantService
             return trim(implode(' ', array_filter([
                 'Se aude multa frustrare fata de comportamentul altora, iar reactia asta are sens.',
                 'Ce te-a atins cel mai tare: lipsa de respect, tonul, sau faptul ca te-ai simtit trecut cu vederea?',
-                'Dupa ce numim clar asta, alegem si o reactie care te protejeaza mai bine.',
+                'După ce numim clar asta, alegem și o reacție care te protejează mai bine.',
             ])));
         }
 
@@ -483,7 +483,7 @@ class AssistantService
             return match ($assistantMode) {
                 'clarity' => 'Spune-mi pe scurt situatia, iar eu te ajut sa vedem ce e central si ce e secundar.',
                 'action' => 'Spune-mi pe scurt situatia, iar apoi alegem cel mai util pas pe care il poti face acum.',
-                'checkin' => 'Spune-mi pe scurt cum esti acum, fara sa fortezi explicatia.',
+                'checkin' => 'Spune-mi pe scurt cum ești acum, fără să forțezi explicația.',
                 default => 'Spune-mi pe scurt ce te apasa acum, iar apoi luam lucrurile pe rand.',
             };
         }
@@ -491,7 +491,7 @@ class AssistantService
         return match ($assistantMode) {
             'clarity' => 'Hai sa alegem un singur fir si sa-l clarificam. Care este partea care te incurca cel mai mult?',
             'action' => 'Hai sa reducem totul la un singur pas urmator. Care este blocajul care te opreste chiar acum?',
-            'checkin' => 'Hai sa ramanem cu un singur punct, fara graba. Care este partea cea mai grea chiar acum?',
+            'checkin' => 'Hai să rămânem cu un singur punct, fără grabă. Care este partea cea mai grea chiar acum?',
             default => 'Hai sa luam un singur punct din tot ce se intampla. Care este partea cea mai grea chiar acum?',
         };
     }
@@ -824,7 +824,7 @@ class AssistantService
     protected function checkInLabel(?string $value): string
     {
         return match ($value) {
-            'afternoon' => 'Pranz / dupa-amiaza (11-17)',
+            'afternoon' => 'Prânz / după-amiaza (11-17)',
             'evening' => 'Seara (17-22)',
             'weekend' => 'Mai ales in weekend',
             default => 'Dimineata (7-11)',
@@ -834,7 +834,7 @@ class AssistantService
     protected function therapyStatusLabel(?string $value): string
     {
         return match ($value) {
-            'considering' => 'Ma gandesc sa incep',
+            'considering' => 'Mă gândesc să încep',
             'active' => 'Sunt in terapie activa',
             'completed' => 'Am incheiat recent un proces terapeutic',
             'none' => 'Nu merg la terapie in prezent',

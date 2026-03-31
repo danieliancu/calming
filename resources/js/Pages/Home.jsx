@@ -1,9 +1,10 @@
 import AppLayout from '@/Layouts/AppLayout';
+import CareReminder from '@/Components/CareReminder';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/contexts/AuthContext';
 import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
-import { BellIcon, FiHeart, FiHelpCircle, FiStar, FiUsers, FiZap, ICON_BY_NAME } from '@/lib/icons';
+import { BellIcon, FiHelpCircle, FiStar, FiUsers, FiZap, ICON_BY_NAME } from '@/lib/icons';
 
 const moodLabelOverrides = {
     'In regula': 'OK',
@@ -69,7 +70,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
             return;
         }
         if (!quickMoodId) {
-            setQuickError('Selecteaza starea din lista inainte sa salvezi.');
+            setQuickError('Selectează starea din listă înainte să salvezi.');
             return;
         }
         setQuickSaving(true);
@@ -83,7 +84,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
             });
             setQuickSuccess(
                 <>
-                    Nota rapida a fost salvata. O poti vedea in contul tau, accesand{' '}
+                    Nota rapidă a fost salvată. O poți vedea în contul tău, accesând{' '}
                     <Link href="/journal" className="text-link" style={{ textDecoration: 'underline' }}>Jurnalul meu</Link>.
                 </>,
             );
@@ -116,19 +117,19 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
     const mobileGreeting = useMemo(() => {
         const hour = new Date().getHours();
         if (hour < 12) {
-            return 'Buna dimineata';
+            return 'Bună dimineața';
         }
         if (hour < 18) {
-            return 'Buna ziua';
+            return 'Bună ziua';
         }
-        return 'Buna seara';
+        return 'Bună seara';
     }, []);
     const latestNotificationTime = useMemo(() => formatHomeNotificationTime(latestNotification?.created_at), [latestNotification?.created_at]);
     const LatestNotificationIcon = useMemo(() => ICON_BY_NAME[latestNotification?.icon] ?? BellIcon, [latestNotification?.icon]);
     const quickNoteField = isAuthenticated ? (
         <input
             className="grow note-input"
-            placeholder="Adauga un gand in jurnal."
+            placeholder="Adaugă un gând în jurnal."
             value={quickNote}
             onChange={(event) => setQuickNote(event.target.value)}
             maxLength={255}
@@ -136,7 +137,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
         />
     ) : (
         <button type="button" className="grow note-input note-input-button" onClick={openJournal}>
-            Adauga un gand in jurnal.
+            Adaugă un gând în jurnal.
         </button>
     );
 
@@ -165,7 +166,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                     ) : null}
 
                     <section className="card home-mobile-auth__card" onClickCapture={guardMoodCard} onKeyDownCapture={guardMoodCard}>
-                        <div className="section-title">Cum te simti azi?</div>
+                        <div className="section-title">Cum te simți azi?</div>
                         <div className="mood-row u-mt-2">
                             {moodOptions.map((item) => (
                                 <button key={item.id} type="button" className={`mood-button ${quickMoodId === item.id ? 'sel' : ''}`} title={getMoodLabel(item.label)} aria-label={`Ma simt ${getMoodLabel(item.label)}`} aria-pressed={quickMoodId === item.id} onClick={openProfileJournal}>
@@ -177,7 +178,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                         <div className="row u-mt-3 home-mobile-auth__note-row">
                             {quickNoteField}
                             <button className="btn primary" type="button" onClick={handleQuickSave} disabled={quickSaving}>
-                                {quickSaving ? 'Se salveaza...' : 'Salveaza'}
+                                {quickSaving ? 'Se salvează...' : 'Salvează'}
                             </button>
                         </div>
                         {quickError ? <div className="error u-mt-2">{quickError}</div> : null}
@@ -185,26 +186,18 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                     </section>
 
                     <section className="card home-mobile-auth__card">
-                        <div className="section-title"><FiZap className="section-icon" /> Actiuni rapide</div>
+                        <div className="section-title"><FiZap className="section-icon" /> Acțiuni rapide</div>
                         <div className="grid grid-single u-gap-2-5">
-                            <Link href="/assistant" className="list-item">Vorbeste cu Asistentul</Link>
-                            <Link href="/psychologists" className="list-item">Programeaza o sedinta</Link>
-                            <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adauga in jurnal</a>
+                            <Link href="/assistant" className="list-item">Vorbește cu Asistentul</Link>
+                            <Link href="/psychologists" className="list-item">Programează o ședință</Link>
+                            <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adaugă în jurnal</a>
                         </div>
                     </section>
 
-                    <div className="note-card home-mobile-auth__care-card">
-                        <div className="note-icon">
-                            <FiHeart size={24} />
-                        </div>
-                        <div>
-                            <div className="u-text-semibold">Aminteste-ti sa ai grija de tine astazi.</div>
-                            <div className="muted note-subtext">Starea ta de bine conteaza, iar tu nu esti singur in aceasta calatorie.</div>
-                        </div>
-                    </div>
+                    <CareReminder className="home-mobile-auth__care-card" />
 
                     <section className="card home-mobile-auth__card">
-                        <div className="section-title"><FiStar className="section-icon" /> Recomandari pentru tine</div>
+                        <div className="section-title"><FiStar className="section-icon" /> Recomandări pentru tine</div>
                         <div className="grid u-gap-2-5">
                             {recommendedArticles.map((item) => (
                                 <Link key={item.slug} href={`/article/${item.slug}`} className="list-item">{item.title}</Link>
@@ -222,7 +215,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                     </section>
 
                     <section className="card home-mobile-auth__card">
-                        <div className="section-title"><FiHelpCircle className="section-icon" /> Intrebari si raspunsuri</div>
+                        <div className="section-title"><FiHelpCircle className="section-icon" /> Întrebări și răspunsuri</div>
                         <div className="accordion">
                             {faqs.map((item, index) => {
                                 const expanded = Boolean(openFaqs[index]);
@@ -255,20 +248,20 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                 <video autoPlay muted loop playsInline src="/video/calm.mp4" className="hero-video" />
                 <div className="u-relative">
                     <div className="hero-badge">Psihologul tău</div>
-                    <h1 className="hero-title">Indrumare confidentiala pentru echilibrul tău</h1>
+                    <h1 className="hero-title">Îndrumare confidențială pentru echilibrul tău</h1>
                     <p className="hero-lead u-mt-2">
-                        Un spatiu sigur in care poti vorbi cu un asistent AI, poti tine un jurnal al starilor si poti gasi rapid specialisti si resurse de incredere.
+                        Un spațiu sigur în care poți vorbi cu un asistent AI, poți ține un jurnal al stărilor și poți găsi rapid specialiști și resurse de încredere.
                     </p>
                     <div className="row hello u-mt-3">
-                        <Link className="btn primary" href="/assistant">Incepe conversatia cu un asistent AI</Link>
-                        <Link className="btn" href="/psychologists">Programeaza o sedinta cu un psiholog</Link>
+                        <Link className="btn primary" href="/assistant">Începe conversația cu un asistent AI</Link>
+                        <Link className="btn" href="/psychologists">Programează o ședință cu un psiholog</Link>
                     </div>
                 </div>
             </section>
 
             <section className={`card home-mood-card${isAuthenticated ? ' home-default-auth' : ''}`} onClickCapture={guardMoodCard} onKeyDownCapture={guardMoodCard}>
                 <div className="section-title">
-                    {isAuthenticated && greetingName ? `Buna, ${greetingName}! Cum te simti azi?` : 'Cum te simti azi?'}
+                    {isAuthenticated && greetingName ? `Bună, ${greetingName}! Cum te simți azi?` : 'Cum te simți azi?'}
                 </div>
                 <div className="mood-row u-mt-2">
                     {moodOptions.map((item) => (
@@ -281,35 +274,27 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
                 <div className="row u-mt-3">
                     {quickNoteField}
                     <button className="btn primary" type="button" onClick={handleQuickSave} disabled={quickSaving}>
-                        {quickSaving ? 'Se salveaza...' : 'Salveaza'}
+                        {quickSaving ? 'Se salvează...' : 'Salvează'}
                     </button>
                 </div>
                 {quickError ? <div className="error u-mt-2">{quickError}</div> : null}
                 {quickSuccess ? <div className="info u-mt-2">{quickSuccess}</div> : null}
 
-                <div className="note-card note-card-spaced">
-                    <div className="note-icon">
-                        <FiHeart size={24} />
-                    </div>
-                    <div>
-                        <div className="u-text-semibold">Aminteste-ti sa ai grija de tine astazi.</div>
-                        <div className="muted note-subtext">Starea ta de bine conteaza, iar tu nu esti singur in aceasta calatorie.</div>
-                    </div>
-                </div>
+                <CareReminder className="note-card-spaced" />
             </section>
 
             <div className={`grid cols-3${isAuthenticated ? ' home-default-auth' : ''}`}>
                 <section className="card">
-                    <div className="section-title"><FiZap className="section-icon" /> Actiuni rapide</div>
+                    <div className="section-title"><FiZap className="section-icon" /> Acțiuni rapide</div>
                     <div className="grid grid-single u-gap-2-5">
-                        <Link href="/assistant" className="list-item">Vorbeste cu Asistentul</Link>
-                        <Link href="/psychologists" className="list-item">Programeaza o sedinta</Link>
-                        <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adauga in jurnal</a>
+                        <Link href="/assistant" className="list-item">Vorbește cu Asistentul</Link>
+                        <Link href="/psychologists" className="list-item">Programează o ședință</Link>
+                        <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adaugă în jurnal</a>
                     </div>
                 </section>
 
                 <section className="card">
-                    <div className="section-title"><FiStar className="section-icon" /> Recomandari pentru tine</div>
+                    <div className="section-title"><FiStar className="section-icon" /> Recomandări pentru tine</div>
                     <div className="grid u-gap-2-5">
                         {recommendedArticles.map((item) => (
                             <Link key={item.slug} href={`/article/${item.slug}`} className="list-item">{item.title}</Link>
@@ -328,7 +313,7 @@ export default function Home({ moodOptions, faqs, recommendedArticles, community
             </div>
 
             <section className={`card u-span-full u-mt-4${isAuthenticated ? ' home-default-auth' : ''}`}>
-                <div className="section-title"><FiHelpCircle className="section-icon" /> Intrebari si raspunsuri</div>
+                <div className="section-title"><FiHelpCircle className="section-icon" /> Întrebări și răspunsuri</div>
                 <div className="accordion">
                     {faqs.map((item, index) => {
                         const expanded = Boolean(openFaqs[index]);

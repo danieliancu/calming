@@ -216,7 +216,7 @@ class CalmPageController extends Controller
                     'name' => $group->name,
                     'memberCount' => $groupStats[$group->id]['memberCount'] ?? 0,
                     'memberLabel' => $groupStats[$group->id]['memberLabel'] ?? $this->communityMemberLabel(0),
-                    'lastActiveExact' => $groupStats[$group->id]['lastActiveExact'] ?? 'fara mesaje',
+                    'lastActiveExact' => $groupStats[$group->id]['lastActiveExact'] ?? 'fără mesaje',
                     'lastMessageAt' => $groupStats[$group->id]['lastMessageAt']?->toIso8601String(),
                     'is_private' => (bool) $group->is_private,
                     'canAccessConversations' => $this->canAccessCommunityGroupConversations($request, $group->id, (bool) $group->is_private, (int) ($group->author ?? 0)),
@@ -331,7 +331,7 @@ class CalmPageController extends Controller
         } elseif ($user) {
             $this->notifications->publishToUser($user->id, 'community_member_update', [
                 'title' => 'Activitate noua in comunitate',
-                'body' => "Ai scris in {$group['name']}. Revino oricand pentru raspunsuri noi.",
+                'body' => "Ai scris în {$group['name']}. Revino oricând pentru răspunsuri noi.",
                 'category' => 'community',
                 'icon' => 'FiHeart',
                 'icon_color' => 'amber',
@@ -468,7 +468,7 @@ class CalmPageController extends Controller
             'slug' => 'help',
             'eyebrow' => 'Help',
             'title' => 'Centru de ajutor',
-            'description' => 'Intrebari si raspunsuri despre paginile, functionalitatile si avantajele principale ale aplicatiei Calming.',
+            'description' => 'Întrebări și răspunsuri despre paginile, funcționalitățile și avantajele principale ale aplicației Calming.',
             'updatedAt' => '28 martie 2026',
             'sections' => $this->helpSections(),
             'company' => null,
@@ -830,7 +830,7 @@ class CalmPageController extends Controller
 
         $specialist = $this->booking->approvedPsychologistBySlug($slug);
         if (! $specialist) {
-            return redirect()->route('psychologists')->with('status', 'Specialistul selectat nu este disponibil pentru programari.');
+            return redirect()->route('psychologists')->with('status', 'Specialistul selectat nu este disponibil pentru programări.');
         }
 
         $types = $this->booking->activeTypesForPsychologist((int) $specialist->id);
@@ -1021,7 +1021,7 @@ class CalmPageController extends Controller
 
         return $text !== ''
             ? str($text)->limit(170, '...')->toString()
-            : 'Indrumare confidentiala pentru echilibrul tau. Exploreaza articole si resurse Calming.';
+            : 'Îndrumare confidențială pentru echilibrul tău. Explorează articole și resurse Calming.';
     }
 
     protected function absoluteMediaUrl(?string $value, Request $request): ?string
@@ -1273,7 +1273,7 @@ class CalmPageController extends Controller
     protected function communityExactElapsedLabel(?Carbon $lastMessageAt): string
     {
         if (! $lastMessageAt) {
-            return 'fara mesaje';
+            return 'fără mesaje';
         }
 
         $now = now();
@@ -1358,22 +1358,22 @@ class CalmPageController extends Controller
         return [
             'termeni-si-conditii' => [
                 'eyebrow' => 'Legal',
-                'title' => 'Termeni si Conditii',
-                'description' => 'Termenii si conditiile de utilizare pentru platforma Calming.',
+                'title' => 'Termeni și Condiții',
+                'description' => 'Termenii și condițiile de utilizare pentru platforma Calming.',
                 'updatedAt' => '28 martie 2026',
                 'company' => $company,
                 'sections' => [
                     [
                         'heading' => '1. Despre platforma',
                         'paragraphs' => [
-                            'Acest document reglementeaza accesul si utilizarea platformei Calming, operata de GREEN HORIZON CONCEPTS S.R.L. Platforma ofera continut informational, functii de suport digital, articole, comunitate si instrumente pentru organizarea interactiunii dintre utilizatori si specialisti.',
-                            'Prin accesarea sau utilizarea platformei, confirmi ca ai citit si accepti acesti termeni si conditii. Daca nu esti de acord cu continutul lor, nu utiliza serviciile disponibile in platforma.',
+                            'Acest document reglementează accesul și utilizarea platformei Calming, operată de GREEN HORIZON CONCEPTS S.R.L. Platforma oferă conținut informațional, funcții de suport digital, articole, comunitate și instrumente pentru organizarea interacțiunii dintre utilizatori și specialiști.',
+                            'Prin accesarea sau utilizarea platformei, confirmi că ai citit și accepți acești termeni și condiții. Dacă nu ești de acord cu conținutul lor, nu utiliza serviciile disponibile în platformă.',
                         ],
                     ],
                     [
                         'heading' => '2. Rolul platformei',
                         'paragraphs' => [
-                            'Calming este o platforma digitala care faciliteaza accesul la resurse de informare si la servicii oferite de specialisti. Platforma nu inlocuieste serviciile medicale de urgenta, evaluarea clinica individuala sau relatia profesionala directa dintre utilizator si specialist.',
+                            'Calming este o platformă digitală care facilitează accesul la resurse de informare și la servicii oferite de specialiști. Platforma nu înlocuiește serviciile medicale de urgență, evaluarea clinică individuală sau relația profesională directă dintre utilizator și specialist.',
                             'Informatiile disponibile in aplicatie au scop orientativ si educational. Pentru situatii urgente sau riscuri imediate pentru sanatate ori siguranta, utilizatorul trebuie sa contacteze de urgenta serviciile competente.',
                         ],
                     ],
@@ -1385,17 +1385,17 @@ class CalmPageController extends Controller
                         ],
                     ],
                     [
-                        'heading' => '4. Programari, continut si interactiuni',
+                        'heading' => '4. Programări, conținut și interacțiuni',
                         'paragraphs' => [
-                            'Programarile, mesajele, reminderele si alte functionalitati sunt oferite in masura disponibilitatii tehnice a platformei. Calming poate modifica, suspenda sau actualiza functii, formulare sau fluxuri de lucru pentru a mentine securitatea si functionarea serviciului.',
-                            'Utilizatorii trebuie sa foloseasca limbaj adecvat si sa nu publice ori transmita continut ilegal, ofensator, defaimator, amenintator, discriminatoriu sau care incalca drepturile altor persoane.',
+                            'Programările, mesajele, reminderele și alte funcționalități sunt oferite în măsura disponibilității tehnice a platformei. Calming poate modifica, suspenda sau actualiza funcții, formulare sau fluxuri de lucru pentru a menține securitatea și funcționarea serviciului.',
+                            'Utilizatorii trebuie să folosească limbaj adecvat și să nu publice ori transmită conținut ilegal, ofensator, defăimător, amenințător, discriminatoriu sau care încalcă drepturile altor persoane.',
                         ],
                     ],
                     [
                         'heading' => '5. Drepturi de proprietate intelectuala',
                         'paragraphs' => [
                             'Designul platformei, textele, elementele grafice, structura, marcile, bazele de date si alte materiale disponibile in platforma sunt protejate de legislatia aplicabila privind drepturile de autor si proprietatea intelectuala.',
-                            'Fara acordul scris al operatorului, este interzisa copierea, republicarea, distribuirea, comercializarea sau reutilizarea substantiala a continutului platformei in alte scopuri decat folosirea personala, legala si necomerciala.',
+                            'Fără acordul scris al operatorului, este interzisă copierea, republicarea, distribuirea, comercializarea sau reutilizarea substanțială a conținutului platformei în alte scopuri decât folosirea personală, legală și necomercială.',
                         ],
                     ],
                     [
@@ -1414,15 +1414,15 @@ class CalmPageController extends Controller
                     [
                         'heading' => '8. Lege aplicabila si contact',
                         'paragraphs' => [
-                            'Acesti termeni sunt guvernati de legislatia romana. Pentru intrebari legate de prezentul document sau de utilizarea platformei, ne poti contacta folosind datele societatii mentionate mai jos.',
+                            'Acești termeni sunt guvernați de legislația română. Pentru întrebări legate de prezentul document sau de utilizarea platformei, ne poți contacta folosind datele societății menționate mai jos.',
                         ],
                     ],
                 ],
             ],
             'confidentialitate' => [
                 'eyebrow' => 'Legal',
-                'title' => 'Confidentialitate',
-                'description' => 'Informatii privind prelucrarea datelor cu caracter personal in platforma Calming.',
+                'title' => 'Confidențialitate',
+                'description' => 'Informații privind prelucrarea datelor cu caracter personal în platforma Calming.',
                 'updatedAt' => '28 martie 2026',
                 'company' => $company,
                 'sections' => [
@@ -1435,47 +1435,47 @@ class CalmPageController extends Controller
                     [
                         'heading' => '2. Ce date putem prelucra',
                         'paragraphs' => [
-                            'In functie de modul in care folosesti platforma, putem prelucra date de identificare si contact, date de cont, preferinte de utilizare, continut introdus de utilizator, date tehnice despre dispozitiv si interactiuni legate de notificari, articole, comunitate, programari si asistenta digitala.',
-                            'Nu solicitam mai multe date decat sunt necesare pentru furnizarea functionalitatilor active in platforma si pentru respectarea obligatiilor legale aplicabile.',
+                            'În funcție de modul în care folosești platforma, putem prelucra date de identificare și contact, date de cont, preferințe de utilizare, conținut introdus de utilizator, date tehnice despre dispozitiv și interacțiuni legate de notificări, articole, comunitate, programări și asistență digitală.',
+                            'Nu solicităm mai multe date decât sunt necesare pentru furnizarea funcționalităților active în platformă și pentru respectarea obligațiilor legale aplicabile.',
                         ],
                     ],
                     [
                         'heading' => '3. Scopurile prelucrarii',
                         'paragraphs' => [
-                            'Prelucram date pentru crearea si administrarea contului, oferirea functionalitatilor platformei, personalizarea experientei, gestionarea notificarilor, organizarea programarilor, securitate, suport tehnic, prevenirea abuzurilor si imbunatatirea serviciilor.',
-                            'In anumite situatii, prelucrarea este necesara pentru executarea relatiei contractuale, pentru respectarea obligatiilor legale sau pentru interese legitime precum securitatea si functionarea platformei.',
+                            'Prelucrăm date pentru crearea și administrarea contului, oferirea funcționalităților platformei, personalizarea experienței, gestionarea notificărilor, organizarea programărilor, securitate, suport tehnic, prevenirea abuzurilor și îmbunătățirea serviciilor.',
+                            'În anumite situații, prelucrarea este necesară pentru executarea relației contractuale, pentru respectarea obligațiilor legale sau pentru interese legitime precum securitatea și funcționarea platformei.',
                         ],
                     ],
                     [
                         'heading' => '4. Temeiurile legale',
                         'paragraphs' => [
-                            'Prelucrarea se poate baza, dupa caz, pe executarea unui contract, consimtamant, obligatii legale sau interes legitim. Atunci cand un anumit flux necesita consimtamant, acesta poate fi retras pentru viitor in conditiile legii si in limitele tehnice ale serviciului.',
+                            'Prelucrarea se poate baza, după caz, pe executarea unui contract, consimțământ, obligații legale sau interes legitim. Atunci când un anumit flux necesită consimțământ, acesta poate fi retras pentru viitor în condițiile legii și în limitele tehnice ale serviciului.',
                         ],
                     ],
                     [
                         'heading' => '5. Cui putem divulga date',
                         'paragraphs' => [
-                            'Datele pot fi accesate de personal autorizat, furnizori de servicii tehnice, parteneri implicati in functionarea platformei sau autoritati competente, numai in masura necesara si cu masuri adecvate de confidentialitate si securitate.',
-                            'Nu vindem datele personale ale utilizatorilor si nu le folosim in afara scopurilor rezonabile asociate functionarii serviciului.',
+                            'Datele pot fi accesate de personal autorizat, furnizori de servicii tehnice, parteneri implicați în funcționarea platformei sau autorități competente, numai în măsura necesară și cu măsuri adecvate de confidențialitate și securitate.',
+                            'Nu vindem datele personale ale utilizatorilor și nu le folosim în afara scopurilor rezonabile asociate funcționării serviciului.',
                         ],
                     ],
                     [
                         'heading' => '6. Durata stocarii',
                         'paragraphs' => [
-                            'Datele sunt pastrate pe durata necesara scopurilor pentru care au fost colectate, pe durata existentei contului sau pentru perioadele impuse de lege, dupa caz. La expirarea acestor perioade, datele sunt sterse, anonimizate sau arhivate conform cerintelor legale.',
+                            'Datele sunt păstrate pe durata necesară scopurilor pentru care au fost colectate, pe durata existenței contului sau pentru perioadele impuse de lege, după caz. La expirarea acestor perioade, datele sunt șterse, anonimizate sau arhivate conform cerințelor legale.',
                         ],
                     ],
                     [
                         'heading' => '7. Drepturile tale',
                         'paragraphs' => [
-                            'Ai dreptul de acces, rectificare, stergere, restrictionare, opozitie, portabilitate, precum si dreptul de a depune plangere la autoritatea competenta, in conditiile legislatiei aplicabile privind protectia datelor.',
-                            'Pentru exercitarea acestor drepturi, ne poti contacta folosind datele societatii mentionate pe aceasta pagina.',
+                            'Ai dreptul de acces, rectificare, ștergere, restricționare, opoziție, portabilitate, precum și dreptul de a depune plângere la autoritatea competentă, în condițiile legislației aplicabile privind protecția datelor.',
+                            'Pentru exercitarea acestor drepturi, ne poți contacta folosind datele societății menționate pe această pagină.',
                         ],
                     ],
                     [
                         'heading' => '8. Securitate',
                         'paragraphs' => [
-                            'Aplicam masuri tehnice si organizatorice rezonabile pentru protejarea datelor, inclusiv controale de acces, segregarea rolurilor si monitorizarea functionarii sistemului. Nicio masura nu poate garanta securitate absoluta, insa urmarim reducerea riscurilor la un nivel adecvat.',
+                            'Aplicăm măsuri tehnice și organizatorice rezonabile pentru protejarea datelor, inclusiv controale de acces, segregarea rolurilor și monitorizarea funcționării sistemului. Nicio măsură nu poate garanta securitate absolută, însă urmărim reducerea riscurilor la un nivel adecvat.',
                         ],
                     ],
                 ],
@@ -1483,90 +1483,90 @@ class CalmPageController extends Controller
             'cookies' => [
                 'eyebrow' => 'Legal',
                 'title' => 'Cookies',
-                'description' => 'Informatii despre modulele cookie si tehnologiile similare folosite de platforma Calming.',
+                'description' => 'Informații despre modulele cookie și tehnologiile similare folosite de platforma Calming.',
                 'updatedAt' => '28 martie 2026',
                 'company' => $company,
                 'sections' => [
                     [
                         'heading' => '1. Ce sunt cookie-urile',
                         'paragraphs' => [
-                            'Cookie-urile sunt fisiere de mici dimensiuni sau tehnologii similare care pot fi stocate pe dispozitivul utilizatorului pentru a sustine functionarea platformei, memorarea preferintelor si analiza utilizarii serviciului.',
+                            'Cookie-urile sunt fișiere de mici dimensiuni sau tehnologii similare care pot fi stocate pe dispozitivul utilizatorului pentru a susține funcționarea platformei, memorarea preferințelor și analiza utilizării serviciului.',
                         ],
                     ],
                     [
                         'heading' => '2. Ce tipuri de cookie-uri putem folosi',
                         'paragraphs' => [
                             'Putem utiliza cookie-uri strict necesare pentru autentificare, securitate, sesiune si functionarea esentiala a platformei.',
-                            'Putem utiliza si cookie-uri functionale pentru memorarea preferintelor, precum tema vizuala sau anumite setari de utilizare. In masura in care sunt utilizate tehnologii de analiza sau masurare, acestea au rolul de a imbunatati performanta si experienta generala in aplicatie.',
+                            'Putem utiliza și cookie-uri funcționale pentru memorarea preferințelor, precum tema vizuală sau anumite setări de utilizare. În măsura în care sunt utilizate tehnologii de analiză sau măsurare, acestea au rolul de a îmbunătăți performanța și experiența generală în aplicație.',
                         ],
                     ],
                     [
                         'heading' => '3. Scopurile utilizarii',
                         'paragraphs' => [
-                            'Cookie-urile si tehnologiile similare ne ajuta sa mentinem sesiunea activa, sa securizam conturile, sa retinem optiuni precum limba si preferintele de notificare si sa intelegem modul in care sunt utilizate diferitele sectiuni ale platformei.',
+                            'Cookie-urile și tehnologiile similare ne ajută să menținem sesiunea activă, să securizăm conturile, să reținem opțiuni precum limba și preferințele de notificare și să înțelegem modul în care sunt utilizate diferitele secțiuni ale platformei.',
                         ],
                     ],
                     [
                         'heading' => '4. Controlul cookie-urilor',
                         'paragraphs' => [
-                            'Poti controla sau sterge cookie-urile din setarile browserului tau. Dezactivarea anumitor cookie-uri poate afecta functionarea unor elemente ale platformei, inclusiv autentificarea, preferintele memorate sau alte functionalitati dependente de sesiune.',
+                            'Poți controla sau șterge cookie-urile din setările browserului tău. Dezactivarea anumitor cookie-uri poate afecta funcționarea unor elemente ale platformei, inclusiv autentificarea, preferințele memorate sau alte funcționalități dependente de sesiune.',
                         ],
                     ],
                     [
                         'heading' => '5. Actualizari',
                         'paragraphs' => [
-                            'Aceasta politica poate fi actualizata periodic pentru a reflecta schimbari tehnice, legislative sau operationale. Te incurajam sa revii periodic pentru a verifica versiunea curenta.',
+                            'Această politică poate fi actualizată periodic pentru a reflecta schimbări tehnice, legislative sau operaționale. Te încurajăm să revii periodic pentru a verifica versiunea curentă.',
                         ],
                     ],
                 ],
             ],
             'tehnic' => [
                 'eyebrow' => 'Tehnic',
-                'title' => 'Date si stocare',
-                'description' => 'Informatii despre gazduire, securitate, stocare si masurile tehnice folosite de platforma Calming.',
+                'title' => 'Date și stocare',
+                'description' => 'Informații despre găzduire, securitate, stocare și măsurile tehnice folosite de platforma Calming.',
                 'updatedAt' => '28 martie 2026',
                 'company' => $company,
                 'sections' => [
                     [
-                        'heading' => '1. Gazduire si infrastructura',
+                        'heading' => '1. Găzduire și infrastructură',
                         'paragraphs' => [
-                            'Platforma Calming este gazduita pe infrastructura VPS din Romania furnizata de ROMARG. Conform informatiilor publice publicate de furnizor pentru gama de servere VPS, infrastructura foloseste stocare NVMe si SSD, configuratii RAID 10, memorie DDR4, conectivitate uplink de 1000 Mbps si un centru de date Tier 3 cu uptime publicat de 99.982%.',
-                            'Alegerea unei gazduiri VPS permite alocarea controlata a resurselor de procesare, memorie si stocare pentru aplicatie, cu separarea mediului de executie fata de alte proiecte gazduite pe platforme shared.',
+                            'Platforma Calming este găzduită pe infrastructura VPS din România furnizată de ROMARG. Conform informațiilor publice publicate de furnizor pentru gama de servere VPS, infrastructura folosește stocare NVMe și SSD, configurații RAID 10, memorie DDR4, conectivitate uplink de 1000 Mbps și un centru de date Tier 3 cu uptime publicat de 99.982%.',
+                            'Alegerea unei găzduiri VPS permite alocarea controlată a resurselor de procesare, memorie și stocare pentru aplicație, cu separarea mediului de execuție față de alte proiecte găzduite pe platforme shared.',
                         ],
                     ],
                     [
-                        'heading' => '2. Stocare si disponibilitate',
+                        'heading' => '2. Stocare și disponibilitate',
                         'paragraphs' => [
-                            'Datele aplicatiei sunt operate intr-un mediu de server virtualizat, cu stocare rapida si redundanta la nivel de disc prin configuratii RAID, pentru a reduce riscurile asociate defectiunilor hardware punctuale.',
-                            'Arhitectura tehnica este gandita pentru continuitate operationala, monitorizare si mentenanta periodica, in limita configuratiei si a serviciilor contractate de operator.',
+                            'Datele aplicației sunt operate într-un mediu de server virtualizat, cu stocare rapidă și redundanță la nivel de disc prin configurații RAID, pentru a reduce riscurile asociate defecțiunilor hardware punctuale.',
+                            'Arhitectura tehnică este gândită pentru continuitate operațională, monitorizare și mentenanță periodică, în limita configurației și a serviciilor contractate de operator.',
                         ],
                     ],
                     [
-                        'heading' => '3. Criptare si transmiterea datelor',
+                        'heading' => '3. Criptare și transmiterea datelor',
                         'paragraphs' => [
-                            'Accesul la platforma trebuie realizat exclusiv prin conexiuni securizate HTTPS/TLS, pentru a proteja datele aflate in tranzit intre browserul utilizatorului si server.',
-                            'Credentialele conturilor sunt pastrate folosind mecanisme de hash dedicate parolelor, iar datele sensibile sunt accesibile numai in masura necesara functionarii aplicatiei si exclusiv de catre rolurile autorizate.',
+                            'Accesul la platformă trebuie realizat exclusiv prin conexiuni securizate HTTPS/TLS, pentru a proteja datele aflate în tranzit între browserul utilizatorului și server.',
+                            'Credentialele conturilor sunt păstrate folosind mecanisme de hash dedicate parolelor, iar datele sensibile sunt accesibile numai în măsura necesară funcționării aplicației și exclusiv de către rolurile autorizate.',
                         ],
                     ],
                     [
-                        'heading' => '4. Control de acces si securitate aplicativa',
+                        'heading' => '4. Control de acces și securitate aplicativă',
                         'paragraphs' => [
-                            'Platforma foloseste controale de autentificare, separarea rolurilor, verificari de sesiune, protectii impotriva accesului neautorizat si masuri pentru limitarea utilizarii abuzive a functionalitatilor.',
-                            'Accesul la datele utilizatorilor este restrictionat pe baza de rol si nevoie operationala, iar fluxurile critice sunt protejate prin validare de input, sesiuni controlate si mecanisme anti-CSRF la nivelul aplicatiei web.',
+                            'Platforma folosește controale de autentificare, separarea rolurilor, verificări de sesiune, protecții împotriva accesului neautorizat și măsuri pentru limitarea utilizării abuzive a funcționalităților.',
+                            'Accesul la datele utilizatorilor este restricționat pe bază de rol și nevoie operațională, iar fluxurile critice sunt protejate prin validare de input, sesiuni controlate și mecanisme anti-CSRF la nivelul aplicației web.',
                         ],
                     ],
                     [
-                        'heading' => '5. Jurnale, monitorizare si recuperare',
+                        'heading' => '5. Jurnale, monitorizare și recuperare',
                         'paragraphs' => [
-                            'Pentru operare si securitate pot fi generate jurnale tehnice privind erori, autentificare, executie si evenimente relevante pentru functionarea serviciului. Acestea sunt utilizate pentru diagnostic, audit operational si raspuns la incidente.',
-                            'Operatorul urmareste mentinerea unui nivel adecvat de backup, recuperare si continuitate, proportional cu natura serviciului si cu configuratia tehnica folosita la momentul respectiv.',
+                            'Pentru operare și securitate pot fi generate jurnale tehnice privind erori, autentificare, execuție și evenimente relevante pentru funcționarea serviciului. Acestea sunt utilizate pentru diagnostic, audit operațional și răspuns la incidente.',
+                            'Operatorul urmărește menținerea unui nivel adecvat de backup, recuperare și continuitate, proporțional cu natura serviciului și cu configurația tehnică folosită la momentul respectiv.',
                         ],
                     ],
                     [
-                        'heading' => '6. Limite si actualizari',
+                        'heading' => '6. Limite și actualizări',
                         'paragraphs' => [
-                            'Nicio infrastructura online nu poate garanta securitate absoluta sau disponibilitate permanenta. Configuratiile tehnice, furnizorii, politicile de backup si masurile operationale pot fi actualizate periodic pentru a raspunde nevoilor platformei si riscurilor identificate.',
-                            'Pentru detalii comerciale despre infrastructura VPS folosita ca referinta de gazduire, operatorul poate consulta in mod public pagina ROMARG dedicata serverelor VPS.',
+                            'Nicio infrastructură online nu poate garanta securitate absolută sau disponibilitate permanentă. Configurațiile tehnice, furnizorii, politicile de backup și măsurile operaționale pot fi actualizate periodic pentru a răspunde nevoilor platformei și riscurilor identificate.',
+                            'Pentru detalii comerciale despre infrastructura VPS folosită ca referință de găzduire, operatorul poate consulta în mod public pagina ROMARG dedicată serverelor VPS.',
                         ],
                     ],
                 ],
@@ -1577,10 +1577,10 @@ class CalmPageController extends Controller
     protected function documentNavItems(bool $includeHelp = false): array
     {
         $items = [
-            ['label' => 'Termeni si Conditii', 'href' => route('legal.show', 'termeni-si-conditii')],
-            ['label' => 'Confidentialitate', 'href' => route('legal.show', 'confidentialitate')],
+            ['label' => 'Termeni și Condiții', 'href' => route('legal.show', 'termeni-si-conditii')],
+            ['label' => 'Confidențialitate', 'href' => route('legal.show', 'confidentialitate')],
             ['label' => 'Cookies', 'href' => route('legal.show', 'cookies')],
-            ['label' => 'Date si stocare', 'href' => route('technical')],
+            ['label' => 'Date și stocare', 'href' => route('technical')],
         ];
 
         if ($includeHelp) {
@@ -1594,94 +1594,94 @@ class CalmPageController extends Controller
     {
         return [
             [
-                'heading' => 'Acasa: la ce foloseste aceasta pagina?',
+                'heading' => 'Acasă: la ce folosește această pagină?',
                 'paragraphs' => [
-                    'Pagina Acasa este punctul de pornire in aplicatie. Aici vezi rapid acces catre articole, comunitate, asistent, psihologi si cele mai utile zone ale platformei.',
-                    'Avantajul principal este orientarea rapida: utilizatorul poate intra in cateva secunde in zona de continut, suport sau programare care il intereseaza.',
+                    'Pagina Acasă este punctul de pornire în aplicație. Aici vezi rapid acces către articole, comunitate, asistent, psihologi și cele mai utile zone ale platformei.',
+                    'Avantajul principal este orientarea rapidă: utilizatorul poate intra în câteva secunde în zona de conținut, suport sau programare care îl interesează.',
                 ],
             ],
             [
-                'heading' => 'Assistant: ce face si la ce ma ajuta?',
+                'heading' => 'Assistant: ce face și la ce mă ajută?',
                 'paragraphs' => [
-                    'Assistantul este zona de conversatie ghidata a aplicatiei. Poate sustine check-in-uri emotionale, clarificarea unei stari, organizarea gandurilor si identificarea unui urmator pas util.',
-                    'Assistantul nu inlocuieste interventia profesionala sau serviciile de urgenta, dar ofera suport rapid, contextual si usor accesibil direct din platforma.',
+                    'Assistantul este zona de conversație ghidată a aplicației. Poate susține check-in-uri emoționale, clarificarea unei stări, organizarea gândurilor și identificarea unui următor pas util.',
+                    'Assistantul nu înlocuiește intervenția profesională sau serviciile de urgență, dar oferă suport rapid, contextual și ușor accesibil direct din platformă.',
                 ],
             ],
             [
-                'heading' => 'Articole: de ce exista biblioteca de continut?',
+                'heading' => 'Articole: de ce există biblioteca de conținut?',
                 'paragraphs' => [
-                    'Biblioteca de articole este construita pentru informare si educatie. Utilizatorul poate explora teme de sanatate emotionala, autoreglare, relatii, stres si alte subiecte relevante.',
-                    'Avantajul este accesul la continut usor de parcurs si la recomandari suplimentare, astfel incat fiecare tema sa poata fi aprofundata in ritmul propriu.',
+                    'Biblioteca de articole este construită pentru informare și educație. Utilizatorul poate explora teme de sănătate emoțională, autoreglare, relații, stres și alte subiecte relevante.',
+                    'Avantajul este accesul la conținut ușor de parcurs și la recomandări suplimentare, astfel încât fiecare temă să poată fi aprofundată în ritmul propriu.',
                 ],
             ],
             [
-                'heading' => 'Favorite Articles: la ce foloseste salvarea articolelor?',
+                'heading' => 'Favorite Articles: la ce folosește salvarea articolelor?',
                 'paragraphs' => [
                     'Articolele favorite permit construirea unei biblioteci personale. Utilizatorul poate reveni rapid la materialele pe care le considera importante sau utile pentru momentul sau.',
-                    'Aceasta functie este utila mai ales pentru continutul la care utilizatorul vrea sa revina ulterior, fara sa il caute din nou in toata platforma.',
+                    'Această funcție este utilă mai ales pentru conținutul la care utilizatorul vrea să revină ulterior, fără să îl caute din nou în toată platforma.',
                 ],
             ],
             [
-                'heading' => 'Comunitate: ce se intampla in aceasta zona?',
+                'heading' => 'Comunitate: ce se întâmplă în această zonă?',
                 'paragraphs' => [
-                    'Zona Comunitate reuneste conversatii si grupuri in jurul unor interese sau nevoi comune. Aici utilizatorii pot urmari schimburi de experienta si interactiuni moderate la nivel de grup.',
-                    'Avantajul major este sentimentul de apartenenta si accesul la dialog, fara a depinde exclusiv de interactiuni unu la unu.',
+                    'Zona Comunitate reunește conversații și grupuri în jurul unor interese sau nevoi comune. Aici utilizatorii pot urmări schimburi de experiență și interacțiuni moderate la nivel de grup.',
+                    'Avantajul major este sentimentul de apartenență și accesul la dialog, fără a depinde exclusiv de interacțiuni unu la unu.',
                 ],
             ],
             [
-                'heading' => 'Comunitate / Conversatii: cum functioneaza dialogurile?',
+                'heading' => 'Comunitate / Conversații: cum funcționează dialogurile?',
                 'paragraphs' => [
-                    'Pagina de conversatii afiseaza mesajele dintr-un grup si permite trimiterea de raspunsuri intr-un flux ordonat. Exista facilitati pentru reply, filtrare vizuala si citire usoara a dialogului.',
-                    'Scopul este mentinerea unei comunicari clare si usor de urmarit, inclusiv pe mobil.',
+                    'Pagina de conversații afișează mesajele dintr-un grup și permite trimiterea de răspunsuri într-un flux ordonat. Există facilități pentru reply, filtrare vizuală și citire ușoară a dialogului.',
+                    'Scopul este menținerea unei comunicări clare și ușor de urmărit, inclusiv pe mobil.',
                 ],
             ],
             [
-                'heading' => 'Psihologi: cum ma ajuta aceasta pagina?',
+                'heading' => 'Psihologi: cum mă ajută această pagină?',
                 'paragraphs' => [
-                    'Pagina Psihologi este locul in care utilizatorul descopera specialistii disponibili si poate evalua optiunile relevante pentru nevoile sale.',
-                    'Avantajul este ca platforma centralizeaza intr-un singur loc specialisti, profiluri si traseul catre programare.',
+                    'Pagina Psihologi este locul în care utilizatorul descoperă specialiștii disponibili și poate evalua opțiunile relevante pentru nevoile sale.',
+                    'Avantajul este că platforma centralizează într-un singur loc specialiști, profiluri și traseul către programare.',
                 ],
             ],
             [
-                'heading' => 'Programari: ce pot face aici?',
+                'heading' => 'Programări: ce pot face aici?',
                 'paragraphs' => [
-                    'Pagina Programari este destinata administrarii interactiunilor cu specialistii. Aici pot aparea disponibilitati, solicitari, statusuri si remindere legate de intalniri.',
-                    'Beneficiul este organizarea intr-un singur loc a etapelor legate de programari, fara fragmentarea informatiei.',
+                    'Pagina Programări este destinată administrării interacțiunilor cu specialiștii. Aici pot apărea disponibilități, solicitări, statusuri și remindere legate de întâlniri.',
+                    'Beneficiul este organizarea într-un singur loc a etapelor legate de programări, fără fragmentarea informației.',
                 ],
             ],
             [
                 'heading' => 'Jurnal: de ce este util?',
                 'paragraphs' => [
-                    'Jurnalul permite notarea starilor, contextelor si observatiilor personale. Este util pentru urmarirea evolutiei in timp si pentru clarificarea tiparelor emotionale sau de comportament.',
-                    'Avantajul major este continuitatea: utilizatorul poate observa schimbari, poate reveni la intrari mai vechi si isi poate construi o imagine mai clara despre propriul parcurs.',
+                    'Jurnalul permite notarea stărilor, contextelor și observațiilor personale. Este util pentru urmărirea evoluției în timp și pentru clarificarea tiparelor emoționale sau de comportament.',
+                    'Avantajul major este continuitatea: utilizatorul poate observa schimbări, poate reveni la intrări mai vechi și își poate construi o imagine mai clară despre propriul parcurs.',
                 ],
             ],
             [
-                'heading' => 'Notificari: ce rol au in aplicatie?',
+                'heading' => 'Notificări: ce rol au în aplicație?',
                 'paragraphs' => [
-                    'Pagina Notificari centralizeaza remindere, evenimente relevante si alte informari generate de sistem. Ea ajuta utilizatorul sa nu piarda repere importante legate de activitatea sa in platforma.',
-                    'Daca notificările sunt dezactivate din Settings, aceasta zona nu mai afiseaza feed-ul activ.',
+                    'Pagina Notificări centralizează remindere, evenimente relevante și alte informări generate de sistem. Ea ajută utilizatorul să nu piardă repere importante legate de activitatea sa în platformă.',
+                    'Dacă notificările sunt dezactivate din Settings, această zonă nu mai afișează feed-ul activ.',
                 ],
             ],
             [
-                'heading' => 'Profil: ce gasesc in aceasta pagina?',
+                'heading' => 'Profil: ce găsesc în această pagină?',
                 'paragraphs' => [
-                    'Pagina Profil concentreaza informatii despre utilizator, activitatea sa in aplicatie si legaturi utile catre zone precum articole favorite, remindere sau alte repere personale.',
-                    'Scopul ei este sa ofere un punct central pentru identitate, progres si acces rapid la functionalitatile cele mai personale.',
+                    'Pagina Profil concentrează informații despre utilizator, activitatea sa în aplicație și legături utile către zone precum articole favorite, remindere sau alte repere personale.',
+                    'Scopul ei este să ofere un punct central pentru identitate, progres și acces rapid la funcționalitățile cele mai personale.',
                 ],
             ],
             [
-                'heading' => 'Settings: ce pot controla din Setari?',
+                'heading' => 'Settings: ce pot controla din Setări?',
                 'paragraphs' => [
-                    'Din Settings utilizatorul poate controla preferinte precum tema, notificarile si accesul la documentele despre confidentialitate, tehnic, termeni sau suport.',
-                    'Avantajul este controlul clar asupra experientei in aplicatie si accesul rapid la documentatia explicativa.',
+                    'Din Settings utilizatorul poate controla preferințe precum tema, notificările și accesul la documentele despre confidențialitate, tehnic, termeni sau suport.',
+                    'Avantajul este controlul clar asupra experienței în aplicație și accesul rapid la documentația explicativă.',
                 ],
             ],
             [
-                'heading' => 'Autentificare si recuperare parola: de ce exista aceste fluxuri?',
+                'heading' => 'Autentificare și recuperare parolă: de ce există aceste fluxuri?',
                 'paragraphs' => [
-                    'Fluxurile de autentificare, inregistrare, recuperare parola si verificare a accesului au rolul de a proteja contul si de a pastra continuitatea datelor utilizatorului.',
-                    'Ele sunt esentiale pentru sincronizare intre dispozitive, siguranta accesului si pastrarea istoricului personal in platforma.',
+                    'Fluxurile de autentificare, înregistrare, recuperare parolă și verificare a accesului au rolul de a proteja contul și de a păstra continuitatea datelor utilizatorului.',
+                    'Ele sunt esențiale pentru sincronizare între dispozitive, siguranța accesului și păstrarea istoricului personal în platformă.',
                 ],
             ],
         ];

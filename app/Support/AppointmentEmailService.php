@@ -115,7 +115,7 @@ class AppointmentEmailService
         $this->sendSafely($user->email, new AppointmentMessageMail(
             'Cererea ta de programare a expirat',
             'Cererea de programare a expirat',
-            "Cererea pentru {$appointment->type} din {$appointment->starts_at?->format('d.m.Y H:i')} a expirat fara confirmare.",
+            "Cererea pentru {$appointment->type} din {$appointment->starts_at?->format('d.m.Y H:i')} a expirat fără confirmare.",
             '/appointments',
             'Vezi sesiunile programate',
         ));
@@ -127,7 +127,7 @@ class AppointmentEmailService
             ? "Reminder programare peste ".(int) round($minutesBefore / 60)."h"
             : "Reminder programare peste {$minutesBefore}m";
 
-        $body = "Programarea pentru {$appointment->type} incepe la {$appointment->starts_at?->format('d.m.Y H:i')}.";
+        $body = "Programarea pentru {$appointment->type} începe la {$appointment->starts_at?->format('d.m.Y H:i')}.";
 
         if ($recipientType === 'psychologist') {
             $psychologist = $appointment->psychologist;

@@ -50,14 +50,14 @@ export default function Community({ groups }) {
 
             <AccentCard dismissKey="community-safety">
                 <div className="section-title">
-                    <FiShield className="section-icon" /> Siguranta
+                    <FiShield className="section-icon" /> Siguranță
                 </div>
-                <div className="muted">Toate conversatiile sunt moderate. Cele private nu permit accesul decat pe baza de invitatie.</div>
+                <div className="muted">Toate conversațiile sunt moderate. Cele private nu permit accesul decât pe bază de invitație.</div>
             </AccentCard>
 
             <section className="card search-card u-mt-4">
                 <FiSearch className="section-icon search-card__icon" />
-                <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Cauta grupuri, moderatori, membri..." className="form-input search-card__input" />
+                <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Caută grupuri, moderatori, membri..." className="form-input search-card__input" />
             </section>
 
             <section className="card u-mt-4">

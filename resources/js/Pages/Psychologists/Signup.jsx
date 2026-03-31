@@ -29,7 +29,7 @@ export default function PsychologistSignup() {
                     <Link href="/" className="brand"><span className="brand-mark" /> Calming</Link>
                     <section className="card auth-card">
                         <div className="section-title">Inscriere partener</div>
-                        <p className="muted">Completeaza detaliile pentru a intra in reteaua Calming. Dupa acest pas iti confirmi emailul profesional, apoi continui cu validarea si autentificarea in doi pasi.</p>
+                        <p className="muted">Completează detaliile pentru a intra în rețeaua Calming. După acest pas îți confirmi emailul profesional, apoi continui cu validarea și autentificarea în doi pași.</p>
                         {page.props.flash?.status ? <div className="info u-mt-2">{page.props.flash.status}</div> : null}
                         {Object.keys(form.errors).length ? <div className="error u-mt-2">{Object.values(form.errors)[0]}</div> : null}
                         <form className="auth-form u-mt-4" onSubmit={submit}>
@@ -54,7 +54,7 @@ export default function PsychologistSignup() {
                                 <input type="password" value={form.data.password_confirmation} onChange={(event) => form.setData('password_confirmation', event.target.value)} required autoComplete="new-password" />
                             </label>
                             <button className="btn primary u-mt-3" type="submit" disabled={form.processing}>
-                                {form.processing ? 'Se creeaza contul...' : 'Creeaza contul si trimite verificarea'}
+                                {form.processing ? 'Se creează contul...' : 'Creează contul și trimite verificarea'}
                             </button>
                         </form>
                         <p className="muted u-mt-3">Ai deja cont? <Link href={route('psychologists.signin')}>Autentifica-te</Link>.</p>

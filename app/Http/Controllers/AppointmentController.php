@@ -73,7 +73,7 @@ class AppointmentController extends Controller
     {
         abort_unless($appointment->user_id === $request->user()->id, 404);
         abort_if(! in_array($appointment->status, [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED], true), 422, 'Programarea nu mai poate fi anulata.');
-        abort_if(optional($appointment->starts_at ?? $appointment->scheduled_for)?->lessThanOrEqualTo(now()), 422, 'Programarea nu mai poate fi anulata dupa ora de start.');
+        abort_if(optional($appointment->starts_at ?? $appointment->scheduled_for)?->lessThanOrEqualTo(now()), 422, 'Programarea nu mai poate fi anulată după ora de start.');
 
         $this->lifecycle->cancelByUser($appointment, $request->user());
 

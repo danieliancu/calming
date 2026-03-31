@@ -65,7 +65,7 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 <input
                     value={q}
                     onChange={(event) => setQ(event.target.value)}
-                    placeholder="Cauta specialisti, servicii, adrese..."
+                    placeholder="Caută specialiști, servicii, adrese..."
                     className="form-input search-card__input"
                 />
             </section>
@@ -149,7 +149,7 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                             </a>
                                         ) : null}
                                         <Link className="btn primary" href={p.slug ? `/appointments?psychologist=${p.slug}` : '/psychologists'}>
-                                            Programeaza
+                                            Programează
                                         </Link>
                                     </div>
                                 ) : null}
@@ -159,7 +159,7 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 })}
                 {list.length === 0 ? (
                     <div className="card">
-                        <div className="muted">Nu am gasit specialisti care sa corespunda cautarii tale.</div>
+                        <div className="muted">Nu am găsit specialiști care să corespundă căutării tale.</div>
                     </div>
                 ) : null}
             </div>

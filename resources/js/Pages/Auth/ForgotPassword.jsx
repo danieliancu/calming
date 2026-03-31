@@ -26,7 +26,7 @@ export default function ForgotPassword({ status }) {
                         <section className="card auth-card auth-card--recovery">
                             <div className="section-title">Trimite link de resetare</div>
                             <p className="muted">
-                                Dupa trimitere, verifica inboxul si folderul spam.
+                                După trimitere, verifică inboxul și folderul spam.
                             </p>
                             {status ? <div className="info u-mt-3">{status}</div> : null}
                             {form.errors.email ? <div className="error u-mt-3">{form.errors.email}</div> : null}
@@ -50,7 +50,7 @@ export default function ForgotPassword({ status }) {
                             <div className="auth-footer auth-footer--split u-mt-4">
                                 <p className="small-text">Ti-ai amintit parola?</p>
                                 <Link className="link-button" href={route('login')}>
-                                    Inapoi la autentificare
+                                    Înapoi la autentificare
                                 </Link>
                             </div>
                         </section>

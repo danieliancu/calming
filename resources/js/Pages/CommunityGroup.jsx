@@ -42,7 +42,7 @@ export default function CommunityGroup({ group }) {
             <div className="group-hero card">
                 <div className="group-nav-bar">
                     <Link href="/community" className="group-back-link">
-                        <FiArrowLeft aria-hidden /> Inapoi la comunitate
+                        <FiArrowLeft aria-hidden /> Înapoi la comunitate
                     </Link>
                     <Link href={`/community/${group.slug}/conversatii`} onClick={handleConversationsNav} className="group-back-link">
                         Mergi la conversatii <FiArrowRight aria-hidden />
@@ -57,7 +57,7 @@ export default function CommunityGroup({ group }) {
                 <div className="group-meta">
                     <div className="group-meta-item">
                         <FiCalendar aria-hidden />
-                        {group.schedule ? group.schedule : <span className="pill badge-info">Fara intalniri live</span>}
+                        {group.schedule ? group.schedule : <span className="pill badge-info">Fără întâlniri live</span>}
                     </div>
                     {group.meetingLink ? <div className="group-meta-item"><a href={group.meetingLink} target="_blank" rel="noreferrer">Link intalnire</a></div> : null}
                     <div className="group-meta-item">
@@ -88,7 +88,7 @@ export default function CommunityGroup({ group }) {
                     <FiShield aria-hidden /> Guideline-uri rapide
                 </div>
                 <ul className="group-guidelines-list muted">
-                    <li>Respecta confidentialitatea si evita detalii identificabile.</li>
+                    <li>Respectă confidențialitatea și evită detalii identificabile.</li>
                     <li>Scrie la persoana intai si descrie ce ai nevoie, nu ce astepti de la ceilalti.</li>
                     <li>Daca simti ca un subiect devine dificil, ia o pauza si revino cand esti pregatit.</li>
                 </ul>

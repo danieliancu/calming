@@ -176,7 +176,7 @@ class AppointmentLifecycleService
                 'cancelled_at' => now(),
                 'expires_at' => null,
                 'cancellation_actor_type' => 'system',
-                'cancellation_reason' => 'Cererea a expirat fara confirmare.',
+                'cancellation_reason' => 'Cererea a expirat fără confirmare.',
             ])->save();
 
             $this->payments->voidForAppointment($appointment, 'expired');
@@ -283,7 +283,7 @@ class AppointmentLifecycleService
     {
         $this->notifications->publishToUser($appointment->user_id, 'appointment_created', [
             'title' => 'Cerere expirata',
-            'body' => "Cererea pentru {$appointment->type} a expirat fara confirmare.",
+            'body' => "Cererea pentru {$appointment->type} a expirat fără confirmare.",
             'category' => 'appointment',
             'trigger_type' => 'appointment',
             'trigger_id' => (string) $appointment->id,

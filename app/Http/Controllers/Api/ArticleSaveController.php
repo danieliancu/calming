@@ -28,7 +28,7 @@ class ArticleSaveController extends Controller
 
         $this->notifications->publishToUser($request->user()->id, 'article_saved', [
             'title' => 'Articol salvat',
-            'body' => 'Articolul a fost salvat si il poti regasi rapid in centrul de notificari.',
+            'body' => 'Articolul a fost salvat și îl poți regăsi rapid în centrul de notificări.',
             'category' => 'article',
             'icon' => 'FiBookmark',
             'icon_color' => 'lilac',
@@ -36,7 +36,7 @@ class ArticleSaveController extends Controller
             'trigger_id' => (string) $articleId,
             'dedupe_key' => "saved_article:{$request->user()->id}:{$articleId}",
             'cta_kind' => 'open',
-            'cta_payload' => ['href' => '/notifications', 'label' => 'Vezi notificarile'],
+            'cta_payload' => ['href' => '/notifications', 'label' => 'Vezi notificările'],
         ]);
         $this->milestones->syncForUser($request->user()->id);
 

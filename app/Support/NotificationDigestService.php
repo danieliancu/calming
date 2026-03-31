@@ -25,7 +25,7 @@ class NotificationDigestService
         return [
             [
                 'id' => 'guest-stats-psychologists',
-                'title' => 'Specialisti validati disponibili',
+                'title' => 'Specialiști validați disponibili',
                 'body' => 'In aplicatie sunt '.DB::table('psychologist_validation_applications')->where('status', 'approved')->count().' psihologi validati.',
                 'category' => 'stats',
                 'icon' => 'FiTrendingUp',
@@ -36,7 +36,7 @@ class NotificationDigestService
                 'relative_time' => 'Acum 4 ore',
                 'is_new' => true,
                 'is_read' => false,
-                'cta' => ['kind' => 'open', 'label' => 'Vezi specialistii', 'href' => '/psychologists'],
+                'cta' => ['kind' => 'open', 'label' => 'Vezi specialiștii', 'href' => '/psychologists'],
             ],
             [
                 'id' => 'guest-stats-city',
@@ -51,7 +51,7 @@ class NotificationDigestService
                 'relative_time' => 'Ieri',
                 'is_new' => false,
                 'is_read' => false,
-                'cta' => ['kind' => 'open', 'label' => 'Explora specialistii', 'href' => '/psychologists'],
+                'cta' => ['kind' => 'open', 'label' => 'Explorează specialiștii', 'href' => '/psychologists'],
             ],
             [
                 'id' => 'guest-stats-category',

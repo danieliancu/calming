@@ -204,7 +204,7 @@ export default function Article({ article, related }) {
             <article className="card article-shell">
                 <div className="action-bar">
                     <div>
-                        <button type="button" className="icon" onClick={() => router.visit('/learn')} aria-label="Inapoi">
+                        <button type="button" className="icon" onClick={() => router.visit('/learn')} aria-label="Înapoi">
                             <FiArrowLeft />
                         </button>
                     </div>

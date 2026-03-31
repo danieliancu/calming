@@ -55,18 +55,18 @@ export default function Settings({ preferences }) {
 
     return (
         <>
-            <Head title="Setari - Calming" />
+            <Head title="Setări - Calming" />
 
             <main className="settings-main">
                 <div className="card">
-                    <span className="section-title">Preferinte</span>
+                    <span className="section-title">Preferințe</span>
                     <div className="grid community-group-grid">
                         <div className="list-item">
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiGlobe /></span>
                                 <div className="settings-item-content">
                                     <span className="settings-item-title">Limba</span>
-                                    <span className="settings-item-muted">Romana</span>
+                                    <span className="settings-item-muted">Română</span>
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
@@ -76,7 +76,7 @@ export default function Settings({ preferences }) {
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiBell /></span>
                                 <div className="settings-item-content">
-                                    <span className="settings-item-title" id="notifications-label">Notificari</span>
+                                    <span className="settings-item-title" id="notifications-label">Notificări</span>
                                     <span className="settings-item-muted">{notificationsEnabled ? 'Activate' : 'Dezactivate'}</span>
                                 </div>
                             </div>
@@ -87,7 +87,7 @@ export default function Settings({ preferences }) {
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiMoon /></span>
                                 <div className="settings-item-content">
-                                    <span className="settings-item-title" id="theme-label">Mod intunecat</span>
+                                    <span className="settings-item-title" id="theme-label">Mod întunecat</span>
                                     <span className="settings-item-muted">{theme === 'dark' ? 'Pornit' : 'Oprit'}</span>
                                 </div>
                             </div>
@@ -97,13 +97,13 @@ export default function Settings({ preferences }) {
                 </div>
 
                 <div className="card">
-                    <span className="section-title">Confidentialitate &amp; Securitate</span>
+                    <span className="section-title">Confidențialitate &amp; Securitate</span>
                     <div className="grid community-group-grid">
                         <Link href={route('legal.show', 'confidentialitate')} className="list-item">
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiLock /></span>
                                 <div className="settings-item-content">
-                                    <span className="settings-item-title">Setari confidentialitate</span>
+                                    <span className="settings-item-title">Setări confidențialitate</span>
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
@@ -113,7 +113,7 @@ export default function Settings({ preferences }) {
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiDatabase /></span>
                                 <div className="settings-item-content">
-                                    <span className="settings-item-title">Date si stocare</span>
+                                    <span className="settings-item-title">Date și stocare</span>
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
@@ -138,7 +138,7 @@ export default function Settings({ preferences }) {
                             <div className="settings-leading">
                                 <span className="settings-icon-bubble"><FiFileText /></span>
                                 <div className="settings-item-content">
-                                    <span className="settings-item-title">Termeni si Conditii</span>
+                                    <span className="settings-item-title">Termeni și Condiții</span>
                                 </div>
                             </div>
                             <FiChevronRight className="settings-chevron" aria-hidden />
@@ -153,7 +153,7 @@ export default function Settings({ preferences }) {
                 ) : (
                     <div className="card u-mt-4">
                         <span className="section-title">Autentificare</span>
-                        <p className="muted">Conecteaza-te pentru a sincroniza preferintele pe toate dispozitivele.</p>
+                        <p className="muted">Conectează-te pentru a sincroniza preferințele pe toate dispozitivele.</p>
                         <button className="btn primary u-mt-2" type="button" onClick={promptAuth}>Intra in cont</button>
                     </div>
                 )}

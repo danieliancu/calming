@@ -1,3 +1,5 @@
+import { emitNotificationSync } from '@/lib/notificationSync';
+
 const STORAGE_KEY = 'calming-guest-state-v1';
 const MAX_NOTIFICATIONS = 20;
 
@@ -61,6 +63,7 @@ export function saveGuestState(state) {
     };
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    emitNotificationSync({ source: 'guest-state' });
 }
 
 export function recordGuestSectionVisit(section) {
@@ -324,7 +327,7 @@ export function buildGuestMilestones() {
         milestones.push({
             id: 'guest-first-reminder',
             title: 'Primul reminder activat',
-            description: 'Ai setat un reminder local pentru a reveni la continut.',
+            description: 'Ai setat un reminder local pentru a reveni la conținut.',
             achieved_at: state.reminders[0].updatedAt,
             icon: 'FiCalendar',
             icon_color: 'rose',
@@ -346,7 +349,7 @@ export function buildGuestMilestones() {
         milestones.push({
             id: 'guest-assistant',
             title: 'Assistant deschis',
-            description: 'Ai pornit prima conversatie cu Assistant.',
+            description: 'Ai pornit prima conversație cu Assistant.',
             achieved_at: state.lastSeenAt,
             icon: 'FiMessageSquare',
             icon_color: 'sky',

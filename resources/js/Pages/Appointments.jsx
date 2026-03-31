@@ -95,7 +95,7 @@ export default function Appointments({
 
                 if (selectedDate && !selectedDateStillAvailable) {
                     if (resumeCheckPending) {
-                        setResumeNotice('Slotul salvat anterior nu mai este disponibil. Alege o alta data.');
+                        setResumeNotice('Slotul salvat anterior nu mai este disponibil. Alege o altă dată.');
                     }
                     setSelectedDate(null);
                     setTime(null);
@@ -112,13 +112,13 @@ export default function Appointments({
 
                 if (time && !selectedTimeStillAvailable) {
                     if (resumeCheckPending && selectedDateStillAvailable) {
-                        setResumeNotice('Ora selectata inainte de autentificare nu mai este libera. Alege alt slot.');
+                        setResumeNotice('Ora selectată înainte de autentificare nu mai este liberă. Alege alt slot.');
                     }
                     setTime(null);
                 }
 
                 if (resumeCheckPending && selectedDateStillAvailable && (!initialTime || selectedTimeStillAvailable)) {
-                    setResumeNotice('Am restaurat selectia ta dinainte de autentificare.');
+                    setResumeNotice('Am restaurat selecția ta dinainte de autentificare.');
                 }
 
                 if (resumeCheckPending) {
@@ -170,19 +170,19 @@ export default function Appointments({
 
     return (
         <>
-            <Head title={`Programeaza cu ${formatPsychologistName(specialist)} - Calming`} />
+            <Head title={`Programează cu ${formatPsychologistName(specialist)} - Calming`} />
 
             <AccentCard dismissKey={`appointments-specialist-${specialist.slug}`}>
-                <div className="section-title">Programeaza cu {formatPsychologistName(specialist)}</div>
+                <div className="section-title">Programează cu {formatPsychologistName(specialist)}</div>
                 <div className="muted">
                     {specialist.city || specialist.county
                         ? `${specialist.city ?? ''}${specialist.city && specialist.county ? ', ' : ''}${specialist.county ?? ''}`
                         : specialist.supports_online
-                            ? 'Disponibil pentru sedinte online'
-                            : 'Disponibil pentru programari in cabinet'}
+                            ? 'Disponibil pentru ședințe online'
+                            : 'Disponibil pentru programări în cabinet'}
                 </div>
                 <div className="row wrap u-mt-3">
-                    <Link className="btn" href="/psychologists">Inapoi la specialisti</Link>
+                    <Link className="btn" href="/psychologists">Înapoi la specialiști</Link>
                     {specialist.phone ? <a className="btn" href={`tel:${specialist.phone}`}>Contact</a> : null}
                 </div>
             </AccentCard>
@@ -191,7 +191,7 @@ export default function Appointments({
             {resumeNotice ? <div className="info u-mt-4">{resumeNotice}</div> : null}
 
             <section className="card u-mt-4">
-                <div className="section-title">Tip sedinta</div>
+                <div className="section-title">Tip ședință</div>
                 {types.length ? (
                     <div className="row wrap">
                         {types.map((entry) => (
@@ -209,8 +209,8 @@ export default function Appointments({
                             </button>
                         ))}
                     </div>
-                ) : <div className="muted">Specialistul nu a configurat inca tipuri de sedinta disponibile.</div>}
-                {type ? <div className="muted u-mt-2">{LOCATION_LABELS[type.location_mode] ?? LOCATION_LABELS.both} · {type.is_paid_online ? 'Plata online la confirmare' : 'Fara plata online'}</div> : null}
+                ) : <div className="muted">Specialistul nu a configurat încă tipuri de ședință disponibile.</div>}
+                {type ? <div className="muted u-mt-2">{LOCATION_LABELS[type.location_mode] ?? LOCATION_LABELS.both} · {type.is_paid_online ? 'Plată online la confirmare' : 'Fără plată online'}</div> : null}
             </section>
 
             <section className="card u-mt-4">
@@ -285,7 +285,7 @@ export default function Appointments({
                 <div className="row wrap">
                     <div className="grow">
                         <div>
-                            <b>{type?.label ?? 'Tip sedinta'}</b> / {formatPsychologistName(specialist)}
+                            <b>{type?.label ?? 'Tip ședință'}</b> / {formatPsychologistName(specialist)}
                         </div>
                         <div className="muted">
                             {selectedDate ? formatDateString(selectedDate) : 'Selecteaza data'} {time ? `/ ${time}` : ''}
@@ -293,7 +293,7 @@ export default function Appointments({
                         {type ? <div className="muted">{formatMoney(type.price_amount, type.currency)} · cererea intra initial in asteptare</div> : null}
                     </div>
                     <button className="btn primary" type="button" onClick={handleConfirm} disabled={!selectedTypeId || !selectedDate || !time || form.processing}>
-                        {form.processing ? 'Se trimite...' : isAuthenticated ? 'Trimite cererea' : 'Continua spre autentificare'}
+                        {form.processing ? 'Se trimite...' : isAuthenticated ? 'Trimite cererea' : 'Continuă spre autentificare'}
                     </button>
                 </div>
                 {!isAuthenticated ? <div className="muted u-mt-2">Pentru a continua, trebuie sa te autentifici.</div> : null}
@@ -307,7 +307,7 @@ export default function Appointments({
                         <AppointmentBlock title="Confirmate" items={confirmedAppointments} />
                         <AppointmentBlock title="Istoric" items={historyAppointments} />
                     </div>
-                ) : <div className="muted">Nu ai programari salvate momentan.</div>}
+                ) : <div className="muted">Nu ai programări salvate momentan.</div>}
             </section>
         </>
     );

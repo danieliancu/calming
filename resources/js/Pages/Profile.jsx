@@ -122,7 +122,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                                     <div className="muted">Activitatea se pastreaza doar in acest browser pana creezi un cont.</div>
                                 </div>
                             </div>
-                            <button type="button" className="btn profile-edit" onClick={promptAuth}>Creeaza cont</button>
+                            <button type="button" className="btn profile-edit" onClick={promptAuth}>Creează cont</button>
                         </div>
 
                         <div className="profile-progress">
@@ -166,7 +166,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                             {guestMilestones.map((milestone) => (
                                 <MilestoneCard key={milestone.id} milestone={milestone} />
                             ))}
-                            {guestMilestones.length === 0 ? <div className="muted">Reperele apar dupa ce explorezi articole, Assistant si reminder-ele locale.</div> : null}
+                            {guestMilestones.length === 0 ? <div className="muted">Reperele apar după ce explorezi articole, Assistant și reminder-ele locale.</div> : null}
                         </div>
                     </section>
 
@@ -174,7 +174,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                         <div className="section-title">Sincronizare</div>
                         <div className="info-list">
                             <button className="info-item" type="button" onClick={promptAuth}>
-                                <span>Creeaza cont pentru a sincroniza saved articles, remindere si notificari</span>
+                                <span>Creează cont pentru a sincroniza saved articles, remindere și notificări</span>
                                 <FiChevronRight aria-hidden />
                             </button>
                         </div>
@@ -191,7 +191,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
             <main className="profile-layout">
                 <section className="card accent profile-card" style={{ marginTop:"-30px" }}>
                     <div className="profile-header">
-                        <button type="button" className="btn profile-edit profile-edit-icon" onClick={() => setEditOpen(true)} aria-label="Editeaza profilul">
+                        <button type="button" className="btn profile-edit profile-edit-icon" onClick={() => setEditOpen(true)} aria-label="Editează profilul">
                             <FiEdit2 />
                         </button>
                         <div className="profile-ident">
@@ -203,7 +203,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                                 </div>
                             </div>
                         </div>
-                        <button type="button" className="btn profile-edit profile-edit-text" onClick={() => setEditOpen(true)}>Editeaza</button>
+                        <button type="button" className="btn profile-edit profile-edit-text" onClick={() => setEditOpen(true)}>Editează</button>
                     </div>
 
                     <div className="muted">
@@ -223,7 +223,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
 
                 <div className="profile-actions">
                     <Link href="/journal" className="list-item">Vezi jurnal</Link>
-                    <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adauga jurnal</a>
+                    <a href="#" className="list-item" onClick={(event) => { event.preventDefault(); openJournal(); }}>Adaugă jurnal</a>
                     <Link href={route('profile.edit')} className="list-item">Contul meu</Link>
                     <SignOutAction className="list-item settings-signout-card profile-signout-action" onClick={signOut} />
                 </div>
@@ -250,7 +250,7 @@ export default function Profile({ profile, profileDetails, stats, milestones, in
                         {userMilestones.map((milestone) => (
                             <MilestoneCard key={milestone.id} milestone={milestone} />
                         ))}
-                        {userMilestones.length === 0 ? <div className="muted">Reperele apar pe masura ce folosesti jurnalul, articolele, programarile, comunitatea si Assistant.</div> : null}
+                        {userMilestones.length === 0 ? <div className="muted">Reperele apar pe măsură ce folosești jurnalul, articolele, programările, comunitatea și Assistant.</div> : null}
                     </div>
                 </section>
 
@@ -382,7 +382,7 @@ function AppointmentSection({ title, appointments }) {
 
 function AppointmentsPanel({ upcomingAppointments, pendingAppointments, confirmedAppointments, historyAppointments }) {
     if (!upcomingAppointments.length) {
-        return <div className="muted">Nu ai inca programari. Exploreaza lista de specialisti si trimite o cerere noua.</div>;
+        return <div className="muted">Nu ai încă programări. Explorează lista de specialiști și trimite o cerere nouă.</div>;
     }
 
     return (
@@ -414,7 +414,7 @@ function formatCategory(category) {
         case 'article':
             return 'Articole';
         case 'appointment':
-            return 'Programari';
+            return 'Programări';
         case 'assistant':
             return 'Assistant';
         case 'community':

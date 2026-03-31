@@ -33,7 +33,7 @@ export default function FavoriteArticles({ articles = [] }) {
             <main className="favorite-articles-page">
                 <div className="favorite-articles-nav">
                     <Link className="assistant-back-link" href="/profile">
-                        <FiArrowLeft aria-hidden /> Inapoi
+                        <FiArrowLeft aria-hidden /> Înapoi
                     </Link>
                     <div className="favorite-articles-title">Articole favorite</div>
                 </div>

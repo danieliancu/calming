@@ -15,7 +15,7 @@ export default function PsychologistProfile({ psychologist }) {
 
             <main className="psychologist-detail-page">
                 <div className="journal-footer">
-                    <Link className="profile-action secondary" href="/psychologists">&larr; Inapoi la specialisti</Link>
+                    <Link className="profile-action secondary" href="/psychologists">&larr; Înapoi la specialiști</Link>
                 </div>
 
                 <section className="card psychologist-detail-card">
@@ -71,7 +71,7 @@ export default function PsychologistProfile({ psychologist }) {
                             </a>
                         ) : null}
                         <Link className="btn primary" href={psychologist.slug ? `/appointments?psychologist=${psychologist.slug}` : '/psychologists'}>
-                            Programeaza
+                            Programează
                         </Link>
                     </div>
 
@@ -83,7 +83,7 @@ export default function PsychologistProfile({ psychologist }) {
                         ) : null}
                         {psychologist.details?.length ? (
                             <span className="psychologists-meta-item">
-                                <FiInfo /> Informatii profesionale afisate fara identificatori numerici.
+                                <FiInfo /> Informații profesionale afișate fără identificatori numerici.
                             </span>
                         ) : null}
                     </div>

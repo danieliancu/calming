@@ -79,6 +79,7 @@ Route::post('/superadmin/articles/{articleId}/reject', [SuperadminController::cl
 Route::delete('/superadmin/articles/{articleId}', [SuperadminController::class, 'destroyArticle'])->name('superadmin.articles.destroy');
 Route::post('/superadmin/community-groups/{groupId}/approve', [SuperadminController::class, 'approveCommunityGroup'])->name('superadmin.community-groups.approve');
 Route::post('/superadmin/community-groups/{groupId}/reject', [SuperadminController::class, 'rejectCommunityGroup'])->name('superadmin.community-groups.reject');
+Route::delete('/superadmin/community-groups/{groupId}', [SuperadminController::class, 'destroyCommunityGroup'])->name('superadmin.community-groups.destroy');
 Route::post('/superadmin/article-categories', [SuperadminController::class, 'storeArticleCategory'])->name('superadmin.article-categories.store');
 Route::put('/superadmin/article-categories/{categoryId}', [SuperadminController::class, 'updateArticleCategory'])->name('superadmin.article-categories.update');
 Route::delete('/superadmin/article-categories/{categoryId}', [SuperadminController::class, 'destroyArticleCategory'])->name('superadmin.article-categories.destroy');

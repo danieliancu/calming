@@ -5,6 +5,7 @@ import { ToastContext } from '@/contexts/ToastContext';
 import { DEFAULT_PSYCH_DASHBOARD_SECTION, normalizePsychDashboardSection, PSYCH_DASHBOARD_MENU_ITEMS } from '@/data/psychDashboardNav';
 import { buildGuestNotifications, recordGuestSectionVisit } from '@/lib/guestActivity';
 import { apiFetch } from '@/lib/http';
+import { subscribeNotificationSync } from '@/lib/notificationSync';
 import { BellIcon, FiBookOpen, FiCalendar, FiHome, FiMessageSquare, FiUsers, FiX, SettingsIcon, UserIcon } from '@/lib/icons';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -45,28 +46,28 @@ export default function AppLayout({ children }) {
         const source = sharedPsychUser?.first_name ?? sharedPsychUser?.name ?? '';
         const trimmed = String(source).trim();
         if (!trimmed) {
-            return 'Specialisti';
+            return 'Specialiști';
         }
-        return trimmed.split(/\s+/)[0] || 'Specialisti';
+        return trimmed.split(/\s+/)[0] || 'Specialiști';
     }, [sharedPsychUser?.first_name, sharedPsychUser?.name]);
 
     const mainLinks = [
-        { href: '/', label: 'Acasa' },
+        { href: '/', label: 'Acasă' },
         { href: '/assistant', label: 'Asistent' },
         { href: '/psychologists', label: 'Ajutor' },
         { href: '/learn', label: 'Articole' },
         { href: '/community', label: 'Comunitate' },
         isPsychAuthenticated
             ? { href: '/psychologists/dashboard', label: specialistFirstName, key: 'specialists', className: 'text-link--specialist' }
-            : { label: 'Specialisti', key: 'specialists', action: 'specialist-modal' },
+            : { label: 'Specialiști', key: 'specialists', action: 'specialist-modal' },
     ];
 
     const profileLink = { href: '/profile', label: 'Profil', icon: UserIcon, key: 'profile' };
 
     const iconLinks = [
-        { href: '/notifications', label: 'Notificari', icon: BellIcon },
+        { href: '/notifications', label: 'Notificări', icon: BellIcon },
         profileLink,
-        { href: '/settings', label: 'Setari', icon: SettingsIcon },
+        { href: '/settings', label: 'Setări', icon: SettingsIcon },
     ];
 
     const closeJournal = useCallback(() => {
@@ -216,6 +217,27 @@ export default function AppLayout({ children }) {
         return next;
     }, [computeAuthUser]);
 
+    const refreshNotificationBadge = useCallback(async () => {
+        if (!notificationsEnabled) {
+            setGuestNotificationCount(0);
+            setAuthUser((current) => ({ ...current, newNotifications: 0 }));
+            return;
+        }
+
+        if (isAuthenticated) {
+            await refreshAuthStatus();
+            return;
+        }
+
+        try {
+            const data = await apiFetch('/api/notifications/bootstrap');
+            const merged = buildGuestNotifications(data.publicNotifications ?? []);
+            setGuestNotificationCount(merged.filter((item) => !item.is_read && Boolean(item.is_new)).length);
+        } catch {
+            setGuestNotificationCount(0);
+        }
+    }, [isAuthenticated, notificationsEnabled, refreshAuthStatus]);
+
     useEffect(() => {
         let active = true;
         setAuthResolved(false);
@@ -233,30 +255,45 @@ export default function AppLayout({ children }) {
     useEffect(() => {
         let active = true;
 
-        apiFetch('/api/notifications/bootstrap')
-            .then((data) => {
-                if (!active) {
-                    return;
-                }
+        const run = () => {
+            if (!active) {
+                return;
+            }
 
-                if (isAuthenticated) {
-                    setGuestNotificationCount(0);
-                    return;
-                }
-
-                const merged = buildGuestNotifications(data.publicNotifications ?? []);
-                setGuestNotificationCount(merged.filter((item) => !item.is_read && Boolean(item.is_new)).length);
-            })
-            .catch(() => {
-                if (active) {
+            refreshNotificationBadge().catch(() => {
+                if (active && !isAuthenticated) {
                     setGuestNotificationCount(0);
                 }
             });
+        };
+
+        run();
+
+        const intervalId = window.setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                run();
+            }
+        }, 5000);
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                run();
+            }
+        };
+
+        const unsubscribe = subscribeNotificationSync(() => {
+            run();
+        });
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
             active = false;
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            unsubscribe();
         };
-    }, [isAuthenticated, pathname]);
+    }, [isAuthenticated, pathname, refreshNotificationBadge]);
 
     const handleCloseAuth = useCallback(() => {
         setShowAuthModal(false);
@@ -541,7 +578,7 @@ function BottomNav() {
     const pathname = url.split('?')[0];
     const isCommunityRoute = pathname === '/community' || pathname.startsWith('/community/');
     const items = [
-        { href: '/', label: 'Acasa', icon: FiHome },
+        { href: '/', label: 'Acasă', icon: FiHome },
         { href: '/assistant', label: 'Asistent', icon: FiMessageSquare },
         { href: '/psychologists', label: 'Ajutor', icon: FiCalendar },
         { href: '/learn', label: 'Articole', icon: FiBookOpen },
@@ -572,22 +609,22 @@ function Footer() {
                     <div className="brand footer-brand">
                         <span className="brand-mark brand-mark--sm" /> Calming
                     </div>
-                    <div className="muted">Indrumare confidentiala pentru echilibrul tau.</div>
+                    <div className="muted">Îndrumare confidențială pentru echilibrul tău.</div>
                 </div>
                 <div>
                     <div className="footer-title">Platforma</div>
                     <ul>
                         <li><Link href="/learn">Biblioteca</Link></li>
                         <li><Link href="/community">Comunitate</Link></li>
-                        <li><Link href="/psychologists">Programari</Link></li>
+                        <li><Link href="/psychologists">Programări</Link></li>
                         <li><a href="mailto:contact@calming.ro">Contact</a></li>
                     </ul>
                 </div>
                 <div>
                     <div className="footer-title">Legal</div>
                     <ul>
-                        <li><Link href={route('legal.show', 'termeni-si-conditii')}>Termeni si Conditii</Link></li>
-                        <li><Link href={route('legal.show', 'confidentialitate')}>Confidentialitate</Link></li>
+                        <li><Link href={route('legal.show', 'termeni-si-conditii')}>Termeni și Condiții</Link></li>
+                        <li><Link href={route('legal.show', 'confidentialitate')}>Confidențialitate</Link></li>
                         <li><Link href={route('legal.show', 'cookies')}>Cookies</Link></li>
                     </ul>
                 </div>

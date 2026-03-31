@@ -22,7 +22,7 @@ export default function LearnCategory({ category, articles }) {
 
             <section className="card learn-category-header">
                 <div className="learn-category-header__top">
-                    <Link href="/learn" className="group-back-link" aria-label="Inapoi la categorii">
+                    <Link href="/learn" className="group-back-link" aria-label="Înapoi la categorii">
                         <FiArrowLeft aria-hidden />
                     </Link>
                     <div className="learn-category-header__title-wrap">

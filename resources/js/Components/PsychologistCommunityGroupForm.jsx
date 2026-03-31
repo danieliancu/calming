@@ -45,7 +45,7 @@ export default function PsychologistCommunityGroupForm({
             <Head title={title} />
             <div className="group-convo-nav">
                 <Link href={route('psychologists.dashboard', { section: 'community' })} className="group-back-link">
-                    &larr; Inapoi
+                    &larr; Înapoi
                 </Link>
             </div>
             <section className="card psych-card psych-card--form">
@@ -62,7 +62,7 @@ export default function PsychologistCommunityGroupForm({
                         <textarea rows={4} value={form.data.description} onChange={(event) => form.setData('description', event.target.value)} placeholder="Cerc de sprijin pentru parinti care cauta strategii blande si resurse pentru echilibru emotional in familie." required />
                     </label>
                     <label>
-                        <span>Intalniri live</span>
+                        <span>Întâlniri live</span>
                         <input value={form.data.schedule} onChange={(event) => form.setData('schedule', event.target.value)} placeholder="Joi, 17:30 - 18:15" />
                     </label>
                     <label>
@@ -92,7 +92,7 @@ export default function PsychologistCommunityGroupForm({
                             {form.processing ? submitProcessingLabel : submitLabel}
                         </button>
                         <Link className="btn" href={route('psychologists.dashboard', { section: 'community' })}>
-                            Renunta
+                            Renunță
                         </Link>
                     </div>
                 </form>

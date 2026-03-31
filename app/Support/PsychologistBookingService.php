@@ -201,7 +201,7 @@ class PsychologistBookingService
                 ->where('is_active', true)
                 ->first();
 
-            abort_unless($type, 422, 'Tipul de sedinta nu este disponibil.');
+            abort_unless($type, 422, 'Tipul de ședință nu este disponibil.');
 
             $startsAt = Carbon::instance($startsAt->toDateTime())->seconds(0);
             abort_if($startsAt->lessThanOrEqualTo(now()), 422, 'Nu poti rezerva o programare in trecut.');

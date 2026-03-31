@@ -432,7 +432,7 @@ export default function PsychologistDashboard({
                     <aside className="psych-menu">
                         <div className="psych-menu__header">
                             <div className="brand-sm">Calming Partners</div>
-                            <div className="muted small">{displayName || 'Partener fara nume'}</div>
+                            <div className="muted small">{displayName || 'Partener fără nume'}</div>
                         </div>
                         <nav className="psych-menu__nav">
                             {PSYCH_DASHBOARD_MENU_ITEMS.map((item) => {
@@ -523,7 +523,7 @@ export default function PsychologistDashboard({
                                                 )}
                                             </label>
                                             <label>
-                                                <span>Ofer si sedinte online</span>
+                                                <span>Ofer și ședințe online</span>
                                                 <select value={validationForm.data.supports_online ? 'da' : 'nu'} onChange={(event) => validationForm.setData('supports_online', event.target.value === 'da')}>
                                                     <option value="da">Da</option>
                                                     <option value="nu">Nu</option>
@@ -561,7 +561,7 @@ export default function PsychologistDashboard({
                                                         <div className="section-title validation-panel__title">Atestat {index + 1}</div>
                                                     </div>
                                                     {validationForm.data.attestations.length > 1 ? (
-                                                        <button className="btn icon-only" type="button" onClick={() => removeAttestation(index)} aria-label={`Sterge atestatul ${index + 1}`}>
+                                                        <button className="btn icon-only" type="button" onClick={() => removeAttestation(index)} aria-label={`Șterge atestatul ${index + 1}`}>
                                                             <FiTrash2 size={16} />
                                                         </button>
                                                     ) : null}
@@ -692,10 +692,10 @@ export default function PsychologistDashboard({
                                         <p className="muted">Publica resurse originale pentru biblioteca Calming.</p>
                                     </div>
                                     <Link className={`btn btn-success${canManageContent ? '' : ' disabled'}`} href={canManageContent ? route('psychologists.articles.create') : '#'} onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
-                                        Adauga
+                                        Adaugă
                                     </Link>
                                 </div>
-                                {!canManageContent ? <div className="info u-mt-3">Publicarea de articole este activa doar dupa aprobarea validarii profesionale.</div> : null}
+                                {!canManageContent ? <div className="info u-mt-3">Publicarea de articole este activă doar după aprobarea validării profesionale.</div> : null}
                                 {flashStatus ? <div className="info u-mt-3">{flashStatus}</div> : null}
                                 {initialArticles.length ? (
                                     <ul className="simple-list u-mt-3">
@@ -704,7 +704,7 @@ export default function PsychologistDashboard({
                                                 <div>
                                                     <div className="u-text-semibold">{item.title}</div>
                                                     <div className="simple-list__meta">
-                                                        {`${item.tag || 'Fara tag'} - ${item.minutes ? `${item.minutes} min` : 'Durata indisponibila'} - ${item.title}`}
+                                                        {`${item.tag || 'Fără tag'} - ${item.minutes ? `${item.minutes} min` : 'Durată indisponibilă'} - ${item.title}`}
                                                         <span className={`status-pill ${item.isValid ? 'status-pill--valid' : 'status-pill--pending'}`}>
                                                             {item.isValid ? 'Articol validat' : 'Asteapta validare'}
                                                         </span>
@@ -724,10 +724,10 @@ export default function PsychologistDashboard({
                                                         >
                                                             <FiEye />
                                                         </Link>
-                                                        <Link href={canManageContent ? route('psychologists.articles.edit', item.id) : '#'} className={`icon-btn${canManageContent ? '' : ' disabled'}`} aria-label="Editeaza articolul" onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
+                                                        <Link href={canManageContent ? route('psychologists.articles.edit', item.id) : '#'} className={`icon-btn${canManageContent ? '' : ' disabled'}`} aria-label="Editează articolul" onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
                                                             <FiEdit2 />
                                                         </Link>
-                                                        <button className="icon-btn danger" type="button" onClick={() => deleteArticle(item.id)} aria-label="Sterge articolul" disabled={!canManageContent}>
+                                                        <button className="icon-btn danger" type="button" onClick={() => deleteArticle(item.id)} aria-label="Șterge articolul" disabled={!canManageContent}>
                                                             <FiTrash2 />
                                                         </button>
                                                     </div>
@@ -747,10 +747,10 @@ export default function PsychologistDashboard({
                                         <p className="muted">Coordoneaza grupuri private sau publice pentru comunitatea ta.</p>
                                     </div>
                                     <Link className={`btn btn-success${canManageContent ? '' : ' disabled'}`} href={canManageContent ? route('psychologists.community.create') : '#'} onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
-                                        Adauga
+                                        Adaugă
                                     </Link>
                                 </div>
-                                {!canManageContent ? <div className="info u-mt-3">Gestionarea grupurilor este disponibila doar dupa aprobarea validarii profesionale.</div> : null}
+                                {!canManageContent ? <div className="info u-mt-3">Gestionarea grupurilor este disponibilă doar după aprobarea validării profesionale.</div> : null}
                                 {initialGroups.length ? (
                                     <ul className="simple-list u-mt-3">
                                         {initialGroups.map((group) => (
@@ -772,10 +772,10 @@ export default function PsychologistDashboard({
                                                         <Link className="icon-btn" href={`/community/${group.slug}`} aria-label="Vezi grupul">
                                                             <FiEye />
                                                         </Link>
-                                                        <Link className={`icon-btn${canManageContent ? '' : ' disabled'}`} href={canManageContent ? route('psychologists.community.edit', group.id) : '#'} aria-label="Editeaza grupul" onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
+                                                        <Link className={`icon-btn${canManageContent ? '' : ' disabled'}`} href={canManageContent ? route('psychologists.community.edit', group.id) : '#'} aria-label="Editează grupul" onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
                                                             <FiEdit2 />
                                                         </Link>
-                                                        <button className="icon-btn danger" type="button" onClick={() => deleteCommunityGroup(group.id)} aria-label="Sterge grupul" disabled={!canManageContent}>
+                                                        <button className="icon-btn danger" type="button" onClick={() => deleteCommunityGroup(group.id)} aria-label="Șterge grupul" disabled={!canManageContent}>
                                                             <FiTrash2 />
                                                         </button>
                                                     </div>
@@ -790,12 +790,12 @@ export default function PsychologistDashboard({
 
                         {activeMenu === 'schedule' ? (
                             <section className="card psych-card">
-                                {!canManageContent ? <div className="info u-mt-3">Administrarea programarilor si a disponibilitatii este activa dupa aprobarea validarii profesionale.</div> : null}
+                                {!canManageContent ? <div className="info u-mt-3">Administrarea programărilor și a disponibilității este activă după aprobarea validării profesionale.</div> : null}
                                 {flashStatus ? <div className="info u-mt-3">{flashStatus}</div> : null}
 
                                 <div className="u-mt-4">
-                                    <div className="section-title" style={{ marginBottom:"0" }}>Tipuri de sedinta</div>
-                                    <p className="muted">Configureaza oferta publica afisata clientilor pentru rezervari noi.</p>
+                                    <div className="section-title" style={{ marginBottom:"0" }}>Tipuri de ședință</div>
+                                    <p className="muted">Configurează oferta publică afișată clienților pentru rezervări noi.</p>
                                     <form className="card subtle u-mt-3" onSubmit={(event) => submitScheduleForm(event, (payload, options) => router.post(route('psychologists.appointment-types.store'), payload, options))}>
                                         <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
                                             <div className="row wrap" style={{ alignItems: 'center', gap: '0.75rem' }}>
@@ -814,7 +814,7 @@ export default function PsychologistDashboard({
                                                         }}
                                                     />
                                                 </button>
-                                                <div className="u-text-semibold">Adauga tip nou de sedinta</div>
+                                                <div className="u-text-semibold">Adaugă tip nou de ședință</div>
                                             </div>
                                         </div>
                                         {showNewAppointmentTypeForm ? (
@@ -854,7 +854,7 @@ export default function PsychologistDashboard({
                                                     </label>
                                                 </div>
                                                 <div className="validation-actions">
-                                                    <button className="btn btn-success" type="submit" disabled={!canManageContent}>Adauga tip nou de sedinta</button>
+                                                    <button className="btn btn-success" type="submit" disabled={!canManageContent}>Adaugă tip nou de ședință</button>
                                                 </div>
                                             </>
                                         ) : null}
@@ -923,12 +923,12 @@ export default function PsychologistDashboard({
                                                                 </label>
                                                             </div>
                                                             <div className="row wrap u-mt-3">
-                                                                <span className="muted">{formatLocationModeLabel(item.location_mode)} · {formatMoney(item.price_amount, item.currency)} · {item.is_paid_online ? 'Plata online activa' : 'Plata in afara platformei'}</span>
+                                                                <span className="muted">{formatLocationModeLabel(item.location_mode)} · {formatMoney(item.price_amount, item.currency)} · {item.is_paid_online ? 'Plată online activă' : 'Plată în afara platformei'}</span>
                                                             </div>
                                                             <div className="validation-actions">
                                                                 <button className="btn primary" type="submit" disabled={!canManageContent}>Salveaza</button>
-                                                                <button className="btn" type="button" disabled={!canManageContent} onClick={() => deleteScheduleItem(route('psychologists.appointment-types.destroy', item.id), 'Esti sigur ca vrei sa stergi acest tip de sedinta?')}>
-                                                                    Sterge
+                                                                <button className="btn" type="button" disabled={!canManageContent} onClick={() => deleteScheduleItem(route('psychologists.appointment-types.destroy', item.id), 'Ești sigur că vrei să ștergi acest tip de ședință?')}>
+                                                                    Șterge
                                                                 </button>
                                                             </div>
                                                         </>
@@ -936,7 +936,7 @@ export default function PsychologistDashboard({
                                                 </form>
                                             ))}
                                         </div>
-                                    ) : <div className="muted u-mt-3">Nu exista tipuri de sedinta configurate.</div>}
+                                    ) : <div className="muted u-mt-3">Nu există tipuri de ședință configurate.</div>}
                                 </div>
 
                                 <div className="u-mt-5">
@@ -977,8 +977,8 @@ export default function PsychologistDashboard({
                                                                                 type="button"
                                                                                 disabled={!canManageContent}
                                                                                 onClick={() => deleteScheduleItem(route('psychologists.availability-rules.destroy', day.rules[0].id))}
-                                                                                title="Sterge intervalul"
-                                                                                aria-label="Sterge intervalul"
+                                                                                title="Șterge intervalul"
+                                                                                aria-label="Șterge intervalul"
                                                                             >
                                                                                 <FiX />
                                                                             </button>
@@ -995,8 +995,8 @@ export default function PsychologistDashboard({
                                                                     type="button"
                                                                     disabled={!canManageContent}
                                                                     onClick={() => addWeeklyAvailabilitySlot(day.value)}
-                                                                    title="Adauga interval"
-                                                                    aria-label="Adauga interval"
+                                                                    title="Adaugă interval"
+                                                                    aria-label="Adaugă interval"
                                                                 >
                                                                     <FiPlus />
                                                                 </button>
@@ -1031,8 +1031,8 @@ export default function PsychologistDashboard({
                                                                             type="button"
                                                                             disabled={!canManageContent}
                                                                             onClick={() => deleteScheduleItem(route('psychologists.availability-rules.destroy', rule.id))}
-                                                                            title="Sterge intervalul"
-                                                                            aria-label="Sterge intervalul"
+                                                                            title="Șterge intervalul"
+                                                                            aria-label="Șterge intervalul"
                                                                         >
                                                                             <FiX />
                                                                         </button>
@@ -1071,8 +1071,8 @@ export default function PsychologistDashboard({
                                     <div className="card subtle u-mt-4">
                                         <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
                                             <div>
-                                                <div className="section-title" style={{ marginBottom: '0.35rem' }}>Ajustare ore pentru zile specifice</div>
-                                                <div className="muted">Selecteaza o data din calendar si defineste ore speciale sau blocari pentru acea zi.</div>
+                                            <div className="section-title" style={{ marginBottom: '0.35rem' }}>Ajustare ore pentru zile specifice</div>
+                                            <div className="muted">Selectează o dată din calendar și definește ore speciale sau blocări pentru acea zi.</div>
                                             </div>
                                             <div className="row wrap" style={{ gap: '0.5rem' }}>
                                                 <button className="btn" type="button" onClick={() => shiftAvailabilityMonth(-1)}>&lt;</button>
@@ -1110,9 +1110,9 @@ export default function PsychologistDashboard({
                                             <div className="row wrap" style={{ alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
                                                 <div>
                                                     <div className="u-text-semibold">{formatSelectedDateLabel(selectedSpecificDate)}</div>
-                                                    <div className="muted">Ore specifice pentru data selectata.</div>
+                                                    <div className="muted">Ore specifice pentru data selectată.</div>
                                                 </div>
-                                                <button className="icon-btn" type="button" disabled={!canManageContent} onClick={addSpecificDateAvailabilitySlot} title="Adauga interval" aria-label="Adauga interval">
+                                                <button className="icon-btn" type="button" disabled={!canManageContent} onClick={addSpecificDateAvailabilitySlot} title="Adaugă interval" aria-label="Adaugă interval">
                                                     <FiPlus />
                                                 </button>
                                             </div>
@@ -1128,7 +1128,7 @@ export default function PsychologistDashboard({
                                                                 <span className="muted">-</span>
                                                                 <input className="schedule-time-input" name="end_time" type="time" defaultValue={item.end_time} style={{ maxWidth: '140px' }} onChange={(event) => autosaveScheduleForm(event, (payload, options) => router.put(route('psychologists.availability-exceptions.update', item.id), payload, options))} />
                                                                 <input name="interval_minutes" type="hidden" value={item.interval_minutes || ''} />
-                                                                <button className="icon-btn plain danger" type="button" disabled={!canManageContent} onClick={() => removeSpecificDateInterval(item)} title="Sterge intervalul" aria-label="Sterge intervalul"><FiX /></button>
+                                                                <button className="icon-btn plain danger" type="button" disabled={!canManageContent} onClick={() => removeSpecificDateInterval(item)} title="Șterge intervalul" aria-label="Șterge intervalul"><FiX /></button>
                                                             </div>
                                                             <input type="hidden" name="note" value={item.note ?? ''} />
                                                         </form>
@@ -1159,23 +1159,23 @@ export default function PsychologistDashboard({
                                                                     type="button"
                                                                     disabled={!canManageContent}
                                                                     onClick={() => removeSpecificDateInterval(item, true)}
-                                                                    title="Sterge intervalul"
-                                                                    aria-label="Sterge intervalul"
+                                                                    title="Șterge intervalul"
+                                                                    aria-label="Șterge intervalul"
                                                                 >
                                                                     <FiX />
                                                                 </button>
                                                             </div>
-                                                            <div className="muted u-mt-2">Interval preluat din Program saptamanal. Prima modificare il transforma in override pentru aceasta zi.</div>
+                                                            <div className="muted u-mt-2">Interval preluat din Program săptămânal. Prima modificare îl transformă în override pentru această zi.</div>
                                                         </form>
                                                     ))}
                                                 </div>
-                                            ) : <div className="muted u-mt-3">Nu exista intervale salvate pentru aceasta zi.</div>}
+                                            ) : <div className="muted u-mt-3">Nu există intervale salvate pentru această zi.</div>}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="u-mt-5">
-                                    <div className="section-title">Programari reale</div>
+                                    <div className="section-title">Programări reale</div>
                                     {initialAppointments.length ? (
                                         <div className="grid u-gap-3 u-mt-3">
                                             {initialAppointments.map((appointment) => (
@@ -1186,7 +1186,7 @@ export default function PsychologistDashboard({
                                                             <div className="simple-list__meta">{appointment.date} · {appointment.slot}</div>
                                                             <div className="simple-list__meta">{appointment.type} · {formatLocationModeLabel(appointment.location_mode)}</div>
                                                             <div className="simple-list__meta">{formatMoney(appointment.price_total, appointment.currency)} · {formatPaymentStatusLabel(appointment.payment_status)}</div>
-                                                            {appointment.expires_at && appointment.status === 'pending' ? <div className="simple-list__meta">Expira la {appointment.expires_at}</div> : null}
+                                                            {appointment.expires_at && appointment.status === 'pending' ? <div className="simple-list__meta">Expiră la {appointment.expires_at}</div> : null}
                                                         </div>
                                                         <span className={`status-pill ${appointment.status === 'confirmed' ? 'status-pill--valid' : appointment.status === 'pending' ? 'status-pill--pending' : 'status-pill--danger'}`}>
                                                             {formatAppointmentStatusLabel(appointment.status)}
@@ -1219,12 +1219,12 @@ export default function PsychologistDashboard({
                                                         </label>
                                                     </div>
                                                     <div className="validation-actions">
-                                                        <button className="btn primary" type="submit" disabled={!canManageContent || !appointment.can_manage}>Actualizeaza statusul</button>
+                                                        <button className="btn primary" type="submit" disabled={!canManageContent || !appointment.can_manage}>Actualizează statusul</button>
                                                     </div>
                                                 </form>
                                             ))}
                                         </div>
-                                    ) : <div className="muted u-mt-3">Nu exista programari inregistrate.</div>}
+                                    ) : <div className="muted u-mt-3">Nu există programări înregistrate.</div>}
                                 </div>
                             </section>
                         ) : null}
@@ -1256,7 +1256,7 @@ const REMINDER_OPTIONS = [
     { value: '1440', label: '24h inainte' },
     { value: '120', label: '2h inainte' },
     { value: '30', label: '30m inainte' },
-    { value: 'none', label: 'Fara reminder' },
+    { value: 'none', label: 'Fără reminder' },
 ];
 
 const CALENDAR_WEEKDAYS = ['Du', 'Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sa'];
@@ -1434,9 +1434,9 @@ function formatPaymentStatusLabel(value) {
         case 'refunded':
             return 'Refund procesat';
         case 'not_required':
-            return 'Fara plata online';
+            return 'Fără plată online';
         default:
-            return value || 'Fara plata';
+            return value || 'Fără plată';
     }
 }
 

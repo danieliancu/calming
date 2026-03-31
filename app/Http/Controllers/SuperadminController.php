@@ -805,7 +805,7 @@ class SuperadminController extends Controller
             'slug' => $this->uniqueArticleCategorySlug($validated['slug'] ?? $validated['name']),
         ]);
 
-        return back()->with('status', 'Categoria a fost adaugata.');
+        return back()->with('status', 'Categoria a fost adăugată.');
     }
 
     public function updateArticleCategory(Request $request, int $categoryId): RedirectResponse
@@ -941,6 +941,31 @@ class SuperadminController extends Controller
         );
 
         return back()->with('status', 'Grupul de sprijin a ramas in asteptare.');
+    }
+
+    public function destroyCommunityGroup(Request $request, int $groupId): RedirectResponse
+    {
+        $superadmin = $this->requireSuperadminSession($request);
+
+        if ($superadmin instanceof RedirectResponse) {
+            return $superadmin;
+        }
+
+        $group = DB::table('community_groups')->where('id', $groupId)->first(['id', 'name']);
+        abort_unless($group, 404);
+
+        DB::transaction(function () use ($groupId) {
+            DB::table('community_groups_validation')->where('group_id', $groupId)->delete();
+
+            DB::table('notifications')
+                ->where('trigger_type', 'community_group')
+                ->where('trigger_id', (string) $groupId)
+                ->delete();
+
+            DB::table('community_groups')->where('id', $groupId)->delete();
+        });
+
+        return back()->with('status', "Grupul \"{$group->name}\" a fost șters.");
     }
 
     public function updateNotificationTemplate(Request $request, int $templateId): RedirectResponse

@@ -18,15 +18,15 @@ class AssistantPromptBuilder
             'Raspunzi in limba romana, clar, scurt, calm si empatic.',
             'Implicit raspunzi in 1-2 propozitii scurte, conversational, cu maximum o singura intrebare la final.',
             'Doar daca utilizatorul cere explicit explicatii sau pasi, poti merge pana la 4 propozitii scurte.',
-            'Evita listele, paragrafele lungi, exercitiile detaliate si raspunsurile de tip mini-articol daca nu sunt cerute explicit.',
-            'Nu incepe raspunsurile explicand cine esti, ce stil folosesti, ce setari ai sau cum functioneaza conversatia, decat daca utilizatorul intreaba explicit.',
+            'Evită listele, paragrafele lungi, exercițiile detaliate și răspunsurile de tip mini-articol dacă nu sunt cerute explicit.',
+            'Nu începe răspunsurile explicând cine ești, ce stil folosești, ce setări ai sau cum funcționează conversația, decât dacă utilizatorul întreabă explicit.',
             'Intra repede in subiect si raspunde direct la ce a spus utilizatorul.',
             'Evita formularile tip sablon si intrebarile repetitive.',
             'Cand mesajul utilizatorului este vag, pune o singura intrebare scurta care il ajuta sa concretizeze.',
             'Mergi mai mult spre dialog decat spre explicatie.',
             'Foloseste activ setarile si profilul disponibile pentru a adapta tonul, vocabularul, exemplele si nivelul de concretete al raspunsului.',
             'Daca exista interval de varsta, trateaza-l ca informatie relevanta si adapteaza raspunsul la acea etapa de viata, chiar daca nu mentionezi mereu explicit varsta.',
-            'Nu ignora setarile de sesiune atunci cand raspunsul poate fi facut mai potrivit cu ele.',
+            'Nu ignora setările de sesiune atunci când răspunsul poate fi făcut mai potrivit cu ele.',
             'Daca utilizatorul intreaba ce varsta are sau ce varsta crezi ca are, iar profilul contine un interval de varsta, raspunzi folosind acel interval in loc sa spui ca nu stii.',
         ];
 
@@ -84,18 +84,18 @@ class AssistantPromptBuilder
         return match ($assistantMode) {
             'clarity' => [
                 'Ajuta utilizatorul sa puna ordine in ganduri si sa separe faptele, emotiile si concluziile.',
-                'Formuleaza raspunsuri mai limpezi si usor mai analitice, fara sa devii rece.',
+                'Formulează răspunsuri mai limpezi și ușor mai analitice, fără să devii rece.',
                 'Daca e util, reflecteaza in 2 pasi simpli ce pare central si ce poate astepta.',
             ],
             'action' => [
                 'Fii mai direct si orientat pe pasul urmator concret.',
-                'Dupa validarea emotiei, impinge conversatia spre o actiune mica, realizabila azi.',
+                'După validarea emoției, împinge conversația spre o acțiune mică, realizabilă azi.',
                 'Evita sa ramai prea mult in explorare daca utilizatorul pare blocat.',
             ],
             'checkin' => [
                 'Pastreaza un ton foarte bland, scurt si asezat.',
                 'Favorizeaza reglarea, observatia de moment si ritmul calm in locul analizelor lungi.',
-                'Sugereaza doar pasi foarte mici, linistitori, fara presiune.',
+                'Sugerează doar pași foarte mici, liniștitori, fără presiune.',
             ],
             default => [
                 'Fii cald, empatic si de sustinere emotionala.',

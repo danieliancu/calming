@@ -120,7 +120,7 @@ class AppointmentReminderService
             if ($preference->actor_type === 'user') {
                 $notifications->publishToUser($appointment->user_id, 'appointment_reminder_24h', [
                     'title' => 'Reminder programare',
-                    'body' => "Programarea pentru {$appointment->type} incepe ".CarbonInterval::minutes($minutesBefore)->cascade()->forHumans(short: true).'.',
+                    'body' => "Programarea pentru {$appointment->type} începe ".CarbonInterval::minutes($minutesBefore)->cascade()->forHumans(short: true).'.',
                     'category' => 'appointment',
                     'trigger_type' => 'appointment',
                     'trigger_id' => (string) $appointment->id,

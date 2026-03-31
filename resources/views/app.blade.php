@@ -4,7 +4,7 @@
         @php
             $meta = $page['props']['meta'] ?? [];
             $metaTitle = $meta['title'] ?? config('app.name', 'Calming');
-            $metaDescription = $meta['description'] ?? 'Indrumare confidentiala pentru echilibrul tau. Exploreaza articole, instrumente si resurse pentru stare de bine emotionala.';
+            $metaDescription = $meta['description'] ?? 'Îndrumare confidențială pentru echilibrul tău. Explorează articole, instrumente și resurse pentru stare de bine emoțională.';
             $metaType = $meta['type'] ?? 'website';
             $metaUrl = $meta['url'] ?? url()->current();
             $metaImage = $meta['image'] ?? null;

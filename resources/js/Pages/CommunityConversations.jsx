@@ -225,7 +225,7 @@ export default function CommunityConversations({ group }) {
                     <header className="assistant-header">
                         <div className="group-convo-nav">
                             <Link href="/community" className="group-back-link">
-                                <FiArrowLeft aria-hidden /> Inapoi la comunitate
+                                <FiArrowLeft aria-hidden /> Înapoi la comunitate
                             </Link>
                         </div>
                     </header>
@@ -233,7 +233,7 @@ export default function CommunityConversations({ group }) {
                         <div className="section-title"><FiLock aria-hidden /> Acces restrictionat</div>
                         <p className="muted">Acest grup este privat. Pentru a accesa conversatiile este necesara o invitatie trimisa catre contul tau.</p>
                         <div className="u-mt-4">
-                            <Link href="/community" className="btn">Inapoi la comunitate</Link>
+                            <Link href="/community" className="btn">Înapoi la comunitate</Link>
                         </div>
                     </section>
                 </div>
@@ -248,7 +248,7 @@ export default function CommunityConversations({ group }) {
                 <header className="assistant-header">
                     <div className="group-convo-nav">
                         <Link href={`/community/${group.slug}`} className="group-back-link">
-                            <FiArrowLeft aria-hidden /> Inapoi
+                            <FiArrowLeft aria-hidden /> Înapoi
                         </Link>
                         <div className="group-convo-title">{group.name}</div>
                     </div>

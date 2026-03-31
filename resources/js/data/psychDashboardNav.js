@@ -4,7 +4,7 @@ export const PSYCH_DASHBOARD_MENU_ITEMS = [
     { key: 'validation', label: 'Validare', icon: FiCheckCircle },
     { key: 'articles', label: 'Articole', icon: FiFileText },
     { key: 'community', label: 'Comunitate', icon: FiUsers },
-    { key: 'schedule', label: 'Programari', icon: FiCalendar },
+    { key: 'schedule', label: 'Programări', icon: FiCalendar },
 ];
 
 export const DEFAULT_PSYCH_DASHBOARD_SECTION = PSYCH_DASHBOARD_MENU_ITEMS[0].key;

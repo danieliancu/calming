@@ -46,7 +46,7 @@ export default function JournalPage({ entries, startDate }) {
             setItems((current) => current.filter((item) => !(item.type === entry.type && item.id === entry.id)));
         } catch (error) {
             console.error('Delete journal entry error', error);
-            setDeleteError(error.message || 'Nu am putut sterge nota.');
+            setDeleteError(error.message || 'Nu am putut șterge nota.');
         } finally {
             setDeletingKey(null);
         }
@@ -78,14 +78,14 @@ export default function JournalPage({ entries, startDate }) {
                     <div>
                         <h1 className="section-title">Jurnalul meu</h1>
                         <p className="muted">
-                            {startDate ? `Ai inceput acest jurnal in data de ${formatDate(startDate)}.` : 'Inca nu ai intrari in jurnal.'} Pentru a adauga o nota noua, apasa{' '}
+                            {startDate ? `Ai început acest jurnal în data de ${formatDate(startDate)}.` : 'Încă nu ai intrări în jurnal.'} Pentru a adăuga o notă nouă, apasă{' '}
                             <Link style={{ textDecoration: 'underline' }} className="text-link" href="/journal?journal=new">aici</Link>.
                         </p>
                     </div>
                 </AccentCard>
 
                 <div className="journal-footer">
-                    <Link className="profile-action secondary" href="/profile">&larr; Inapoi la profil</Link>
+                    <Link className="profile-action secondary" href="/profile">&larr; Înapoi la profil</Link>
                 </div>
 
                 {deleteError ? <div className="error">{deleteError}</div> : null}
@@ -109,7 +109,7 @@ export default function JournalPage({ entries, startDate }) {
                                                 </div>
                                                 <div className="journal-actions">
                                                     <button type="button" className="journal-delete" onClick={() => handleDelete(entry)} disabled={deletingKey === key}>
-                                                        {deletingKey === key ? 'Se sterge...' : 'Sterge'}
+                                                        {deletingKey === key ? 'Se șterge...' : 'Șterge'}
                                                     </button>
                                                 </div>
                                             </div>

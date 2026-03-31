@@ -34,8 +34,8 @@ export default function Register({ redirectTo = null }) {
                 <div className="auth-shell">
                     <Link href="/" className="brand"><span className="brand-mark" /> Calming</Link>
                     <section className="card auth-card">
-                        <div className="section-title">Creeaza un cont Calming</div>
-                        <p className="muted">Completeaza detaliile de mai jos pentru a salva jurnalul, programarile si notificarile in contul tau.</p>
+                        <div className="section-title">Creează un cont Calming</div>
+                        <p className="muted">Completează detaliile de mai jos pentru a salva jurnalul, programările și notificările în contul tău.</p>
                         {Object.keys(form.errors).length ? <div className="error u-mt-2">{Object.values(form.errors)[0]}</div> : null}
                         <form className="auth-form u-mt-4" onSubmit={submit}>
                             <label className="auth-field">
@@ -59,7 +59,7 @@ export default function Register({ redirectTo = null }) {
                                 <input type="password" value={form.data.password_confirmation} onChange={(event) => form.setData('password_confirmation', event.target.value)} required autoComplete="new-password" />
                             </label>
                             <button className="btn primary u-mt-3" type="submit" disabled={form.processing}>
-                                {form.processing ? 'Se creeaza contul...' : 'Creeaza cont'}
+                                {form.processing ? 'Se creează contul...' : 'Creează cont'}
                             </button>
                         </form>
                         <p className="muted u-mt-3">Ai deja cont? <Link href={route('login', redirectTo ? { redirectTo } : {})}>Autentifica-te</Link>.</p>

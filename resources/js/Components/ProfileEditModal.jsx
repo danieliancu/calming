@@ -21,13 +21,13 @@ const GUIDANCE_STYLES = [
 ];
 const CHECK_IN_OPTIONS = [
     { value: 'morning', label: 'Dimineata (7-11)' },
-    { value: 'afternoon', label: 'Pranz / dupa-amiaza (11-17)' },
+    { value: 'afternoon', label: 'Prânz / după-amiaza (11-17)' },
     { value: 'evening', label: 'Seara (17-22)' },
     { value: 'weekend', label: 'Mai ales in weekend' },
 ];
 const THERAPY_STATUS = [
     { value: 'none', label: 'Nu merg la terapie in prezent' },
-    { value: 'considering', label: 'Ma gandesc sa incep' },
+    { value: 'considering', label: 'Mă gândesc să încep' },
     { value: 'active', label: 'Sunt in terapie activa' },
     { value: 'completed', label: 'Am incheiat recent un proces terapeutic' },
 ];
@@ -163,13 +163,13 @@ export default function ProfileEditModal({ initialProfile, initialDetails, onClo
     };
 
     return (
-        <div className="modal-root" role="dialog" aria-modal="true" aria-label="Editeaza profilul">
+        <div className="modal-root" role="dialog" aria-modal="true" aria-label="Editează profilul">
             <div className="modal-backdrop" onClick={onClose} />
             <div className="modal-center">
                 <section className="sheet profile-sheet">
                     <div className="sheet-head">
                         <div>
-                            <div className="title">Editeaza profilul</div>
+                            <div className="title">Editează profilul</div>
                             <div className="muted u-mt-1">Completeaza detalii care il vor ajuta pe asistentul AI sa iti ofere recomandari mai bune.</div>
                         </div>
                         <button type="button" className="close" aria-label="Inchide" onClick={onClose}>
@@ -225,11 +225,11 @@ export default function ProfileEditModal({ initialProfile, initialDetails, onClo
                                     value={customTopic}
                                     onChange={(event) => setCustomTopic(event.target.value)}
                                     maxLength={80}
-                                    placeholder="Adauga o arie personala"
+                                    placeholder="Adaugă o arie personală"
                                 />
-                                <button type="button" className="btn" onClick={addCustomTopic}>Adauga</button>
+                                <button type="button" className="btn" onClick={addCustomTopic}>Adaugă</button>
                             </div>
-                            <div className="profile-hint">Poti selecta sau adauga maximum 10 arii. Aria adaugata personal va fi folosita si de Assistant.</div>
+                            <div className="profile-hint">Poți selecta sau adăuga maximum 10 arii. Aria adăugată personal va fi folosită și de Assistant.</div>
                         </div>
 
                         <div className="profile-section">
@@ -288,7 +288,7 @@ export default function ProfileEditModal({ initialProfile, initialDetails, onClo
                         </div>
 
                         <div className="actions">
-                            <button type="button" className="btn" onClick={onClose} disabled={saving}>Renunta</button>
+                            <button type="button" className="btn" onClick={onClose} disabled={saving}>Renunță</button>
                             <button type="submit" className="btn primary" disabled={saving}>{saving ? 'Se salveaza...' : 'Salveaza profilul'}</button>
                         </div>
                     </form>

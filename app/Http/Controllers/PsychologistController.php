@@ -630,7 +630,7 @@ class PsychologistController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Tipul de sedinta a fost adaugat.');
+        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Tipul de ședință a fost adăugat.');
     }
 
     public function updateAppointmentType(Request $request, int $typeId): RedirectResponse
@@ -667,7 +667,7 @@ class PsychologistController extends Controller
 
         abort_unless($updated, 404);
 
-        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Tipul de sedinta a fost actualizat.');
+        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Tipul de ședință a fost actualizat.');
     }
 
     public function destroyAppointmentType(Request $request, int $typeId): RedirectResponse
@@ -684,7 +684,7 @@ class PsychologistController extends Controller
             ->whereIn('status', [Appointment::STATUS_PENDING, Appointment::STATUS_CONFIRMED])
             ->exists();
 
-        abort_if($hasActiveAppointments, 422, 'Tipul are programari active si nu poate fi sters.');
+        abort_if($hasActiveAppointments, 422, 'Tipul are programări active și nu poate fi șters.');
 
         $deleted = DB::table('psychologist_appointment_types')
             ->where('id', $typeId)
@@ -693,7 +693,7 @@ class PsychologistController extends Controller
 
         abort_unless($deleted, 404);
 
-        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Tipul de sedinta a fost sters.');
+        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Tipul de ședință a fost șters.');
     }
 
     public function storeAvailabilityRule(Request $request): RedirectResponse
@@ -723,7 +723,7 @@ class PsychologistController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Regula de disponibilitate a fost adaugata.');
+        return redirect()->route('psychologists.dashboard', ['section' => 'schedule'])->with('status', 'Regula de disponibilitate a fost adăugată.');
     }
 
     public function updateAvailabilityRule(Request $request, int $ruleId): RedirectResponse
@@ -1016,7 +1016,7 @@ class PsychologistController extends Controller
             'description' => $validated['description'],
             'schedule' => $validated['schedule'] ?? null,
             'meeting_link' => $validated['meeting_link'] ?? null,
-            'safety_note' => 'Respecta confidentialitatea si evita detalii identificabile. Scrie la persoana intai si cere pauza daca ai nevoie.',
+            'safety_note' => 'Respectă confidențialitatea și evită detalii identificabile. Scrie la persoana întâi și cere pauză dacă ai nevoie.',
             'author' => $psychologistId,
             'members' => 0,
             'is_private' => $validated['access_type'] === 'private',
@@ -1550,8 +1550,8 @@ class PsychologistController extends Controller
             'documents.*.file' => 'Unul dintre documente nu este valid.',
             'documents.*.mimes' => 'Documentele trebuie sa fie PDF, JPG, JPEG, PNG sau WEBP.',
             'documents.*.max' => 'Fiecare document poate avea maximum 5 MB.',
-            'attestations.required' => 'Adauga cel putin un atestat.',
-            'attestations.min' => 'Adauga cel putin un atestat.',
+            'attestations.required' => 'Adaugă cel puțin un atestat.',
+            'attestations.min' => 'Adaugă cel puțin un atestat.',
             'attestations.*.professional_role_id.required' => 'Selecteaza un rol profesional valid pentru fiecare atestat.',
             'attestations.*.professional_role_id.in' => 'Rolul profesional selectat pentru unul dintre atestate nu este valid.',
             'attestations.*.professional_grade_id.in' => 'Treapta de specializare selectata nu este valida.',
@@ -1788,7 +1788,7 @@ class PsychologistController extends Controller
             if ($status !== 'approved') {
                 return redirect()
                     ->route('psychologists.dashboard', ['section' => 'validation'])
-                    ->with('status', 'Articolele si grupurile pot fi gestionate doar dupa aprobarea validarii profesionale.');
+                    ->with('status', 'Articolele și grupurile pot fi gestionate doar după aprobarea validării profesionale.');
             }
         }
 
@@ -1921,7 +1921,7 @@ class PsychologistController extends Controller
     protected function communityExactElapsedLabel(?Carbon $lastMessageAt): string
     {
         if (! $lastMessageAt) {
-            return 'fara mesaje';
+            return 'fără mesaje';
         }
 
         $now = now();

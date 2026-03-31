@@ -32,10 +32,10 @@ export default function Learn({ topics, articles }) {
 
             <AccentCard dismissKey="learn-professionalism">
                 <div className="section-title">
-                    <FiAward className="section-icon" /> Profesionalism si incredere
+                    <FiAward className="section-icon" /> Profesionalism și încredere
                 </div>
                 <div className="muted">
-                    Toate articolele sunt redactate de specialisti acreditati din reteaua Calming si sunt revizuite constant de echipa editoriala pentru acuratete.
+                    Toate articolele sunt redactate de specialiști acreditați din rețeaua Calming și sunt revizuite constant de echipa editorială pentru acuratețe.
                 </div>
             </AccentCard>
 
@@ -44,7 +44,7 @@ export default function Learn({ topics, articles }) {
                 <input
                     value={q}
                     onChange={(event) => setQ(event.target.value)}
-                    placeholder="Cauta in categorii si articole"
+                    placeholder="Caută în categorii și articole"
                     className="form-input search-card__input"
                 />
             </section>

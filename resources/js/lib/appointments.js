@@ -2,7 +2,7 @@ export const REMINDER_OPTIONS = [
     { value: '1440', label: '24h inainte' },
     { value: '120', label: '2h inainte' },
     { value: '30', label: '30m inainte' },
-    { value: 'none', label: 'Fara reminder' },
+    { value: 'none', label: 'Fără reminder' },
 ];
 
 export function partitionAppointments(appointments = []) {
@@ -47,7 +47,7 @@ export function formatPaymentStatus(status) {
         case 'refunded':
             return 'Plata returnata';
         case 'not_required':
-            return 'Fara plata online';
+            return 'Fără plată online';
         default:
             return 'Plata in curs';
     }
