@@ -201,7 +201,7 @@ function relativeTime(dateString) {
         return `Acum ${diffDays} zile`;
     }
 
-    return `Acum ${Math.max(1, Math.round(diffDays / 7))} saptamani`;
+    return `Acum ${Math.max(1, Math.round(diffDays / 7))} săptămâni`;
 }
 
 function localNotificationsFromState(state) {
@@ -211,7 +211,7 @@ function localNotificationsFromState(state) {
         notifications.push({
             id: `guest-saved-${state.savedArticles[0].id}`,
             title: 'Articol salvat',
-            body: `${state.savedArticles[0].title} a fost salvat local in browser.`,
+            body: `${state.savedArticles[0].title} a fost salvat local în browser.`,
             category: 'article',
             icon: 'FiBookmark',
             icon_color: 'lilac',
@@ -246,8 +246,8 @@ function localNotificationsFromState(state) {
     if ((state.visitedSections.learn ?? 0) >= 2 && state.savedArticles.length === 0) {
         notifications.push({
             id: 'guest-nudge-save-article',
-            title: 'Salveaza articolele importante',
-            body: 'Poti salva articolele preferate si activa remindere direct din pagina lor.',
+            title: 'Salvează articolele importante',
+            body: 'Poți salva articolele preferate și activa remindere direct din pagina lor.',
             category: 'product',
             icon: 'FiBell',
             icon_color: 'peach',
@@ -264,8 +264,8 @@ function localNotificationsFromState(state) {
     if (state.openedAssistant) {
         notifications.push({
             id: 'guest-assistant-tip',
-            title: 'Asistentul te asteapta',
-            body: 'Revino in Assistant pentru un nou punct de pornire sau un check-in ghidat.',
+            title: 'Asistentul te așteaptă',
+            body: 'Revino în Assistant pentru un nou punct de pornire sau un check-in ghidat.',
             category: 'assistant',
             icon: 'FiMessageSquare',
             icon_color: 'sky',
@@ -305,7 +305,7 @@ export function buildGuestMilestones() {
         milestones.push({
             id: 'guest-first-article',
             title: 'Primul articol explorat',
-            description: 'Ai deschis primul articol din biblioteca publica.',
+            description: 'Ai deschis primul articol din biblioteca publică.',
             achieved_at: state.viewedArticles[0].viewedAt,
             icon: 'FiBookOpen',
             icon_color: 'lilac',
@@ -316,7 +316,7 @@ export function buildGuestMilestones() {
         milestones.push({
             id: 'guest-first-save',
             title: 'Primul articol salvat',
-            description: 'Ai salvat primul articol direct in browser.',
+            description: 'Ai salvat primul articol direct în browser.',
             achieved_at: state.savedArticles[0].savedAt,
             icon: 'FiBookmark',
             icon_color: 'lilac',
@@ -337,8 +337,8 @@ export function buildGuestMilestones() {
     if (state.openedCommunity) {
         milestones.push({
             id: 'guest-community',
-            title: 'Comunitate explorata',
-            description: 'Ai vizitat zona de comunitate si suport.',
+            title: 'Comunitate explorată',
+            description: 'Ai vizitat zona de comunitate și suport.',
             achieved_at: state.lastSeenAt,
             icon: 'FiUsers',
             icon_color: 'amber',
@@ -360,7 +360,7 @@ export function buildGuestMilestones() {
         milestones.push({
             id: 'guest-returning',
             title: '7 zile de revenire',
-            description: 'Ai revenit in aplicatie in cel putin 7 zile diferite.',
+            description: 'Ai revenit în aplicație în cel puțin 7 zile diferite.',
             achieved_at: state.lastSeenAt,
             icon: 'FiAward',
             icon_color: 'rose',

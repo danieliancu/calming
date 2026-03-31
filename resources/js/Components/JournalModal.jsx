@@ -48,7 +48,7 @@ export default function JournalModal({ onClose, onSaved }) {
             } catch (err) {
                 if (!cancelled) {
                     console.error(err);
-                    setError('Nu am putut incarca optiunile de jurnal.');
+                    setError('Nu am putut încărca opțiunile de jurnal.');
                     setLoading(false);
                 }
             }
@@ -105,12 +105,12 @@ export default function JournalModal({ onClose, onSaved }) {
 
     const saveEntry = async () => {
         if (!selectedMoodId) {
-            setFormError('Selecteaza emoji-ul care descrie cel mai bine starea ta.');
+            setFormError('Selectează emoji-ul care descrie cel mai bine starea ta.');
             return;
         }
 
         if (!notes.trim()) {
-            setFormError('Scrie in jurnal cateva ganduri inainte sa salvezi.');
+            setFormError('Scrie în jurnal câteva gânduri înainte să salvezi.');
             return;
         }
 
@@ -143,13 +143,13 @@ export default function JournalModal({ onClose, onSaved }) {
     };
 
     return (
-        <div className="modal-root" role="dialog" aria-modal="true" aria-label="Nota completa in jurnal">
+        <div className="modal-root" role="dialog" aria-modal="true" aria-label="Notă completă în jurnal">
             <div className="modal-backdrop" onClick={onClose} />
             <div className="modal-center">
                 <section className="sheet">
                     <div className="sheet-head">
-                        <div className="title">Nota completa in jurnal</div>
-                        <button type="button" className="close" aria-label="Inchide" onClick={onClose}>
+                        <div className="title">Notă completă în jurnal</div>
+                        <button type="button" className="close" aria-label="Închide" onClick={onClose}>
                             <FiX aria-hidden />
                         </button>
                     </div>
@@ -157,13 +157,13 @@ export default function JournalModal({ onClose, onSaved }) {
                     {formError ? <div className="error u-mt-2">{formError}</div> : null}
 
                     {loading ? (
-                        <div className="u-mt-2 muted">Se incarca optiunile...</div>
+                        <div className="u-mt-2 muted">Se încarcă opțiunile...</div>
                     ) : error ? (
                         <div className="u-mt-2 error">{error}</div>
                     ) : (
                         <>
                             <div className="u-mt-2">
-                                <div className="muted">Cum te simti?</div>
+                                <div className="muted">Cum te simți?</div>
                                 <div className="moods journal-modal__moods u-mt-2">
                                     {moods.map((item) => (
                                         <button
@@ -176,7 +176,7 @@ export default function JournalModal({ onClose, onSaved }) {
                                             }}
                                             title={getMoodLabel(item.label)}
                                             aria-pressed={selectedMoodId === item.id}
-                                            aria-label={`Ma simt ${getMoodLabel(item.label)}`}
+                                            aria-label={`Mă simt ${getMoodLabel(item.label)}`}
                                         >
                                             <span className="mood-emoji" aria-hidden="true">{item.emoji}</span>
                                             <span className="mood-label">{getMoodLabel(item.label)}</span>
@@ -198,9 +198,9 @@ export default function JournalModal({ onClose, onSaved }) {
                                             <input className="range" type="range" min="0" max="10" value={level} onChange={(event) => setLevel(Number(event.target.value))} />
                                         </div>
                                         <div className="scale">
-                                            <span>Mica</span>
+                                            <span>Mică</span>
                                             <span>Normal</span>
-                                            <span>Maxima</span>
+                                            <span>Maximă</span>
                                         </div>
                                     </div>
                                     <div className="bubble">{level}/10</div>
@@ -220,7 +220,7 @@ export default function JournalModal({ onClose, onSaved }) {
 
                             {selectedMoodId ? (
                                 <div className="u-mt-4">
-                                    <div className="muted">Simptome (selecteaza tot ce se aplica)</div>
+                                    <div className="muted">Simptome (selectează tot ce se aplică)</div>
                                     <div className="tags u-mt-2">
                                         {symptomOptions.map((tag) => (
                                             <button type="button" key={tag.id} className={`tag ${selectedSymptoms.includes(tag.id) ? 'sel' : ''}`} onClick={() => toggleSymptom(tag.id)}>
@@ -232,13 +232,13 @@ export default function JournalModal({ onClose, onSaved }) {
                             ) : null}
 
                             <div className="u-mt-4">
-                                <div className="muted">Scrie in jurnal</div>
+                                <div className="muted">Scrie în jurnal</div>
                                 <textarea
                                     className="journal-notes u-mt-2"
                                     rows={5}
                                     value={notes}
                                     onChange={(event) => setNotes(event.target.value)}
-                                    placeholder="Spune despre cum te simti, ce ai facut, ce planuri ai..."
+                                    placeholder="Spune despre cum te simți, ce ai făcut, ce planuri ai..."
                                 />
                             </div>
 
@@ -247,7 +247,7 @@ export default function JournalModal({ onClose, onSaved }) {
                                     Renunță
                                 </button>
                                 <button type="button" className="btn primary" onClick={saveEntry} disabled={saving}>
-                                    {saving ? 'Se salveaza...' : 'Salveaza intrarea'}
+                                    {saving ? 'Se salvează...' : 'Salvează intrarea'}
                                 </button>
                             </div>
                         </>
