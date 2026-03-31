@@ -587,15 +587,15 @@ class CalmPageController extends Controller
                     'actor_type' => 'both',
                     'category' => 'article',
                     'title' => 'Articol nou',
-                    'message' => 'A aparut un articol nou in biblioteca Calming.',
+                    'message' => 'A apărut un articol nou în secțiunea de articole.',
                     'default_title' => 'Articol nou',
-                    'default_body' => 'A aparut un articol nou in biblioteca Calming.',
+                    'default_body' => 'A apărut un articol nou în secțiunea de articole.',
                     'icon' => 'FiBookOpen',
                     'icon_color' => 'lilac',
                     'accent' => 'lilac',
                     'priority' => 3,
                     'cta_kind' => 'open',
-                    'cta_label' => 'Citeste acum',
+                    'cta_label' => 'Citește acum',
                     'deep_link' => '/learn',
                     'is_repeatable' => true,
                     'published_at' => now(),
@@ -603,13 +603,13 @@ class CalmPageController extends Controller
             );
 
             $this->notifications->publishBroadcast('article_published', [
-                'title' => 'Articol nou in biblioteca',
+                'title' => 'Articol nou în secțiunea de articole',
                 'body' => $article->title,
                 'trigger_type' => 'article',
                 'trigger_id' => (string) $article->id,
                 'dedupe_key' => "article_published:{$article->id}",
                 'cta_kind' => 'open',
-                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citeste articolul'],
+                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citește articolul'],
             ]);
         }
 
@@ -784,15 +784,15 @@ class CalmPageController extends Controller
 
         $details = collect([
             [
-                'label' => 'Specializari',
+                'label' => 'Specializări',
                 'values' => $specialties,
             ],
             [
-                'label' => 'Descriere profesionala',
+                'label' => 'Descriere profesională',
                 'value' => $this->sanitizeProfessionalText($psychologist->public_bio),
             ],
             [
-                'label' => 'Competente clinice',
+                'label' => 'Competențe clinice',
                 'value' => $this->sanitizeProfessionalText($psychologist->clinical_competencies),
             ],
         ])->filter(fn ($item) => ! empty($item['value'] ?? null) || ! empty($item['values'] ?? []))
