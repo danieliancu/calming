@@ -52,6 +52,7 @@ export default function SuperadminDashboard({
     validationApplications = [],
     pendingArticles = [],
     pendingSupportGroups = [],
+    users = [],
     categories = [],
     notificationTemplates = [],
     notificationEvents = [],
@@ -279,7 +280,7 @@ export default function SuperadminDashboard({
     const deleteSupportGroup = (group) => {
         const groupLabel = group?.name || `#${group?.id}`;
 
-        if (!window.confirm(`EÈ™ti sigur cÄƒ vrei sÄƒ È™tergi grupul "${groupLabel}"? AcÈ›iunea este definitivÄƒ.`)) {
+        if (!window.confirm(`Ești sigur că vrei să ștergi grupul "${groupLabel}"? Acțiunea este definitivă.`)) {
             return;
         }
 
@@ -295,7 +296,7 @@ export default function SuperadminDashboard({
                 <section className="superadmin-hero">
                     <div>
                         <h1>Superadmin Dashboard</h1>
-                        <p>Review operaÈ›ional, specialiÈ™ti È™i articole.</p>
+                        <p>Review operațional, specialiști, useri și articole.</p>
                     </div>
                     <div className="superadmin-hero__actions">
                         <Link className="btn btn-compact superadmin-pill-compact" href="/" style={{ height:"30px" }}>
@@ -313,9 +314,9 @@ export default function SuperadminDashboard({
                 {page.props.flash?.status ? <div className="info u-mb-3">{page.props.flash.status}</div> : null}
 
                 <section className="superadmin-stats">
-                    <StatCard label="TOTAL SPECIALIÈ˜TI" value={stats?.specialists_total ?? 0} hint={`${stats?.specialists_approved ?? 0} aprobaÈ›i`} />
+                    <StatCard label="TOTAL SPECIALIȘTI" value={stats?.specialists_total ?? 0} hint={`${stats?.specialists_approved ?? 0} aprobați`} />
                     <StatCard label="TOTAL USERS" value={stats?.users_total ?? 0} hint="conturi user active" />
-                    <StatCard label="VALIDARI PENDING" value={stats?.validation_pending ?? 0} hint="cereri de verificat" />
+                    <StatCard label="VALIDĂRI PENDING" value={stats?.validation_pending ?? 0} hint="cereri de verificat" />
                     <StatCard label="ARTICOLE PENDING" value={stats?.articles_pending ?? 0} hint="articole in review" />
                     <StatCard label="GRUPURI PENDING" value={stats?.support_groups_pending ?? 0} hint="grupuri in review" />
                 </section>
@@ -326,7 +327,10 @@ export default function SuperadminDashboard({
                             <div className="superadmin-panel__head">
                                 <div className="superadmin-tabs">
                                     <button type="button" className={`superadmin-tab ${activeTab === 'specialists' ? 'active' : ''}`} onClick={() => setActiveTab('specialists')}>
-                                        SpecialiÈ™ti
+                                        Specialiști
+                                    </button>
+                                    <button type="button" className={`superadmin-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+                                        Users
                                     </button>
                                     <button type="button" className={`superadmin-tab ${activeTab === 'articles' ? 'active' : ''}`} onClick={() => setActiveTab('articles')}>
                                         Articole
@@ -341,7 +345,7 @@ export default function SuperadminDashboard({
                                         Categorii
                                     </button>
                                     <button type="button" className={`superadmin-tab ${activeTab === 'notifications' ? 'active' : ''}`} onClick={() => setActiveTab('notifications')}>
-                                        NotificÄƒri
+                                        Notificări
                                     </button>
                                 </div>
                             </div>
@@ -406,7 +410,7 @@ export default function SuperadminDashboard({
                                                                         type="button"
                                                                         onClick={() => deletePsychologist(application)}
                                                                     >
-                                                                        È˜terge cont
+                                                                        Șterge cont
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -430,7 +434,7 @@ export default function SuperadminDashboard({
                                                                                         <button
                                                                                             className="btn icon-only danger"
                                                                                             type="button"
-                                                                                            aria-label="È˜terge mesajul"
+                                                                                            aria-label="Șterge mesajul"
                                                                                             onClick={() => deleteValidationMessage(application.application_id, message.id)}
                                                                                         >
                                                                                             <FiTrash2 size={14} />
@@ -518,6 +522,53 @@ export default function SuperadminDashboard({
                                         </table>
                                     </div>
                                 ) : <div className="muted">Nu exista cereri de validare in asteptare.</div>
+                            ) : activeTab === 'users' ? (
+                                users.length ? (
+                                    <div className="superadmin-table-wrap">
+                                        <table className="superadmin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>User</th>
+                                                    <th>Contact</th>
+                                                    <th>Locație</th>
+                                                    <th>Setări</th>
+                                                    <th>Email</th>
+                                                    <th>Înregistrat</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {users.map((user) => (
+                                                    <tr key={user.id}>
+                                                        <td>#{user.id}</td>
+                                                        <td>
+                                                            <div className="superadmin-cell-title">{user.name}</div>
+                                                            <div className="superadmin-cell-subtle">{user.language || '-'}</div>
+                                                        </td>
+                                                        <td>
+                                                            <div>{user.email}</div>
+                                                            <div className="superadmin-cell-subtle">{user.phone || '-'}</div>
+                                                        </td>
+                                                        <td>
+                                                            <div>{user.city || '-'}</div>
+                                                            <div className="superadmin-cell-subtle">{user.country || '-'}</div>
+                                                        </td>
+                                                        <td>
+                                                            <div>{user.notifications_enabled ? 'Notificări active' : 'Notificări oprite'}</div>
+                                                            <div className="superadmin-cell-subtle">{user.language || 'Română'}</div>
+                                                        </td>
+                                                        <td>
+                                                            <span className={`status-pill ${user.email_verified_at ? 'status-pill--valid' : 'status-pill--pending'}`}>
+                                                                {user.email_verified_at ? 'VERIFICAT' : 'NEVERIFICAT'}
+                                                            </span>
+                                                        </td>
+                                                        <td>{formatDate(user.created_at)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : <div className="muted">Nu există useri înregistrați.</div>
                             ) : activeTab === 'articles' ? (
                                 pendingArticles.length ? (
                                     <div className="superadmin-table-wrap">
@@ -562,7 +613,7 @@ export default function SuperadminDashboard({
                                                                 </Link>
                                                                 {article.author_type === 'guest' ? (
                                                                     <Link className="status-pill status-pill--pending superadmin-pill-compact" href={route('superadmin.articles.edit', article.id)}>
-                                                                        EditeazÄƒ
+                                                                        Editează
                                                                     </Link>
                                                                 ) : null}
                                                                 {article.status !== 'approved' ? (
@@ -580,7 +631,7 @@ export default function SuperadminDashboard({
                                                                         router.delete(route('superadmin.articles.destroy', article.id), { preserveScroll: true });
                                                                     }}
                                                                 >
-                                                                    È˜terge
+                                                                    Șterge
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -635,7 +686,7 @@ export default function SuperadminDashboard({
                                                                     Keep pending
                                                                 </button>
                                                                 <button className="status-pill status-pill--danger superadmin-pill-compact" type="button" onClick={() => deleteSupportGroup(group)}>
-                                                                    È˜terge
+                                                                    Șterge
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -650,7 +701,7 @@ export default function SuperadminDashboard({
                                     <div className="superadmin-panel__head">
                                         <button className="btn btn-compact superadmin-pill-compact" type="button" onClick={() => openCategoryModal()}>
                                             <FiPlus size={12} />
-                                            <span>AdaugÄƒ</span>
+                                            <span>Adaugă</span>
                                         </button>
                                     </div>
                                     <table className="superadmin-table">
@@ -676,7 +727,7 @@ export default function SuperadminDashboard({
                                                                 <span>Edit</span>
                                                             </button>
                                                             <button className="status-pill status-pill--danger" type="button" onClick={() => deleteCategory(category.id)}>
-                                                                <span>È˜terge</span>
+                                                                <span>Șterge</span>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -688,9 +739,9 @@ export default function SuperadminDashboard({
                             ) : (
                                 <div className="superadmin-table-wrap">
                                     <section className="superadmin-stats" style={{ marginBottom: '20px' }}>
-                                        <StatCard label="TEMPLATE-URI" value={notificationSummary?.templates_total ?? 0} hint="definiÈ›ii active pentru evenimente" />
-                                        <StatCard label="LIVRARI TOTAL" value={notificationSummary?.deliveries_total ?? 0} hint="instante create" />
-                                        <StatCard label="USER / GUEST" value={`${notificationSummary?.deliveries_user ?? 0} / ${notificationSummary?.deliveries_guest ?? 0}`} hint="distributie actori" />
+                                        <StatCard label="TEMPLATE-URI" value={notificationSummary?.templates_total ?? 0} hint="definiții active pentru evenimente" />
+                                        <StatCard label="LIVRĂRI TOTAL" value={notificationSummary?.deliveries_total ?? 0} hint="instanțe create" />
+                                        <StatCard label="USER / GUEST" value={`${notificationSummary?.deliveries_user ?? 0} / ${notificationSummary?.deliveries_guest ?? 0}`} hint="distribuție actori" />
                                         <StatCard label="UNREAD" value={notificationSummary?.unread_total ?? 0} hint={`${notificationSummary?.repeatable_total ?? 0} template-uri repeatable`} />
                                     </section>
 
@@ -747,7 +798,7 @@ export default function SuperadminDashboard({
                                                                 <div className="superadmin-cell-subtle">{formatRecipient(template.latest_delivery.recipient_type)} | {template.latest_delivery.title}</div>
                                                             </>
                                                         ) : (
-                                                            <span className="muted">FÄƒrÄƒ livrÄƒri</span>
+                                                            <span className="muted">Fără livrări</span>
                                                         )}
                                                     </td>
                                                     <td>
@@ -764,7 +815,7 @@ export default function SuperadminDashboard({
                                     <div className="superadmin-panel__head" style={{ marginTop: '24px' }}>
                                         <div>
                                             <div className="superadmin-panel__eyebrow">Deliveries</div>
-                                            <h2>Ultimele notificÄƒri generate</h2>
+                                            <h2>Ultimele notificări generate</h2>
                                         </div>
                                     </div>
                                     <table className="superadmin-table">
@@ -916,7 +967,7 @@ export default function SuperadminDashboard({
                             <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
                                     <div className="superadmin-panel__eyebrow">Categorie</div>
-                                    <h2 className="u-m-0">{categoryModal.mode === 'edit' ? 'EditeazÄƒ categorie' : 'AdaugÄƒ categorie'}</h2>
+                                    <h2 className="u-m-0">{categoryModal.mode === 'edit' ? 'Editează categorie' : 'Adaugă categorie'}</h2>
                                 </div>
                                 <button type="button" className="close" aria-label="Inchide" onClick={closeCategoryModal}>
                                     <FiX />
@@ -939,7 +990,7 @@ export default function SuperadminDashboard({
                                         Inchide
                                     </button>
                                     <button className="btn primary btn-compact superadmin-pill-compact" type="submit" disabled={categoryForm.processing} style={{ height:"30px" }}>
-                                        {categoryForm.processing ? 'Se salveazÄƒ...' : categoryModal.mode === 'edit' ? 'SalveazÄƒ' : 'AdaugÄƒ'}
+                                        {categoryForm.processing ? 'Se salvează...' : categoryModal.mode === 'edit' ? 'Salvează' : 'Adaugă'}
                                     </button>
                                 </div>
                             </form>

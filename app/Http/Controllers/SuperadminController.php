@@ -295,6 +295,37 @@ class SuperadminController extends Controller
                 ->count(),
         ];
 
+        $users = DB::table('users')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'first_name',
+                'last_name',
+                'name',
+                'email',
+                'phone',
+                'city',
+                'country',
+                'language',
+                'notifications_enabled',
+                'email_verified_at',
+                'created_at',
+            ])
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => trim((string) implode(' ', array_filter([$item->first_name, $item->last_name]))) ?: ($item->name ?: 'Utilizator fără nume'),
+                'email' => $item->email,
+                'phone' => $item->phone,
+                'city' => $item->city,
+                'country' => $item->country,
+                'language' => $item->language,
+                'notifications_enabled' => (bool) ($item->notifications_enabled ?? true),
+                'email_verified_at' => $item->email_verified_at,
+                'created_at' => $item->created_at,
+            ])
+            ->all();
+
         $categories = DB::table('article_topics as at')
             ->leftJoin('articles as a', 'a.topic_id', '=', 'at.id')
             ->selectRaw('at.id, at.name, at.slug, COUNT(a.id) as article_count')
@@ -394,6 +425,7 @@ class SuperadminController extends Controller
             'validationApplications' => $validationApplications,
             'pendingArticles' => $pendingArticles,
             'pendingSupportGroups' => $pendingSupportGroups,
+            'users' => $users,
             'categories' => $categories,
             'notificationTemplates' => $notificationTemplates,
             'notificationEvents' => $notificationEvents,
