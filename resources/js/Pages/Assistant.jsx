@@ -29,15 +29,15 @@ const GUIDANCE_STYLES = [
     { value: 'motivational', label: 'Motivant și pragmatic' },
 ];
 const THERAPY_STATUS = [
-    { value: 'none', label: 'Nu merg la terapie ?n prezent' },
+    { value: 'none', label: 'Nu merg la terapie în prezent' },
     { value: 'considering', label: 'Mă gândesc să încep' },
-    { value: 'active', label: 'Sunt ?n terapie activ?' },
-    { value: 'completed', label: 'Am ?ncheiat recent un proces terapeutic' },
+    { value: 'active', label: 'Sunt în terapie activă' },
+    { value: 'completed', label: 'Am încheiat recent un proces terapeutic' },
 ];
 const ASSISTANT_MODES = [
     {
         value: 'supportive',
-        label: 'Sus?inere',
+        label: 'Susținere',
         description: 'Cald, empatic, bun pentru descărcare emoțională',
     },
     {
@@ -47,7 +47,7 @@ const ASSISTANT_MODES = [
     },
     {
         value: 'action',
-        label: 'Ac?iune',
+        label: 'Acțiune',
         description: 'Mai direct, orientat spre pasul următor',
     },
     {
@@ -147,7 +147,7 @@ export default function Assistant() {
             }
         } catch (err) {
             console.error('Assistant bootstrap failed', err);
-            setError('Nu am putut ?nc?rca Assistantul acum.');
+            setError('Nu am putut încărca asistentul acum.');
         }
 
         guestStateHydratedRef.current = true;
@@ -285,7 +285,7 @@ export default function Assistant() {
 
                 const assistantMessage = payload?.message
                     ? payload.message
-                    : createLocalMessage('assistant', 'Momentan nu am putut genera un r?spuns.');
+                    : createLocalMessage('assistant', 'Momentan nu am putut genera un răspuns.');
 
                 setMessages((current) => {
                     const filtered = current.filter(m => m.id !== userLocalMsg.id);
@@ -307,7 +307,7 @@ export default function Assistant() {
                     return [
                         ...filtered,
                         payload?.user_message ?? userLocalMsg,
-                        payload?.message ?? createLocalMessage('assistant', 'Momentan nu am putut genera un r?spuns.'),
+                        payload?.message ?? createLocalMessage('assistant', 'Momentan nu am putut genera un răspuns.'),
                     ];
                 });
             }
@@ -402,8 +402,8 @@ export default function Assistant() {
                         </div>
                         <div className="muted">
                             {guestMode
-                                ? 'Spune ce te preocup? acum ?i Assistantul va r?spunde ?in?nd cont de set?rile sesiunii.'
-                                : 'Assistantul porne?te de la profilul t?u ?i te poate ajuta cu un check-in, clarificare sau urm?torul pas.'}
+                                ? 'Spune ce te preocupă acum și asistentul va răspunde ținând cont de setările sesiunii.'
+                                : 'Asistentul pornește de la profilul tău și te poate ajuta cu un check-in, clarificare sau următorul pas.'}
                         </div>
                     </AccentCard>
 
@@ -427,7 +427,7 @@ export default function Assistant() {
                                 <div className="assistant-convo-mode">Asistent AI: <span style={{ color:"var(--text-900)" }}>{activeAssistantModeMeta.label}</span></div>
                             </div>
 
-                            {loading ? <div className="card muted">Se ?ncarc? Assistantul...</div> : null}
+                            {loading ? <div className="card muted">Se încarcă asistentul...</div> : null}
                             {error ? <div className="error">{error}</div> : null}
 
                             <div ref={threadRef} className="assistant-thread" role="log" aria-live="polite">
@@ -440,14 +440,14 @@ export default function Assistant() {
 
                             {guestLimitReached ? (
                                 <div className="assistant-limit card">
-                                    <div className="section-title">Limita sesiunii a fost atins?</div>
-                                    <div className="muted">Creează-ți un cont pentru a continua conversația și pentru a salva istoricul Assistantului.</div>
+                                    <div className="section-title">Limita sesiunii a fost atinsă</div>
+                                    <div className="muted">Creează-ți un cont pentru a continua conversația și pentru a salva istoricul asistentului.</div>
                                     <button className="btn primary u-mt-2" type="button" onClick={promptAuth}>Creează cont</button>
                                 </div>
                             ) : null}
 
                             {sending ? (
-                                <div className="assistant-typing-indicator" aria-live="polite" aria-label="Asistentul r?spunde">
+                                <div className="assistant-typing-indicator" aria-live="polite" aria-label="Asistentul răspunde">
                                     <LoadingDots />
                                     <span>{activeAssistantModeMeta.label}</span>
                                 </div>
@@ -519,9 +519,9 @@ export default function Assistant() {
                     <div className="assistant-settings-head">
                         <div>
                             <div className="title">Setări sesiune</div>
-                            <div className="muted">Aceste set?ri se pierd la ie?irea din sesiune.</div>
+                            <div className="muted">Aceste setări se pierd la ieșirea din sesiune.</div>
                         </div>
-                        <button type="button" className="close assistant-settings-close" onClick={() => setSettingsOpen(false)} aria-label="?nchide set?rile">
+                        <button type="button" className="close assistant-settings-close" onClick={() => setSettingsOpen(false)} aria-label="Închide setările">
                             <FiX />
                         </button>
                     </div>
@@ -547,9 +547,9 @@ function GuestAssistantSettings({
 }) {
     return (
         <div className="assistant-settings-body">
-            <label className="profile-label" htmlFor="guestAgeRange">Interval de v?rst?</label>
+            <label className="profile-label" htmlFor="guestAgeRange">Interval de vârstă</label>
             <select id="guestAgeRange" className="form-input" value={profile.ageRange ?? ''} onChange={(event) => onFieldChange('ageRange', event.target.value)}>
-                <option value="">Selecteaz?</option>
+                <option value="">Selectează</option>
                 {AGE_RANGES.map((item) => <option key={item} value={item}>{item} ani</option>)}
             </select>
 
@@ -558,7 +558,7 @@ function GuestAssistantSettings({
                 {GUIDANCE_STYLES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
 
-            <div className="profile-label">Pe ce arii vrei s? lucr?m</div>
+            <div className="profile-label">Pe ce arii vrei să lucrăm</div>
             <div className="tags">
                 {FOCUS_TOPICS.map((topic) => (
                     <button type="button" key={topic} className={`tag ${focusTopicSet.has(topic) ? 'sel' : ''}`} onClick={() => onToggleTopic(topic)}>
@@ -567,9 +567,9 @@ function GuestAssistantSettings({
                 ))}
             </div>
 
-            <label className="profile-label" htmlFor="guestTherapyStatus">Situa?ia ta legat? de terapie</label>
+            <label className="profile-label" htmlFor="guestTherapyStatus">Situația ta legată de terapie</label>
             <select id="guestTherapyStatus" className="form-input" value={profile.therapyStatus ?? ''} onChange={(event) => onFieldChange('therapyStatus', event.target.value)}>
-                <option value="">Selecteaz?</option>
+                <option value="">Selectează</option>
                 {THERAPY_STATUS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
         </div>
