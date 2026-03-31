@@ -1,12 +1,15 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { FiArrowLeft } from '@/lib/icons';
+import { apiFetch } from '@/lib/http';
+import { FiArrowLeft, FiX } from '@/lib/icons';
 import { normalizeMediaUrl } from '@/lib/mediaUrl';
 import { Head, Link } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function FavoriteArticles({ articles = [] }) {
     const { isAuthenticated, authResolved, promptAuth } = useAuth();
+    const [savedArticles, setSavedArticles] = useState(articles);
+    const [busyArticleId, setBusyArticleId] = useState(null);
 
     useEffect(() => {
         if (!authResolved) {
@@ -17,6 +20,30 @@ export default function FavoriteArticles({ articles = [] }) {
             promptAuth();
         }
     }, [authResolved, isAuthenticated, promptAuth]);
+
+    useEffect(() => {
+        setSavedArticles(articles);
+    }, [articles]);
+
+    const handleUnsave = async (event, articleId) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (busyArticleId === articleId) {
+            return;
+        }
+
+        setBusyArticleId(articleId);
+
+        try {
+            await apiFetch(`/api/articles/${articleId}/save`, { method: 'DELETE' });
+            setSavedArticles((current) => current.filter((article) => article.id !== articleId));
+        } catch (error) {
+            console.error('Favorite article unsave failed', error);
+        } finally {
+            setBusyArticleId(null);
+        }
+    };
 
     if (!authResolved) {
         return null;
@@ -39,27 +66,33 @@ export default function FavoriteArticles({ articles = [] }) {
                 </div>
 
                 <section className="card favorite-articles-summary">
-                    <div className="section-title">Articole favorite</div>
                     <div className="muted">
-                        {articles.length === 1 ? 'Ai 1 articol salvat.' : `Ai ${articles.length} articole salvate.`}
+                        {savedArticles.length === 1 ? 'Ai 1 articol salvat.' : `Ai ${savedArticles.length} articole salvate.`}
                     </div>
                 </section>
 
                 <section className="favorite-articles-list">
-                    {articles.map((article) => (
-                        <Link key={article.id} href={`/article/${article.slug}`} className="card favorite-article-card">
-                            <img className="favorite-article-image" src={normalizeMediaUrl(article.hero_image)} alt={`Ilustratie pentru ${article.title}`} />
-                            <div className="favorite-article-copy">
-                                <div className="favorite-article-heading">{article.title}</div>
-                                <div className="muted">{article.author}</div>
-                            </div>
-                        </Link>
+                    {savedArticles.map((article) => (
+                        <article key={article.id} className="card favorite-article-card">
+                            <button
+                                type="button"
+                                className="favorite-article-remove"
+                                aria-label={`Desalvează articolul ${article.title}`}
+                                title="Desalvează articolul"
+                                onClick={(event) => handleUnsave(event, article.id)}
+                                disabled={busyArticleId === article.id}
+                            >
+                                <FiX aria-hidden />
+                            </button>
+                            <Link href={`/article/${article.slug}`} className="favorite-article-link">
+                                <img className="favorite-article-image" src={normalizeMediaUrl(article.hero_image)} alt={`Ilustrație pentru ${article.title}`} />
+                                <div className="favorite-article-copy">
+                                    <div className="favorite-article-heading">{article.title}</div>
+                                    <div className="muted">{article.author}</div>
+                                </div>
+                            </Link>
+                        </article>
                     ))}
-                    {articles.length === 0 ? (
-                        <section className="card">
-                            <div className="muted">Nu ai inca articole salvate.</div>
-                        </section>
-                    ) : null}
                 </section>
             </main>
         </>
