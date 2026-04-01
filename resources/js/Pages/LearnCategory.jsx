@@ -36,15 +36,13 @@ export default function LearnCategory({ category, articles }) {
                     <input
                         value={q}
                         onChange={(event) => setQ(event.target.value)}
-                        placeholder={`Cauta in ${category.title}`}
+                        placeholder={`Caută în ${category.title}`}
                         className="form-input search-card__input"
                     />
                 </div>
             </section>
 
             <section className="card u-mt-4">
-                <div className="section-title">Articole</div>
-
                 <div className="article-grid">
                     {filteredArticles.map((article) => (
                         <Link href={`/article/${article.slug}`} key={article.slug} className="article-card">
@@ -63,7 +61,7 @@ export default function LearnCategory({ category, articles }) {
                             </div>
                         </Link>
                     ))}
-                    {filteredArticles.length === 0 ? <div className="muted">Nu exista articole in aceasta categorie pentru cautarea curenta.</div> : null}
+                    {filteredArticles.length === 0 ? <div className="muted">Nu există articole în această categorie pentru căutarea curentă.</div> : null}
                 </div>
             </section>
         </>

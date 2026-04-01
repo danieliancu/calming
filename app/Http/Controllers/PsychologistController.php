@@ -1202,7 +1202,7 @@ class PsychologistController extends Controller
 
         return redirect()
             ->route('psychologists.dashboard', ['section' => 'articles'])
-            ->with('status', 'Articolul a fost trimis in asteptarea aprobarii superadminului.');
+            ->with('status', 'Articolul a fost trimis în așteptarea aprobării superadminului.');
     }
 
     public function updateArticle(Request $request, int $articleId): RedirectResponse

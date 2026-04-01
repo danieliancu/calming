@@ -184,6 +184,7 @@ class CalmPageController extends Controller
                 'messages.sender',
                 'messages.role',
                 'messages.time',
+                'messages.text',
                 'dialogues.sort_order as dialogue_sort_order',
                 'messages.sort_order as message_sort_order'
             )
@@ -204,6 +205,7 @@ class CalmPageController extends Controller
                     'memberLabel' => $this->communityMemberLabel($memberCount),
                     'lastMessageAt' => $lastMessageAt,
                     'lastActiveExact' => $this->communityExactElapsedLabel($lastMessageAt),
+                    'lastCommentPreview' => $this->communityMessagePreview($lastMessage?->text),
                 ],
             ];
         });
@@ -217,6 +219,7 @@ class CalmPageController extends Controller
                     'memberCount' => $groupStats[$group->id]['memberCount'] ?? 0,
                     'memberLabel' => $groupStats[$group->id]['memberLabel'] ?? $this->communityMemberLabel(0),
                     'lastActiveExact' => $groupStats[$group->id]['lastActiveExact'] ?? 'fără mesaje',
+                    'lastCommentPreview' => $groupStats[$group->id]['lastCommentPreview'] ?? null,
                     'lastMessageAt' => $groupStats[$group->id]['lastMessageAt']?->toIso8601String(),
                     'is_private' => (bool) $group->is_private,
                     'canAccessConversations' => $this->canAccessCommunityGroupConversations($request, $group->id, (bool) $group->is_private, (int) ($group->author ?? 0)),
@@ -1296,15 +1299,32 @@ class CalmPageController extends Controller
 
         if ($diff->days > 0) {
             $parts[] = $diff->days.' '.$this->communityPluralize($diff->days, 'zi', 'zile');
+
+            if ($diff->h > 0) {
+                $parts[] = $diff->h.' '.$this->communityPluralize($diff->h, 'ora', 'ore');
+            }
+
+            return implode(' ', $parts);
         }
+
         if ($diff->h > 0) {
             $parts[] = $diff->h.' '.$this->communityPluralize($diff->h, 'ora', 'ore');
         }
-        if ($diff->i > 0) {
-            $parts[] = $diff->i.' '.$this->communityPluralize($diff->i, 'minut', 'minute');
+
+        $parts[] = $diff->i.' '.$this->communityPluralize($diff->i, 'minut', 'minute');
+
+        return implode(' ', $parts);
+    }
+
+    protected function communityMessagePreview(?string $text): ?string
+    {
+        $normalized = trim((string) preg_replace('/\s+/u', ' ', (string) $text));
+
+        if ($normalized === '') {
+            return null;
         }
 
-        return $parts !== [] ? implode(' ', $parts) : '0 minute';
+        return Str::limit($normalized, 90, '...');
     }
 
     protected function communityMemberCount(bool $isPrivate, int $groupId, \Illuminate\Support\Collection $rows, \Illuminate\Support\Collection $invitationCounts): int

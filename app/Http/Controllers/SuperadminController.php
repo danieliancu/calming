@@ -496,9 +496,9 @@ class SuperadminController extends Controller
                     'actor_type' => 'both',
                     'category' => 'article',
                     'title' => 'Articol nou',
-                    'message' => 'A aparut un articol nou in biblioteca Calming.',
+                    'message' => 'A aparut un articol nou în secțiunea Articole.',
                     'default_title' => 'Articol nou',
-                    'default_body' => 'A aparut un articol nou in biblioteca Calming.',
+                    'default_body' => 'A aparut un articol nou în secțiunea Articole.',
                     'icon' => 'FiBookOpen',
                     'icon_color' => 'lilac',
                     'accent' => 'lilac',
@@ -512,13 +512,13 @@ class SuperadminController extends Controller
             );
 
             app(NotificationService::class)->publishBroadcast('article_published', [
-                'title' => 'Articol nou in biblioteca',
+                'title' => 'Articol nou în secțiunea Articole',
                 'body' => $article->title,
                 'trigger_type' => 'article',
                 'trigger_id' => (string) $article->id,
                 'dedupe_key' => "article_published:{$article->id}",
                 'cta_kind' => 'open',
-                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citeste articolul'],
+                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citește articolul'],
             ]);
         }
 
@@ -606,7 +606,7 @@ class SuperadminController extends Controller
 
         return redirect()
             ->route('superadmin.articles.edit', ['articleId' => $articleId])
-            ->with('status', 'Modificarile au fost salvate.');
+            ->with('status', 'Modificările au fost salvate.');
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -625,7 +625,7 @@ class SuperadminController extends Controller
 
         if (! Hash::check($validated['current_password'], $superadmin->password_hash)) {
             return back()->withErrors([
-                'current_password' => 'Parola curenta este invalida.',
+                'current_password' => 'Parola curentă este invalidă.',
             ]);
         }
 
@@ -660,7 +660,7 @@ class SuperadminController extends Controller
                 'updated_at' => now(),
             ]);
 
-        return back()->with('status', 'Cererea de validare a fost aprobata.');
+        return back()->with('status', 'Cererea de validare a fost aprobată.');
     }
 
     public function rejectValidationApplication(Request $request, int $applicationId): RedirectResponse
@@ -684,7 +684,7 @@ class SuperadminController extends Controller
                 'updated_at' => now(),
             ]);
 
-        return back()->with('status', 'Cererea de validare a fost respinsa.');
+        return back()->with('status', 'Cererea de validare a fost respinsă.');
     }
 
     public function storeValidationMessage(Request $request, int $applicationId): RedirectResponse
@@ -698,7 +698,7 @@ class SuperadminController extends Controller
         $validated = $request->validate([
             'message' => ['required', 'string', 'max:1000'],
         ], [
-            'message.required' => 'Completeaza mesajul pentru specialist.',
+            'message.required' => 'Completează mesajul pentru specialist.',
             'message.max' => 'Mesajul poate avea maximum 1000 de caractere.',
         ]);
 
@@ -762,7 +762,7 @@ class SuperadminController extends Controller
 
         $displayName = trim(implode(' ', array_filter([$psychologist->name, $psychologist->surname]))) ?: $psychologist->email;
 
-        return back()->with('status', "Contul specialistului {$displayName} a fost sters.");
+        return back()->with('status', "Contul specialistului {$displayName} a fost șters.");
     }
 
     public function approveArticle(Request $request, int $articleId): RedirectResponse
@@ -787,9 +787,9 @@ class SuperadminController extends Controller
                     'actor_type' => 'both',
                     'category' => 'article',
                     'title' => 'Articol nou',
-                    'message' => 'A aparut un articol nou in biblioteca Calming.',
+                    'message' => 'A aparut un articol nou în secțiunea Articole.',
                     'default_title' => 'Articol nou',
-                    'default_body' => 'A aparut un articol nou in biblioteca Calming.',
+                    'default_body' => 'A aparut un articol nou în secțiunea Articole.',
                     'icon' => 'FiBookOpen',
                     'icon_color' => 'lilac',
                     'accent' => 'lilac',
@@ -803,13 +803,13 @@ class SuperadminController extends Controller
             );
 
             app(NotificationService::class)->publishBroadcast('article_published', [
-                'title' => 'Articol nou in biblioteca',
+                'title' => 'Articol nou în secțiunea Articole',
                 'body' => $article->title,
                 'trigger_type' => 'article',
                 'trigger_id' => (string) $article->id,
                 'dedupe_key' => "article_published:{$article->id}",
                 'cta_kind' => 'open',
-                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citeste articolul'],
+                'cta_payload' => ['href' => "/article/{$article->slug}", 'label' => 'Citește articolul'],
             ]);
         }
 
@@ -852,8 +852,8 @@ class SuperadminController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'slug' => ['nullable', 'string', 'max:150', 'unique:article_topics,slug,'.$categoryId],
         ], [
-            'name.required' => 'Completeaza numele categoriei.',
-            'slug.unique' => 'Slug-ul categoriei exista deja.',
+            'name.required' => 'Completează numele categoriei.',
+            'slug.unique' => 'Slug-ul categoriei există deja.',
         ]);
 
         DB::table('article_topics')
@@ -863,7 +863,7 @@ class SuperadminController extends Controller
                 'slug' => $this->uniqueArticleCategorySlug($validated['slug'] ?? $validated['name'], $categoryId),
             ]);
 
-        return back()->with('status', 'Categoria a fost actualizata.');
+        return back()->with('status', 'Categoria a fost actualizată.');
     }
 
     public function destroyArticleCategory(Request $request, int $categoryId): RedirectResponse
@@ -878,14 +878,14 @@ class SuperadminController extends Controller
 
         if ($articleCount > 0) {
             return back()->withErrors([
-                'category' => 'Categoria nu poate fi stearsa cat timp are articole asociate.',
+                'category' => 'Categoria nu poate fi ștearsă cât timp are articole asociate.',
             ]);
         }
 
         $deleted = DB::table('article_topics')->where('id', $categoryId)->delete();
         abort_unless($deleted, 404);
 
-        return back()->with('status', 'Categoria a fost stearsa.');
+        return back()->with('status', 'Categoria a fost ștearsă.');
     }
 
     public function rejectArticle(Request $request, int $articleId): RedirectResponse
@@ -901,7 +901,7 @@ class SuperadminController extends Controller
             ['is_valid' => false, 'validated_at' => null]
         );
 
-        return back()->with('status', 'Articolul a fost lasat in asteptare.');
+        return back()->with('status', 'Articolul a fost lăsat în așteptare.');
     }
 
     public function destroyArticle(Request $request, int $articleId): RedirectResponse
@@ -924,7 +924,7 @@ class SuperadminController extends Controller
             DB::table('articles')->where('id', $articleId)->delete();
         });
 
-        return back()->with('status', "Articolul \"{$article->title}\" a fost sters.");
+        return back()->with('status', "Articolul \"{$article->title}\" a fost șters.");
     }
 
     public function approveCommunityGroup(Request $request, int $groupId): RedirectResponse
@@ -972,7 +972,7 @@ class SuperadminController extends Controller
             ]
         );
 
-        return back()->with('status', 'Grupul de sprijin a ramas in asteptare.');
+        return back()->with('status', 'Grupul de sprijin a rămas în așteptare.');
     }
 
     public function destroyCommunityGroup(Request $request, int $groupId): RedirectResponse

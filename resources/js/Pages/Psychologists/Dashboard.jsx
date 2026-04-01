@@ -836,8 +836,8 @@ export default function PsychologistDashboard({
                                                         <span>Desfasurare</span>
                                                         <select name="location_mode" defaultValue="both">
                                                             <option value="online">Online</option>
-                                                            <option value="in_person">In cabinet</option>
-                                                            <option value="both">Online sau in cabinet</option>
+                                                            <option value="in_person">În cabinet</option>
+                                                            <option value="both">Online sau în cabinet</option>
                                                         </select>
                                                     </label>
                                                     <label>
@@ -905,8 +905,8 @@ export default function PsychologistDashboard({
                                                                     <span>Desfasurare</span>
                                                                     <select name="location_mode" defaultValue={item.location_mode}>
                                                                         <option value="online">Online</option>
-                                                                        <option value="in_person">In cabinet</option>
-                                                                        <option value="both">Online sau in cabinet</option>
+                                                                        <option value="in_person">În cabinet</option>
+                                                                        <option value="both">Online sau în cabinet</option>
                                                                     </select>
                                                                 </label>
                                                                 <label>
@@ -1390,9 +1390,9 @@ function formatLocationModeLabel(value) {
         case 'online':
             return 'Online';
         case 'in_person':
-            return 'In cabinet';
+            return 'În cabinet';
         case 'both':
-            return 'Online sau in cabinet';
+            return 'Online sau în cabinet';
         default:
             return value || 'Nespecificat';
     }
@@ -1401,21 +1401,21 @@ function formatLocationModeLabel(value) {
 function formatAppointmentStatusLabel(value) {
     switch (value) {
         case 'pending':
-            return 'In asteptare';
+            return 'În așteptare';
         case 'confirmed':
-            return 'Confirmata';
+            return 'Confirmată';
         case 'declined_by_psychologist':
-            return 'Respinsa de specialist';
+            return 'Respinsă de specialist';
         case 'cancelled_by_user':
-            return 'Anulata de client';
+            return 'Anulată de client';
         case 'cancelled_by_psychologist':
-            return 'Anulata de specialist';
+            return 'Anulată de specialist';
         case 'completed':
-            return 'Finalizata';
+            return 'Finalizată';
         case 'no_show':
-            return 'Neonorata';
+            return 'Neonorată';
         case 'expired':
-            return 'Expirata';
+            return 'Expirată';
         default:
             return value;
     }

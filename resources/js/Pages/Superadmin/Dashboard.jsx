@@ -521,7 +521,7 @@ export default function SuperadminDashboard({
                                             </tbody>
                                         </table>
                                     </div>
-                                ) : <div className="muted">Nu exista cereri de validare in asteptare.</div>
+                                ) : <div className="muted">Nu există cereri de validare în așteptare.</div>
                             ) : activeTab === 'users' ? (
                                 users.length ? (
                                     <div className="superadmin-table-wrap">

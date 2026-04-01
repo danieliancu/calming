@@ -25,8 +25,8 @@ const WEEKDAYS = ['luni', 'marti', 'miercuri', 'joi', 'vineri', 'sambata', 'dumi
 const WEEKDAYS_SHORT = ['Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sa', 'Du'];
 const LOCATION_LABELS = {
     online: 'Online',
-    in_person: 'In cabinet',
-    both: 'Online sau in cabinet',
+    in_person: 'În cabinet',
+    both: 'Online sau în cabinet',
 };
 
 export default function Appointments({
@@ -46,6 +46,7 @@ export default function Appointments({
     const [year, setYear] = useState(initialMonthDate.getFullYear());
     const [selectedDate, setSelectedDate] = useState(initialDate);
     const [time, setTime] = useState(initialTime);
+    const [selectedLocation, setSelectedLocation] = useState('');
     const [availableDates, setAvailableDates] = useState([]);
     const [slots, setSlots] = useState([]);
     const [loadingAvailability, setLoadingAvailability] = useState(false);
@@ -61,9 +62,21 @@ export default function Appointments({
     });
 
     const type = types.find((item) => item.id === selectedTypeId) ?? null;
+    const locationOptions = useMemo(() => buildLocationOptions(type, specialist), [specialist, type]);
     const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
     const flashStatus = page.props.flash?.status;
     const { pendingAppointments, confirmedAppointments, historyAppointments } = partitionAppointments(upcomingAppointments);
+
+    useEffect(() => {
+        if (!locationOptions.length) {
+            setSelectedLocation('');
+            return;
+        }
+
+        if (!locationOptions.some((option) => option.value === selectedLocation)) {
+            setSelectedLocation(locationOptions[0].value);
+        }
+    }, [locationOptions, selectedLocation]);
 
     useEffect(() => {
         if (!selectedTypeId) {
@@ -182,7 +195,10 @@ export default function Appointments({
                             : 'Disponibil pentru programări în cabinet'}
                 </div>
                 <div className="row wrap u-mt-3">
-                    <Link className="btn" href="/psychologists">Înapoi la specialiști</Link>
+                    <Link className="btn" href="/psychologists">
+                        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path></svg>
+                        Înapoi la specialiști
+                    </Link>
                     {specialist.phone ? <a className="btn" href={`tel:${specialist.phone}`}>Contact</a> : null}
                 </div>
             </AccentCard>
@@ -191,26 +207,50 @@ export default function Appointments({
             {resumeNotice ? <div className="info u-mt-4">{resumeNotice}</div> : null}
 
             <section className="card u-mt-4">
-                <div className="section-title">Tip ședință</div>
+                <div className="section-title">Alege ședința și locația</div>
                 {types.length ? (
-                    <div className="row wrap">
-                        {types.map((entry) => (
-                            <button
-                                key={entry.id}
-                                className={`btn ${entry.id === selectedTypeId ? 'primary' : ''}`}
-                                onClick={() => {
-                                    setSelectedTypeId(entry.id);
+                    <div className="grid u-gap-3">
+                        <label className="appointment-select-field">
+                            <span className="appointment-select-label">Tip ședință</span>
+                            <select
+                                className="form-input"
+                                value={selectedTypeId ?? ''}
+                                onChange={(event) => {
+                                    const nextTypeId = Number(event.target.value);
+                                    setSelectedTypeId(nextTypeId);
                                     setTime(null);
-                                    form.setData('appointment_type_id', entry.id);
+                                    form.setData('appointment_type_id', nextTypeId);
                                 }}
-                                type="button"
+                                style={{ backgroundColor: "var(--primary-500)", color:"#fff", cursor: 'pointer' }}
                             >
-                                {entry.label} · {entry.duration_minutes} min · {formatMoney(entry.price_amount, entry.currency)}
-                            </button>
-                        ))}
+                                {types.map((entry) => (
+                                    <option key={entry.id} value={entry.id}>
+                                        {entry.label} - {entry.duration_minutes} min - {formatMoney(entry.price_amount, entry.currency)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label className="appointment-select-field">
+                            <span className="appointment-select-label">Locație</span>
+                            <select
+                                className="form-input"
+                                value={selectedLocation}
+                                onChange={(event) => setSelectedLocation(event.target.value)}
+                                disabled={!locationOptions.length}
+                                style={{ backgroundColor: "var(--primary-500)", color:"#fff", cursor: 'pointer' }}
+                            >
+                                {locationOptions.length ? (
+                                    locationOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))
+                                ) : (
+                                    <option value="">Nicio locație disponibilă</option>
+                                )}
+                            </select>
+                        </label>
                     </div>
-                ) : <div className="muted">Specialistul nu a configurat încă tipuri de ședință disponibile.</div>}
-                {type ? <div className="muted u-mt-2">{LOCATION_LABELS[type.location_mode] ?? LOCATION_LABELS.both} · {type.is_paid_online ? 'Plată online la confirmare' : 'Fără plată online'}</div> : null}
+                ) : <div className="muted">Specialistul nu a configurat inca tipuri de sedinta disponibile.</div>}
+                {type ? <div style={{ marginTop:"10px", marginLeft:"10px" }} className="muted u-mt-2">{LOCATION_LABELS[type.location_mode] ?? LOCATION_LABELS.both} - {type.is_paid_online ? 'Plata online la confirmare' : 'Fără plata online'}</div> : null}
             </section>
 
             <section className="card u-mt-4">
@@ -282,7 +322,7 @@ export default function Appointments({
             </section>
 
             <section className="card u-mt-4">
-                <div className="row wrap">
+                <div className="row wrap appointments-summary-actions">
                     <div className="grow">
                         <div>
                             <b>{type?.label ?? 'Tip ședință'}</b> / {formatPsychologistName(specialist)}
@@ -290,20 +330,21 @@ export default function Appointments({
                         <div className="muted">
                             {selectedDate ? formatDateString(selectedDate) : 'Selecteaza data'} {time ? `/ ${time}` : ''}
                         </div>
-                        {type ? <div className="muted">{formatMoney(type.price_amount, type.currency)} · cererea intra initial in asteptare</div> : null}
+                        {type ? <div className="muted">{formatMoney(type.price_amount, type.currency)} · cererea intră inițial în așteptare</div> : null}
+                        {selectedLocation ? <div className="muted">{selectedLocation}</div> : null}
                     </div>
                     <button className="btn primary" type="button" onClick={handleConfirm} disabled={!selectedTypeId || !selectedDate || !time || form.processing}>
                         {form.processing ? 'Se trimite...' : isAuthenticated ? 'Trimite cererea' : 'Continuă spre autentificare'}
                     </button>
                 </div>
-                {!isAuthenticated ? <div className="muted u-mt-2">Pentru a continua, trebuie sa te autentifici.</div> : null}
+                {!isAuthenticated ? <div style ={{ marginTop:"10px", marginLeft:"0px" }} className="muted u-mt-2">Pentru a continua, trebuie să te autentifici.</div> : null}
             </section>
 
             <section className="card u-mt-4">
                 <div className="section-title">Sesiuni programate</div>
                 {upcomingAppointments.length ? (
                     <div className="grid">
-                        <AppointmentBlock title="In asteptare" items={pendingAppointments} />
+                        <AppointmentBlock title="În asteptare" items={pendingAppointments} />
                         <AppointmentBlock title="Confirmate" items={confirmedAppointments} />
                         <AppointmentBlock title="Istoric" items={historyAppointments} />
                     </div>
@@ -415,6 +456,26 @@ function buildAppointmentRedirectUrl(slug, typeId, date, time) {
 
 function formatPsychologistName(entry) {
     return [entry.title, entry.name, entry.surname].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function buildLocationOptions(type, specialist) {
+    if (!type) {
+        return [];
+    }
+
+    const options = [];
+    const addressLabel = specialist?.address?.trim() || [specialist?.city, specialist?.county].filter(Boolean).join(', ') || 'În cabinet';
+    const supportsOnline = Boolean(specialist?.supports_online);
+
+    if ((type.location_mode === 'in_person' || type.location_mode === 'both') && addressLabel) {
+        options.push({ value: addressLabel, label: addressLabel });
+    }
+
+    if ((type.location_mode === 'online' || type.location_mode === 'both') && supportsOnline) {
+        options.push({ value: 'Online', label: 'Online' });
+    }
+
+    return options;
 }
 
 function formatDateString(value) {

@@ -16,21 +16,21 @@ export function partitionAppointments(appointments = []) {
 export function formatAppointmentStatus(status) {
     switch (status) {
         case 'pending':
-            return 'In asteptare';
+            return 'În asteptare';
         case 'confirmed':
-            return 'Confirmata';
+            return 'Confirmată';
         case 'declined_by_psychologist':
-            return 'Respinsa';
+            return 'Respinsă';
         case 'cancelled_by_user':
-            return 'Anulata de tine';
+            return 'Anulată de tine';
         case 'cancelled_by_psychologist':
-            return 'Anulata de specialist';
+            return 'Anulată de specialist';
         case 'completed':
-            return 'Finalizata';
+            return 'Finalizată';
         case 'no_show':
             return 'No-show';
         case 'expired':
-            return 'Expirata';
+            return 'Expirată';
         default:
             return status;
     }
@@ -39,16 +39,16 @@ export function formatAppointmentStatus(status) {
 export function formatPaymentStatus(status) {
     switch (status) {
         case 'authorized':
-            return 'Plata autorizata';
+            return 'Plată autorizată';
         case 'captured':
-            return 'Plata incasata';
+            return 'Plată incasată';
         case 'voided':
-            return 'Plata anulata';
+            return 'Plată anulată';
         case 'refunded':
-            return 'Plata returnata';
+            return 'Plată returnată';
         case 'not_required':
             return 'Fără plată online';
         default:
-            return 'Plata in curs';
+            return 'Plata în curs';
     }
 }

@@ -330,7 +330,7 @@ function MilestoneCard({ milestone }) {
 function AppointmentSection({ title, appointments }) {
     return (
         <div>
-            <div className="u-text-semibold u-mb-2">{title}</div>
+            <div style={{ marginTop:"10px" }} className="u-text-semibold u-mb-2">{title}</div>
             <div className="stack gap-2">
                 {appointments.map((appointment) => (
                     <div key={appointment.id} className="card subtle">
@@ -387,7 +387,7 @@ function AppointmentsPanel({ upcomingAppointments, pendingAppointments, confirme
 
     return (
         <div className="stack gap-3">
-            {pendingAppointments.length ? <AppointmentSection title="In asteptare" appointments={pendingAppointments} /> : null}
+            {pendingAppointments.length ? <AppointmentSection title="În așteptare" appointments={pendingAppointments} /> : null}
             {confirmedAppointments.length ? <AppointmentSection title="Confirmate" appointments={confirmedAppointments} /> : null}
             {historyAppointments.length ? <AppointmentSection title="Istoric" appointments={historyAppointments} /> : null}
         </div>

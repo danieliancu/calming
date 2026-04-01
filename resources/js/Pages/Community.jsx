@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Head, router } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
-import { FiChevronRight, FiLock, FiSearch, FiShield, FiUsers } from '@/lib/icons';
+import { FiChevronRight, FiLock, FiMessageSquare, FiSearch, FiShield, FiUsers } from '@/lib/icons';
 
 export default function Community({ groups }) {
     const { isAuthenticated, isPsychAuthenticated, promptAuth } = useAuth();
@@ -17,7 +17,7 @@ export default function Community({ groups }) {
         }
 
         const term = q.trim().toLowerCase();
-        return groups.filter((group) => [group.name, group.memberLabel, group.lastActiveExact].filter(Boolean).join(' ').toLowerCase().includes(term));
+        return groups.filter((group) => [group.name, group.memberLabel, group.lastActiveExact, group.lastCommentPreview].filter(Boolean).join(' ').toLowerCase().includes(term));
     }, [groups, q]);
 
     const handleGroupAccess = useCallback((group) => {
@@ -74,13 +74,19 @@ export default function Community({ groups }) {
                             onClick={() => handleGroupAccess(group)}
                             onKeyDown={(event) => handleKeyDown(event, group)}
                         >
-                            <div>
+                            <div className="community-group-copy">
                                 <span className="u-text-semibold">
                                     {group.name} {group.is_private ? <FiLock aria-hidden /> : null}
                                 </span>
                                 <div className="muted community-meta">
-                                    {group.memberLabel} - ultimul mesaj acum {group.lastActiveExact}
+                                    {group.memberLabel} - activ acum {group.lastActiveExact}
                                 </div>
+                                {group.lastCommentPreview ? (
+                                    <div className="muted community-comment-preview">
+                                        <FiMessageSquare className="community-comment-preview__icon" aria-hidden />
+                                        <span className="community-comment-preview__text">{group.lastCommentPreview}</span>
+                                    </div>
+                                ) : null}
                             </div>
                             <FiChevronRight className="chev" aria-hidden />
                         </div>
