@@ -4,8 +4,8 @@ namespace App\Support;
 
 use App\Mail\AppointmentMessageMail;
 use App\Models\Appointment;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AppointmentEmailService
 {
@@ -20,7 +20,7 @@ class AppointmentEmailService
             'Cererea ta de programare a fost trimisa',
             'Cererea de programare a fost trimisa',
             "Am inregistrat cererea ta pentru {$appointment->type} pe {$appointment->starts_at?->format('d.m.Y H:i')}.\nSpecialistul trebuie sa confirme rezervarea.",
-            '/appointments',
+            $this->appointmentsUrl($appointment),
             'Vezi sesiunile programate',
         ));
     }
@@ -36,7 +36,7 @@ class AppointmentEmailService
             'Ai o noua cerere de programare',
             'Cerere noua de programare',
             "Ai primit o cerere pentru {$appointment->type} pe {$appointment->starts_at?->format('d.m.Y H:i')}.\nIntra in dashboard pentru a confirma sau respinge.",
-            route('psychologists.dashboard', ['section' => 'schedule'], false),
+            $this->psychologistDashboardUrl(),
             'Deschide dashboard-ul',
         ));
     }
@@ -52,7 +52,7 @@ class AppointmentEmailService
             'Programarea ta a fost confirmata',
             'Programarea a fost confirmata',
             "Programarea pentru {$appointment->type} a fost confirmata de specialist.\nData si ora: {$appointment->starts_at?->format('d.m.Y H:i')}.",
-            '/appointments',
+            $this->appointmentsUrl($appointment),
             'Vezi programarea',
         ));
     }
@@ -68,7 +68,7 @@ class AppointmentEmailService
             'Cererea ta de programare a fost respinsa',
             'Cererea a fost respinsa',
             "Cererea pentru {$appointment->type} din {$appointment->starts_at?->format('d.m.Y H:i')} nu a fost confirmata de specialist.",
-            '/appointments',
+            $this->appointmentsUrl($appointment),
             'Vezi sesiunile programate',
         ));
     }
@@ -84,7 +84,7 @@ class AppointmentEmailService
             'Programarea ta a fost anulata',
             'Programarea a fost anulata',
             "Programarea pentru {$appointment->type} din {$appointment->starts_at?->format('d.m.Y H:i')} a fost anulata.\n{$reasonText}",
-            '/appointments',
+            $this->appointmentsUrl($appointment),
             'Vezi sesiunile programate',
         ));
     }
@@ -100,7 +100,7 @@ class AppointmentEmailService
             'O programare a fost anulata',
             'Programarea a fost anulata',
             "Programarea pentru {$appointment->type} din {$appointment->starts_at?->format('d.m.Y H:i')} a fost anulata.\n{$reasonText}",
-            route('psychologists.dashboard', ['section' => 'schedule'], false),
+            $this->psychologistDashboardUrl(),
             'Deschide dashboard-ul',
         ));
     }
@@ -115,8 +115,8 @@ class AppointmentEmailService
         $this->sendSafely($user->email, new AppointmentMessageMail(
             'Cererea ta de programare a expirat',
             'Cererea de programare a expirat',
-            "Cererea pentru {$appointment->type} din {$appointment->starts_at?->format('d.m.Y H:i')} a expirat fără confirmare.",
-            '/appointments',
+            "Cererea pentru {$appointment->type} din {$appointment->starts_at?->format('d.m.Y H:i')} a expirat fara confirmare.",
+            $this->appointmentsUrl($appointment),
             'Vezi sesiunile programate',
         ));
     }
@@ -124,10 +124,10 @@ class AppointmentEmailService
     public function sendReminder(Appointment $appointment, string $recipientType, int $minutesBefore): void
     {
         $subject = $minutesBefore >= 60
-            ? "Reminder programare peste ".(int) round($minutesBefore / 60)."h"
+            ? 'Reminder programare peste '.(int) round($minutesBefore / 60).'h'
             : "Reminder programare peste {$minutesBefore}m";
 
-        $body = "Programarea pentru {$appointment->type} începe la {$appointment->starts_at?->format('d.m.Y H:i')}.";
+        $body = "Programarea pentru {$appointment->type} incepe la {$appointment->starts_at?->format('d.m.Y H:i')}.";
 
         if ($recipientType === 'psychologist') {
             $psychologist = $appointment->psychologist;
@@ -139,7 +139,7 @@ class AppointmentEmailService
                 $subject,
                 'Reminder programare',
                 $body,
-                route('psychologists.dashboard', ['section' => 'schedule'], false),
+                $this->psychologistDashboardUrl(),
                 'Deschide dashboard-ul',
             ));
 
@@ -155,7 +155,7 @@ class AppointmentEmailService
             $subject,
             'Reminder programare',
             $body,
-            '/appointments',
+            $this->appointmentsUrl($appointment),
             'Vezi sesiunile programate',
         ));
     }
@@ -173,5 +173,21 @@ class AppointmentEmailService
                 'error' => $exception->getMessage(),
             ]);
         }
+    }
+
+    protected function appointmentsUrl(Appointment $appointment): string
+    {
+        $psychologistSlug = $appointment->psychologist?->slug;
+
+        if (! $psychologistSlug) {
+            return route('appointments');
+        }
+
+        return route('appointments', ['psychologist' => $psychologistSlug]);
+    }
+
+    protected function psychologistDashboardUrl(): string
+    {
+        return route('psychologists.dashboard', ['section' => 'schedule']);
     }
 }

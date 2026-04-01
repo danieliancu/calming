@@ -18,7 +18,7 @@
         @endif
 
         <p style="margin-top: 24px; font-size: 13px; color: #6b7280;">
-            {{ config('app.name') }}
+            Echipa Calming
         </p>
     </div>
 </body>

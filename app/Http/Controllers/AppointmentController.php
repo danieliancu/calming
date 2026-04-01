@@ -66,7 +66,7 @@ class AppointmentController extends Controller
             Carbon::createFromFormat('Y-m-d H:i', "{$validated['date']} {$validated['time']}", config('app.timezone'))
         );
 
-        return back()->with('status', 'Cererea de programare a fost trimisa.');
+        return back()->with('status', 'Cererea de programare a fost trimisă.');
     }
 
     public function cancel(Request $request, Appointment $appointment): RedirectResponse
@@ -77,7 +77,7 @@ class AppointmentController extends Controller
 
         $this->lifecycle->cancelByUser($appointment, $request->user());
 
-        return back()->with('status', 'Programarea a fost anulata.');
+        return back()->with('status', 'Programarea a fost anulată.');
     }
 
     public function updateReminderPreferences(Request $request, Appointment $appointment): RedirectResponse
