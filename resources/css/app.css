@@ -2025,7 +2025,7 @@ main.community-container {
 .article-title {
   margin: 0;
   font-size: clamp(28px, 5vw, 44px);
-  line-height: clamp(1.02px, 30px, 65px);
+  line-height: clamp(1.02px, 40px, 65px);
   letter-spacing: -0.03em;
   padding: 20px 0;
 }
@@ -3903,7 +3903,6 @@ main.community-container {
 
 .icon-active {
   color: var(--primary-600);
-  background: rgba(74, 144, 226, 0.12);
 }
 
 .notification-actions {

@@ -917,17 +917,7 @@ class CalmPageController extends Controller
                 'canonical' => $request->fullUrl(),
                 'twitter_card' => 'summary_large_image',
             ],
-            'related' => DB::table('related_articles as ra')
-                ->join('articles as a', 'a.id', '=', 'ra.related_article_id')
-                ->where('ra.article_id', $articleId)
-                ->orderBy('ra.sort_order')
-                ->select('a.slug', 'a.title', 'a.minutes', 'a.body')
-                ->get()
-                ->map(fn ($related) => [
-                    'slug' => $related->slug,
-                    'title' => $related->title,
-                    'minutes' => $this->estimateArticleReadingMinutesFromBody($related->body, $related->minutes),
-                ]),
+            'related' => $this->relatedArticlesFor($article),
         ]);
     }
 
@@ -1071,6 +1061,26 @@ class CalmPageController extends Controller
         $normalized = preg_replace('/^(?:\s*<div><br><\/div>\s*)+|(?:\s*<div><br><\/div>\s*)+$/i', '', $normalized) ?? $normalized;
 
         return trim($normalized);
+    }
+
+    protected function relatedArticlesFor(object $article)
+    {
+        return DB::table('articles as a')
+            ->leftJoin('articles_validation as av', 'av.article_id', '=', 'a.id')
+            ->where('a.id', '!=', $article->id)
+            ->where(function ($query) {
+                $query->whereNull('av.article_id')->orWhere('av.is_valid', 1);
+            })
+            ->orderByDesc('a.id')
+            ->limit(3)
+            ->select('a.slug', 'a.title', 'a.minutes', 'a.body')
+            ->get()
+            ->map(fn ($related) => [
+                'slug' => $related->slug,
+                'title' => $related->title,
+                'minutes' => $this->estimateArticleReadingMinutesFromBody($related->body, $related->minutes),
+            ])
+            ->values();
     }
 
     protected function communityGroupPayload(string $slug, bool $includeDialogues = false): ?array

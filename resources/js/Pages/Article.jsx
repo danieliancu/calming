@@ -277,9 +277,15 @@ export default function Article({ article, related }) {
                 </div>
 
                 {renderBody()}
+                <div className="grid grid-single u-gap-2-5 u-mt-4" style={{ maxWidth: '600px', margin:"20px auto" }}  >
+                    <button className="btn primary pill" type="button" onClick={handleSave} disabled={busy}>
+                        {saved ? 'Articol salvat' : 'Salvează articolul'}
+                    </button>
+                </div>
             </article>
 
             <div className="article-rec">
+
                 <h3 className="h3">Alte articole</h3>
                 <div className="related">
                     {related.map((item) => (
@@ -294,11 +300,6 @@ export default function Article({ article, related }) {
                         </Link>
                     ))}
                     {related.length === 0 ? <div className="muted">Nu exista recomandari suplimentare.</div> : null}
-                </div>
-                <div className="grid grid-single u-gap-2-5 u-mt-4">
-                    <button className="btn primary pill full" type="button" onClick={handleSave} disabled={busy}>
-                        {saved ? 'Articol salvat' : 'Salveaza articolul'}
-                    </button>
                 </div>
             </div>
         </>
