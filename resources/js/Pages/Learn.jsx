@@ -53,11 +53,11 @@ export default function Learn({ topics, articles }) {
                 <div className="section-title">
                     <FiGrid className="section-icon" /> Categorii
                 </div>
-                <div className="grid cols-2">
+                <div className="learn-topics-grid">
                     {filteredTopics.map((topic) => (
-                        <Link href={`/learn/${topic.slug}`} key={topic.id} className="list-item">
-                            <span>{topic.title}</span>
-                            <span className="chip">{topic.articleCount} articole</span>
+                        <Link href={`/learn/${topic.slug}`} key={topic.id} className="list-item learn-topic-card">
+                            <span className="learn-topic-card__title">{topic.title}</span>
+                            <span className="chip learn-topic-card__meta">{topic.articleCount} articole</span>
                         </Link>
                     ))}
                     {filteredTopics.length === 0 ? <div className="muted">Nu exista categorii configurate.</div> : null}

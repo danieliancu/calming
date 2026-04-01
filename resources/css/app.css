@@ -2336,6 +2336,28 @@ main.community-container {
 }
 
 /* Learn */
+.learn-topics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.learn-topic-card {
+  display: grid;
+  align-items: start;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.learn-topic-card__title {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.learn-topic-card__meta {
+  margin-top: auto;
+}
+
 .article-grid {
   display: grid;
   gap: var(--space-4);
