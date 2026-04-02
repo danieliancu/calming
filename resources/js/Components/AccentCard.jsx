@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 const STORAGE_PREFIX = 'accent-card:dismissed:';
 
-export default function AccentCard({ children, className = '', dismissKey }) {
+export default function AccentCard({ children, className = '', dismissKey, showClose = true }) {
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
@@ -20,19 +20,21 @@ export default function AccentCard({ children, className = '', dismissKey }) {
 
     return (
         <section className={`card accent accent-card ${className}`.trim()}>
-            <button
-                type="button"
-                className="accent-card__close"
-                aria-label="Inchide"
-                onClick={() => {
-                    if (typeof window !== 'undefined' && dismissKey) {
-                        window.localStorage.setItem(`${STORAGE_PREFIX}${dismissKey}`, '1');
-                    }
-                    setDismissed(true);
-                }}
-            >
-                <FiX aria-hidden />
-            </button>
+            {showClose ? (
+                <button
+                    type="button"
+                    className="accent-card__close"
+                    aria-label="Inchide"
+                    onClick={() => {
+                        if (typeof window !== 'undefined' && dismissKey) {
+                            window.localStorage.setItem(`${STORAGE_PREFIX}${dismissKey}`, '1');
+                        }
+                        setDismissed(true);
+                    }}
+                >
+                    <FiX aria-hidden />
+                </button>
+            ) : null}
             {children}
         </section>
     );

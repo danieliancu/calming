@@ -1,12 +1,13 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { FiCheck, FiInfo, FiMail, FiMapPin, FiPhone, FiSend } from '@/lib/icons';
-import { Head, Link } from '@inertiajs/react';
+import { FiCheck, FiMail, FiMapPin, FiPhone, FiSend } from '@/lib/icons';
+import { Head, Link, router } from '@inertiajs/react';
 
 export default function PsychologistProfile({ psychologist }) {
     const displayName = formatPsychologistName(psychologist);
     const location = formatPsychologistLocation(psychologist);
     const phoneHref = psychologist.phone ? `tel:${psychologist.phone.replace(/\s+/g, '')}` : null;
-    const mapsHref = psychologist.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(psychologist.address)}` : null;
+    const hasOffice = Boolean(psychologist.address?.trim());
+    const mapsHref = hasOffice ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(psychologist.address)}` : null;
     const emailHref = psychologist.email ? `mailto:${psychologist.email}` : null;
 
     return (
@@ -15,7 +16,20 @@ export default function PsychologistProfile({ psychologist }) {
 
             <main className="psychologist-detail-page">
                 <div className="journal-footer">
-                    <Link className="profile-action secondary" href="/psychologists">&larr; Înapoi la specialiști</Link>
+                    <button
+                        className="profile-action secondary"
+                        type="button"
+                        onClick={() => {
+                            if (window.history.length > 1) {
+                                window.history.back();
+                                return;
+                            }
+
+                            router.visit('/psychologists');
+                        }}
+                    >
+                        &larr; Înapoi la specialiști
+                    </button>
                 </div>
 
                 <section className="card psychologist-detail-card">
@@ -28,6 +42,7 @@ export default function PsychologistProfile({ psychologist }) {
                                     Specialist verificat
                                 </span>
                                 {psychologist.supports_online ? <span className="badge badge-info">Online</span> : null}
+                                {hasOffice ? <span className="badge badge-info">Cabinet</span> : null}
                             </div>
                         </div>
                     </div>
@@ -79,11 +94,6 @@ export default function PsychologistProfile({ psychologist }) {
                         {location ? (
                             <span className="psychologists-meta-item">
                                 <FiMapPin /> {location}
-                            </span>
-                        ) : null}
-                        {psychologist.details?.length ? (
-                            <span className="psychologists-meta-item">
-                                <FiInfo /> Informații profesionale afișate fără identificatori numerici.
                             </span>
                         ) : null}
                     </div>

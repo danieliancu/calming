@@ -1,12 +1,12 @@
 import AccentCard from '@/Components/AccentCard';
 import AppLayout from '@/Layouts/AppLayout';
 import SignOutAction from '@/Components/SignOutAction';
-import { Head, Link, router } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, Link, router, useRemember } from '@inertiajs/react';
+import { useMemo } from 'react';
 import { FiCheck, FiClock, FiInfo, FiMail, FiMapPin, FiPhone, FiSearch, FiSend } from '@/lib/icons';
 
 export default function Psychologists({ psychologists, activePsychologist }) {
-    const [q, setQ] = useState('');
+    const [q, setQ] = useRemember('', 'psychologists.search');
 
     const list = useMemo(() => {
         const term = normalize(q);
@@ -75,7 +75,8 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                     const displayName = formatPsychologistName(p);
                     const location = formatPsychologistLocation(p);
                     const phoneHref = p.phone ? `tel:${p.phone.replace(/\s+/g, '')}` : null;
-                    const mapsHref = p.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}` : null;
+                    const hasOffice = Boolean(p.address?.trim());
+                    const mapsHref = hasOffice ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}` : null;
                     const emailHref = p.email ? `mailto:${p.email}` : null;
 
                     return (
@@ -100,6 +101,9 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                             </span>
                                             {p.supports_online ? (
                                                 <span className="badge badge-info">Online</span>
+                                            ) : null}
+                                            {hasOffice ? (
+                                                <span className="badge badge-info">Cabinet</span>
                                             ) : null}
                                         </div>
                                     </div>

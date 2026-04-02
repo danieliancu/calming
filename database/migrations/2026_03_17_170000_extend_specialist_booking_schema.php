@@ -82,7 +82,7 @@ return new class extends Migration {
 
         $defaults = DB::table('appointment_types')->orderBy('id')->pluck('label')->all();
         if ($defaults === []) {
-            $defaults = ['Evaluare initiala', 'Sedinta individuala', 'Follow-up', 'Consiliere online'];
+            $defaults = ['Evaluare inițială', 'Ședință individuală', 'Follow-up', 'Consiliere online'];
         }
 
         foreach ($psychologists as $psychologist) {

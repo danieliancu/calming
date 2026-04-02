@@ -185,7 +185,7 @@ export default function Appointments({
         <>
             <Head title={`Programează cu ${formatPsychologistName(specialist)} - Calming`} />
 
-            <AccentCard dismissKey={`appointments-specialist-${specialist.slug}`}>
+            <AccentCard dismissKey={`appointments-specialist-${specialist.slug}`} showClose={false}>
                 <div className="section-title">Programează cu {formatPsychologistName(specialist)}</div>
                 <div className="muted">
                     {specialist.city || specialist.county
@@ -195,10 +195,10 @@ export default function Appointments({
                             : 'Disponibil pentru programări în cabinet'}
                 </div>
                 <div className="row wrap u-mt-3">
-                    <Link className="btn" href="/psychologists">
+                    <button className="btn" type="button" onClick={() => window.history.back()}>
                         <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path></svg>
-                        Înapoi la specialiști
-                    </Link>
+                        &Icirc;napoi
+                    </button>
                     {specialist.phone ? <a className="btn" href={`tel:${specialist.phone}`}>Contact</a> : null}
                 </div>
             </AccentCard>
@@ -330,7 +330,7 @@ export default function Appointments({
                         <div className="muted">
                             {selectedDate ? formatDateString(selectedDate) : 'Selecteaza data'} {time ? `/ ${time}` : ''}
                         </div>
-                        {type ? <div className="muted">{formatMoney(type.price_amount, type.currency)} · cererea intră inițial în așteptare</div> : null}
+                        {type ? <div className="muted">{formatMoney(type.price_amount, type.currency)}</div> : null}
                         {selectedLocation ? <div className="muted">{selectedLocation}</div> : null}
                     </div>
                     <button className="btn primary" type="button" onClick={handleConfirm} disabled={!selectedTypeId || !selectedDate || !time || form.processing}>

@@ -334,7 +334,7 @@ function AppointmentSection({ title, appointments }) {
             <div className="stack gap-2">
                 {appointments.map((appointment) => (
                     <div key={appointment.id} className="card subtle">
-                        <div className="row wrap u-items-center u-justify-between gap-2">
+                        <div className="row wrap u-items-center u-justify-between gap-2" style={{ justifyContent:"space-between" }}>
                             <div>
                                 <div className="u-text-semibold">{appointment.type}</div>
                                 <div className="muted">{appointment.psychologist_name} · {appointment.scheduled_for}</div>
@@ -358,7 +358,7 @@ function AppointmentSection({ title, appointments }) {
                                         ))}
                                     </select>
                                 ) : null}
-                                {appointment.psychologist_slug ? <Link className="btn" href={`/appointments?psychologist=${appointment.psychologist_slug}`}>Vezi</Link> : null}
+                                {appointment.psychologist_slug ? <Link className="btn" href={`/appointments?psychologist=${appointment.psychologist_slug}`}>Vezi programarea</Link> : null}
                                 {appointment.can_cancel ? (
                                     <button
                                         className="btn"

@@ -43,11 +43,15 @@ class CalmPageController extends Controller
             ? (bool) ($request->user()->notifications_enabled ?? true)
             : (bool) $request->session()->get('notifications_enabled', true);
 
-        $recommendedArticles = DB::table('articles')
-            ->select('slug', 'title', 'minutes', 'body')
-            ->where('is_recommended', 1)
-            ->orderBy('id')
+        $recommendedArticles = DB::table('articles as a')
+            ->leftJoin('articles_validation as av', 'av.article_id', '=', 'a.id')
+            ->where(function ($query) {
+                $query->whereNull('av.article_id')->orWhere('av.is_valid', 1);
+            })
+            ->orderByDesc('a.created_at')
+            ->orderByDesc('a.id')
             ->limit(3)
+            ->select('a.slug', 'a.title', 'a.minutes', 'a.body')
             ->get()
             ->map(fn ($article) => [
                 'slug' => $article->slug,

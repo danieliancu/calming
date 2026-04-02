@@ -1089,7 +1089,6 @@ main {
   position: relative;
   background: var(--surface);
   padding: 0;
-  border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .search-card__icon {
@@ -4142,6 +4141,8 @@ main.community-container {
   align-items: center;
   gap: 6px;
   width: 100%;
+  font-size:13px;
+  color: black;
 }
 
 .psychologists-meta-item:first-child {
@@ -4226,7 +4227,7 @@ main.community-container {
 }
 
 .badge-info {
-  background: rgba(59, 130, 246, 0.14);
+  border:.1px solid;
   color: #1d4ed8;
 }
 

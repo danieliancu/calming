@@ -81,7 +81,7 @@ export default function Learn({ topics, articles }) {
                                 </div>
                                 <div className="ac-title">{article.title}</div>
                                 <div className="ac-read">
-                                    Citeste mai mult <FiArrowRight />
+                                    Citește mai mult <FiArrowRight />
                                 </div>
                             </div>
                         </Link>
