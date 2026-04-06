@@ -5883,6 +5883,23 @@ main.community-container {
   margin-bottom: var(--space-3);
 }
 
+.warning {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(249, 115, 22, 0.16);
+  color: #c2410c;
+  font-size: 14px;
+  margin-bottom: var(--space-3);
+}
+
+.validation-message-card {
+  border-color: rgba(249, 115, 22, 0.28);
+}
+
+.validation-message-card:hover {
+  background: rgba(249, 115, 22, 0.2);
+}
+
 .auth-footer {
   display: flex;
   justify-content: flex-end;

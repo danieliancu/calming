@@ -87,7 +87,7 @@ class PsychologistController extends Controller
                 ->update(['consumed_at' => now()]);
         });
 
-        return redirect()->route('psychologists.signin')->with('status', 'Emailul a fost confirmat. Continua cu autentificarea si codul MFA.');
+        return redirect()->route('psychologists.signin')->with('status', 'Emailul a fost confirmat. Continuă cu autentificarea și codul Multi-Factor Authentication.');
     }
 
     public function resendVerification(Request $request): RedirectResponse
@@ -136,7 +136,7 @@ class PsychologistController extends Controller
 
         if (! $challenge || now()->greaterThan($challenge->expires_at) || ! Hash::check($validated['code'], $challenge->code_hash)) {
             return back()->withErrors([
-                'code' => 'Codul MFA este invalid sau a expirat.',
+                'code' => 'Codul Multi-Factor Authentication este invalid sau a expirat.',
             ]);
         }
 
@@ -171,10 +171,10 @@ class PsychologistController extends Controller
         abort_unless($psychologist, 404);
 
         if (! $this->issueMfaChallenge((object) $psychologist, $pendingPurpose)) {
-            return back()->withErrors(['code' => 'Nu am putut trimite un nou cod MFA. Incearca din nou.']);
+            return back()->withErrors(['code' => 'Nu am putut trimite un nou cod Multi-Factor Authentication. Încearcă din nou.']);
         }
 
-        return back()->with('status', 'Am trimis un nou cod MFA pe emailul profesional.');
+        return back()->with('status', 'Am trimis un nou cod Multi-Factor Authentication pe emailul profesional.');
     }
 
     public function signup(Request $request): RedirectResponse
@@ -254,7 +254,7 @@ class PsychologistController extends Controller
 
         if (! $this->issueMfaChallenge((object) $psychologist, 'login')) {
             return back()->withErrors([
-                'email' => 'Nu am putut trimite codul MFA. Incearca din nou.',
+                'email' => 'Nu am putut trimite codul Multi-Factor Authentication. Încearcă din nou.',
             ])->onlyInput('email');
         }
 

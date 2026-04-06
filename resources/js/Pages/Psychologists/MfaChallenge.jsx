@@ -25,12 +25,12 @@ export default function PsychologistMfaChallenge({ maskedEmail, purpose = 'login
 
     return (
         <>
-            <Head title="Confirmare autentificare in doi pasi - Calming" />
+            <Head title="Confirmare autentificare în doi pași - Calming" />
             <div className="auth-screen">
                 <div className="auth-shell">
                     <Link href="/" className="brand"><span className="brand-mark" /> Calming</Link>
                     <section className="card auth-card">
-                        <div className="section-title">Confirmare autentificare in doi pasi</div>
+                        <div className="section-title">Confirmare autentificare în doi pași</div>
                         <p className="muted">
                             Am trimis un cod de 6 cifre pe <strong>{maskedEmail}</strong> pentru {purpose === 'login' ? 'autentificare' : 'confirmarea accesului'}.
                         </p>

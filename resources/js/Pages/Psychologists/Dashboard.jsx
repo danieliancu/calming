@@ -216,6 +216,12 @@ export default function PsychologistDashboard({
         });
     };
 
+    const deleteValidationMessage = (messageId) => {
+        router.delete(route('psychologists.validation.messages.destroy', messageId), {
+            preserveScroll: true,
+        });
+    };
+
     const submitScheduleForm = (event, submit) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
@@ -422,7 +428,7 @@ export default function PsychologistDashboard({
                         <div>
                             <p className="muted">Calming Partners</p>
                             <p>
-                                Bine ai revenit, {initialProfile.name || 'partener'}! Completeaza profilul profesional si atestatele pentru obtinerea validarii. Pana la aprobare, poti accesa dashboard-ul, dar nu poti publica articole sau crea grupuri.
+                                Bine ai revenit, {initialProfile.name || 'partener'}! Completează profilul profesional și atestatele pentru obținerea validării. Până la aprobare, poti accesa dashboard-ul, dar nu poți publica articole sau crea grupuri.
                             </p>
                         </div>
                     </AccentCard>
@@ -457,11 +463,21 @@ export default function PsychologistDashboard({
                             <section className="card psych-card">
                                 <div className={`section-title${isValidated ? ' success' : ''}`}>{isValidated ? 'Partener validat' : 'Validare partener'}</div>
                                 <div className="info u-mt-3">
-                                    Status curent validare: {reviewStatus === 'approved' ? 'aprobat' : reviewStatus === 'submitted' ? 'in review' : reviewStatus}.
+                                    Status curent validare: {reviewStatus === 'approved' ? 'aprobat' : reviewStatus === 'submitted' ? 'în așteptare' : reviewStatus === 'draft' ? 'în așteptare' : reviewStatus}.
                                 </div>
                                 {validationMessages.map((message) => (
-                                    <div key={message.id} className="info u-mt-3">
-                                        <strong>Mesaj superadmin:</strong> {message.message}
+                                    <div key={message.id} className="warning u-mt-3 list-item validation-message-card">
+                                        <div>
+                                            <strong>Mesaj superadmin:</strong> {message.message}
+                                        </div>
+                                        <button
+                                            className="btn icon-only"
+                                            type="button"
+                                            aria-label="Închide mesajul"
+                                            onClick={() => deleteValidationMessage(message.id)}
+                                        >
+                                            <FiX size={16} />
+                                        </button>
                                     </div>
                                 ))}
                                 {reviewStatus === 'rejected' && reviewerNotes ? <div className="error u-mt-3">{reviewerNotes}</div> : null}
@@ -593,7 +609,7 @@ export default function PsychologistDashboard({
                                                         </select>
                                                     </label>
                                                     <label>
-                                                        <span>Număr Certificat / Serie</span>
+                                                        <span>Număr Atestat</span>
                                                         <input value={attestation.license_number} onChange={(event) => setAttestationField(index, 'license_number', event.target.value)} />
                                                     </label>
                                                     <label>
@@ -677,7 +693,7 @@ export default function PsychologistDashboard({
                                             {validationForm.processing ? 'Se salvează...' : 'Salvează'}
                                         </button>
                                         <button className="btn btn-success" type="button" onClick={(event) => submitValidation(event, 'submit')} disabled={validationForm.processing}>
-                                            Cerere validare
+                                            {reviewStatus === 'submitted' ? 'Cerere validare trimisă' : 'Cerere validare'}
                                         </button>
                                     </div>
                                 </form>
@@ -689,7 +705,7 @@ export default function PsychologistDashboard({
                                 <div className="psych-section-head">
                                     <div>
                                         <div className="section-title">Articolele mele</div>
-                                        <p className="muted">Publica resurse originale pentru biblioteca Calming.</p>
+                                        <p className="muted">Publică text original pentru secțiunea de articole Calming.</p>
                                     </div>
                                     <Link className={`btn btn-success${canManageContent ? '' : ' disabled'}`} href={canManageContent ? route('psychologists.articles.create') : '#'} onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
                                         Adaugă
@@ -744,7 +760,7 @@ export default function PsychologistDashboard({
                                 <div className="psych-section-head">
                                     <div>
                                         <div className="section-title">Grupurile mele de sprijin</div>
-                                        <p className="muted">Coordoneaza grupuri private sau publice pentru comunitatea ta.</p>
+                                        <p className="muted">Coordonează grupuri private sau publice pentru comunitatea ta.</p>
                                     </div>
                                     <Link className={`btn btn-success${canManageContent ? '' : ' disabled'}`} href={canManageContent ? route('psychologists.community.create') : '#'} onClick={(event) => { if (!canManageContent) { event.preventDefault(); } }}>
                                         Adaugă
@@ -784,7 +800,7 @@ export default function PsychologistDashboard({
                                             </li>
                                         ))}
                                     </ul>
-                                ) : <div className="muted u-mt-3">Nu ai creat inca niciun grup.</div>}
+                                ) : <div className="muted u-mt-3">Nu ai creat încă niciun grup.</div>}
                             </section>
                         ) : null}
 

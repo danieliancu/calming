@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PsychologistValidationMessageMail;
 use App\Models\NotificationTemplate;
 use App\Support\CommunityVisibilityService;
 use App\Support\NotificationService;
@@ -9,6 +10,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -702,8 +705,17 @@ class SuperadminController extends Controller
             'message.max' => 'Mesajul poate avea maximum 1000 de caractere.',
         ]);
 
-        $applicationExists = DB::table('psychologist_validation_applications')->where('id', $applicationId)->exists();
-        abort_unless($applicationExists, 404);
+        $application = DB::table('psychologist_validation_applications as pva')
+            ->join('psychologists as p', 'p.id', '=', 'pva.psychologist_id')
+            ->where('pva.id', $applicationId)
+            ->first([
+                'pva.id',
+                'p.id as psychologist_id',
+                'p.name',
+                'p.email',
+            ]);
+
+        abort_unless($application, 404);
 
         DB::table('psychologist_validation_messages')->insert([
             'application_id' => $applicationId,
@@ -711,6 +723,25 @@ class SuperadminController extends Controller
             'message' => $validated['message'],
             'created_at' => now(),
         ]);
+
+        if ($application->email) {
+            try {
+                Mail::mailer(config('mail.default', 'failover'))
+                    ->to($application->email)
+                    ->send(new PsychologistValidationMessageMail(
+                        firstName: $application->name ?: 'specialist',
+                        messageBody: $validated['message'],
+                        dashboardUrl: route('psychologists.dashboard', ['section' => 'validation']),
+                    ));
+            } catch (\Throwable $exception) {
+                Log::warning('Failed to send psychologist validation message email.', [
+                    'application_id' => $applicationId,
+                    'psychologist_id' => $application->psychologist_id,
+                    'email' => $application->email,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        }
 
         return back()->with('status', 'Mesajul a fost trimis catre specialist.');
     }
