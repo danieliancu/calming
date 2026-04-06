@@ -753,21 +753,20 @@ class CalmPageController extends Controller
         $importedPsychologists = Schema::hasTable('psychologist_imports')
             ? DB::table('psychologist_imports')
                 ->where('is_registered', false)
-                ->orderBy('last_name')
-                ->orderBy('first_name')
+                ->orderBy('name')
                 ->get()
                 ->map(fn ($entry) => [
                     'id' => "import-{$entry->id}",
                     'recordType' => 'import',
                     'slug' => null,
                     'title' => null,
-                    'name' => $entry->first_name,
-                    'surname' => $entry->last_name,
+                    'name' => $entry->name,
+                    'surname' => null,
                     'supports_online' => false,
                     'phone' => $entry->phone,
                     'email' => $entry->professional_email,
                     'address' => null,
-                    'city' => null,
+                    'city' => $entry->city,
                     'county' => null,
                     'specialties' => array_values(array_filter([
                         $entry->specialization,

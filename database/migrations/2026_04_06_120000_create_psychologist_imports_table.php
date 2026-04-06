@@ -18,8 +18,7 @@ return new class extends Migration
             $table->string('attestation_number', 60)->unique();
             $table->date('license_issue_date')->nullable();
             $table->string('rupa_code', 60)->nullable();
-            $table->string('last_name', 80);
-            $table->string('first_name', 80);
+            $table->string('name', 160);
             $table->string('specialty_commission', 160)->nullable();
             $table->string('specialization', 150)->nullable();
             $table->string('professional_grade', 80)->nullable();
@@ -31,7 +30,7 @@ return new class extends Migration
             $table->timestamp('registered_at')->nullable();
             $table->timestamps();
 
-            $table->index(['is_registered', 'last_name', 'first_name'], 'psychologist_imports_listing_idx');
+            $table->index(['is_registered', 'name'], 'psychologist_imports_listing_idx');
             $table->index('rupa_code', 'psychologist_imports_rupa_code_idx');
         });
     }
