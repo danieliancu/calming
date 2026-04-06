@@ -18,6 +18,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -716,37 +717,76 @@ class CalmPageController extends Controller
             }
         }
 
-        return Inertia::render('Psychologists', [
-            'psychologists' => DB::table('psychologists as p')
-                ->leftJoin('psychologists_address as pa', 'pa.psychologist_id', '=', 'p.id')
-                ->leftJoin('psychologist_validation_applications as pva', 'pva.psychologist_id', '=', 'p.id')
-                ->select('p.id', 'p.slug', 'p.title', 'p.name', 'p.surname', 'p.supports_online', 'p.phone', 'p.email', 'pa.address', 'pa.city', 'pa.county', 'pva.status as validation_status')
-                ->orderBy('p.surname')
-                ->orderBy('p.name')
-                ->get()
-                ->map(function ($entry) {
-                    $specialties = DB::table('psychologist_specialties')
-                        ->where('psychologist_id', $entry->id)
-                        ->orderBy('id')
-                        ->pluck('label')
-                        ->all();
+        $approvedPsychologists = DB::table('psychologists as p')
+            ->leftJoin('psychologists_address as pa', 'pa.psychologist_id', '=', 'p.id')
+            ->leftJoin('psychologist_validation_applications as pva', 'pva.psychologist_id', '=', 'p.id')
+            ->select('p.id', 'p.slug', 'p.title', 'p.name', 'p.surname', 'p.supports_online', 'p.phone', 'p.email', 'pa.address', 'pa.city', 'pa.county')
+            ->where('pva.status', 'approved')
+            ->orderBy('p.surname')
+            ->orderBy('p.name')
+            ->get()
+            ->map(function ($entry) {
+                $specialties = DB::table('psychologist_specialties')
+                    ->where('psychologist_id', $entry->id)
+                    ->orderBy('id')
+                    ->pluck('label')
+                    ->all();
 
-                    return [
-                        'id' => $entry->id,
-                        'slug' => $entry->slug,
-                        'title' => $entry->title,
-                        'name' => $entry->name,
-                        'surname' => $entry->surname,
-                        'supports_online' => (bool) $entry->supports_online,
-                        'phone' => $entry->phone,
-                        'email' => $entry->email,
-                        'address' => $entry->address,
-                        'city' => $entry->city,
-                        'county' => $entry->county,
-                        'specialties' => $specialties,
-                        'validationStatus' => $entry->validation_status === 'approved' ? 1 : 0,
-                    ];
-                }),
+                return [
+                    'id' => "psychologist-{$entry->id}",
+                    'recordType' => 'psychologist',
+                    'slug' => $entry->slug,
+                    'title' => $entry->title,
+                    'name' => $entry->name,
+                    'surname' => $entry->surname,
+                    'supports_online' => (bool) $entry->supports_online,
+                    'phone' => $entry->phone,
+                    'email' => $entry->email,
+                    'address' => $entry->address,
+                    'city' => $entry->city,
+                    'county' => $entry->county,
+                    'specialties' => $specialties,
+                    'validationStatus' => 1,
+                ];
+            });
+
+        $importedPsychologists = Schema::hasTable('psychologist_imports')
+            ? DB::table('psychologist_imports')
+                ->where('is_registered', false)
+                ->orderBy('last_name')
+                ->orderBy('first_name')
+                ->get()
+                ->map(fn ($entry) => [
+                    'id' => "import-{$entry->id}",
+                    'recordType' => 'import',
+                    'slug' => null,
+                    'title' => null,
+                    'name' => $entry->first_name,
+                    'surname' => $entry->last_name,
+                    'supports_online' => false,
+                    'phone' => $entry->phone,
+                    'email' => $entry->professional_email,
+                    'address' => null,
+                    'city' => null,
+                    'county' => null,
+                    'specialties' => array_values(array_filter([
+                        $entry->specialization,
+                        $entry->specialty_commission,
+                        $entry->professional_grade,
+                    ])),
+                    'validationStatus' => 0,
+                ])
+            : collect();
+
+        return Inertia::render('Psychologists', [
+            'psychologists' => $approvedPsychologists
+                ->concat($importedPsychologists)
+                ->sortBy([
+                    ['validationStatus', 'desc'],
+                    ['surname', 'asc'],
+                    ['name', 'asc'],
+                ])
+                ->values(),
             'activePsychologist' => $activePsychologist,
         ]);
     }

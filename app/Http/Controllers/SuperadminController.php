@@ -669,6 +669,36 @@ class SuperadminController extends Controller
                 'updated_at' => now(),
             ]);
 
+        $application = DB::table('psychologist_validation_applications as pva')
+            ->join('psychologists as p', 'p.id', '=', 'pva.psychologist_id')
+            ->where('pva.id', $applicationId)
+            ->first([
+                'pva.id',
+                'p.id as psychologist_id',
+                'p.name',
+                'p.email',
+            ]);
+
+        if ($application) {
+            $isUnapprove = $currentStatus === 'approved';
+
+            $this->sendPsychologistValidationEmail(
+                applicationId: $applicationId,
+                psychologistId: (int) $application->psychologist_id,
+                email: $application->email,
+                firstName: $application->name ?: 'specialist',
+                subjectLine: $isUnapprove
+                    ? 'Aprobarea contului tau de specialist a fost retrasa'
+                    : 'Contul tau de specialist a fost aprobat',
+                introLine: $isUnapprove
+                    ? 'Echipa Calming a retras aprobarea contului tau de specialist.'
+                    : 'Echipa Calming a aprobat contul tau de specialist.',
+                messageBody: $isUnapprove
+                    ? 'Statusul contului a revenit in asteptarea aprobarii. Verifica dashboard-ul pentru statusul actual.'
+                    : 'Contul tau este acum aprobat. Verifica dashboard-ul pentru statusul actual si functionalitatile disponibile.'
+            );
+        }
+
         return back()->with('status', $currentStatus === 'approved'
             ? 'Cererea de validare a revenit in asteptarea aprobarii.'
             : 'Cererea de validare a fost aprobata.');
@@ -732,26 +762,50 @@ class SuperadminController extends Controller
             'created_at' => now(),
         ]);
 
-        if ($application->email) {
-            try {
-                Mail::mailer(config('mail.default', 'failover'))
-                    ->to($application->email)
-                    ->send(new PsychologistValidationMessageMail(
-                        firstName: $application->name ?: 'specialist',
-                        messageBody: $validated['message'],
-                        dashboardUrl: route('psychologists.dashboard', ['section' => 'validation']),
-                    ));
-            } catch (\Throwable $exception) {
-                Log::warning('Failed to send psychologist validation message email.', [
-                    'application_id' => $applicationId,
-                    'psychologist_id' => $application->psychologist_id,
-                    'email' => $application->email,
-                    'error' => $exception->getMessage(),
-                ]);
-            }
-        }
+        $this->sendPsychologistValidationEmail(
+            applicationId: $applicationId,
+            psychologistId: (int) $application->psychologist_id,
+            email: $application->email,
+            firstName: $application->name ?: 'specialist',
+            subjectLine: 'Ai primit un mesaj nou de la echipa Calming',
+            introLine: 'Ai primit un mesaj nou de la echipa Calming in contul tau de specialist.',
+            messageBody: $validated['message'],
+        );
 
         return back()->with('status', 'Mesajul a fost trimis catre specialist.');
+    }
+
+    protected function sendPsychologistValidationEmail(
+        int $applicationId,
+        int $psychologistId,
+        ?string $email,
+        string $firstName,
+        string $subjectLine,
+        string $introLine,
+        string $messageBody,
+    ): void {
+        if (! $email) {
+            return;
+        }
+
+        try {
+            Mail::mailer(config('mail.default', 'failover'))
+                ->to($email)
+                ->send(new PsychologistValidationMessageMail(
+                    subjectLine: $subjectLine,
+                    firstName: $firstName,
+                    introLine: $introLine,
+                    messageBody: $messageBody,
+                    dashboardUrl: route('psychologists.dashboard', ['section' => 'validation']),
+                ));
+        } catch (\Throwable $exception) {
+            Log::warning('Failed to send psychologist validation email.', [
+                'application_id' => $applicationId,
+                'psychologist_id' => $psychologistId,
+                'email' => $email,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     public function destroyValidationMessage(Request $request, int $applicationId, int $messageId): RedirectResponse

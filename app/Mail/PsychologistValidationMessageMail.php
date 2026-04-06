@@ -14,7 +14,9 @@ class PsychologistValidationMessageMail extends Mailable
     use SerializesModels;
 
     public function __construct(
+        public string $subjectLine,
         public string $firstName,
+        public string $introLine,
         public string $messageBody,
         public ?string $dashboardUrl = null,
     ) {
@@ -23,7 +25,7 @@ class PsychologistValidationMessageMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Ai primit un mesaj nou de la echipa Calming',
+            subject: $this->subjectLine,
         );
     }
 

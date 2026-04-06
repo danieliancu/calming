@@ -183,6 +183,7 @@ class PsychologistController extends Controller
             'first_name' => ['required', 'string', 'max:80'],
             'last_name' => ['required', 'string', 'max:80'],
             'email' => ['required', 'email', 'max:120', 'unique:psychologists,email'],
+            'attestation_number' => ['required', 'string', 'max:60', 'unique:psychologists,attestation_number'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
@@ -195,6 +196,7 @@ class PsychologistController extends Controller
                 'surname' => $validated['last_name'],
                 'slug' => $slug,
                 'email' => $validated['email'],
+                'attestation_number' => $validated['attestation_number'],
                 'password_hash' => Hash::make($validated['password']),
                 'created_at' => now(),
             ]);
@@ -214,6 +216,16 @@ class PsychologistController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            DB::table('psychologist_imports')
+                ->where('attestation_number', $validated['attestation_number'])
+                ->where('is_registered', false)
+                ->update([
+                    'is_registered' => true,
+                    'registered_psychologist_id' => $psychologistId,
+                    'registered_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
             return $psychologistId;
         });

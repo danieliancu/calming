@@ -50,11 +50,11 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 ) : (
                     <AccentCard dismissKey="psychologists-specialist-cta">
                         <div className="section-title">
-                            <FiCheck className="section-icon" /> Specialiști verificați
+                            <FiCheck className="section-icon" /> Reteaua specialistilor Calming
                         </div>
                         <div className="muted">
-                            Toți specialiștii au fost verificați de echipa Calming. Ești profesionist și vrei să te alături comunității?
-                            <Link style={{ paddingLeft:"4px", fontWeight:"800", color:"var(--primary-600)" }} href="/psychologists/signup">Înscrie-te acum!</Link>
+                            Aici apar specialistii verificati deja activi in platforma si profesionistii importati care nu s-au inscris inca. Esti profesionist si vrei sa te alaturi comunitatii?
+                            <Link style={{ paddingLeft: '4px', fontWeight: '800', color: 'var(--primary-600)' }} href="/psychologists/signup">Inscrie-te acum!</Link>
                         </div>
                     </AccentCard>
                 )}
@@ -65,7 +65,7 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 <input
                     value={q}
                     onChange={(event) => setQ(event.target.value)}
-                    placeholder="Caută specialiști, servicii, adrese..."
+                    placeholder="Cauta specialisti, servicii, adrese..."
                     className="form-input search-card__input"
                 />
             </section>
@@ -85,7 +85,7 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                 <div className="grow">
                                     <div className="psychologists-name-row">
                                         <div className="u-text-semibold">{displayName}</div>
-                                        <div style={{ display:"flex", gap: "0.5rem", alignItems: "center", width: "100%" }}>
+                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: '100%' }}>
                                             <span className={`badge ${p.validationStatus === 1 ? 'badge-success' : 'badge-muted'}`}>
                                                 {p.validationStatus === 1 ? (
                                                     <>
@@ -153,7 +153,7 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                             </a>
                                         ) : null}
                                         <Link className="btn primary" href={p.slug ? `/appointments?psychologist=${p.slug}` : '/psychologists'}>
-                                            Programează
+                                            Programeaza
                                         </Link>
                                     </div>
                                 ) : null}
@@ -163,7 +163,7 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 })}
                 {list.length === 0 ? (
                     <div className="card">
-                        <div className="muted">Nu am găsit specialiști care să corespundă căutării tale.</div>
+                        <div className="muted">Nu am gasit specialisti care sa corespunda cautarii tale.</div>
                     </div>
                 ) : null}
             </div>
@@ -207,4 +207,3 @@ function formatPsychologistLocation(entry) {
 }
 
 Psychologists.layout = (page) => <AppLayout>{page}</AppLayout>;
-

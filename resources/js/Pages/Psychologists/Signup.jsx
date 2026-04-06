@@ -6,6 +6,7 @@ export default function PsychologistSignup() {
     const form = useForm({
         first_name: '',
         last_name: '',
+        attestation_number: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -44,6 +45,10 @@ export default function PsychologistSignup() {
                             <label className="auth-field">
                                 <span>Email profesional</span>
                                 <input type="email" value={form.data.email} onChange={(event) => form.setData('email', event.target.value)} required autoComplete="email" />
+                            </label>
+                            <label className="auth-field">
+                                <span>Numar atestat</span>
+                                <input value={form.data.attestation_number} onChange={(event) => form.setData('attestation_number', event.target.value)} required autoComplete="off" />
                             </label>
                             <label className="auth-field">
                                 <span>Parola</span>
