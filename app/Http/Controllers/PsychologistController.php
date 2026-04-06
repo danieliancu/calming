@@ -1598,7 +1598,7 @@ class PsychologistController extends Controller
                     ->update([
                         'entity_type_id' => $validated['entity_type_id'] ?? null,
                         'status' => $intent === 'submit'
-                            ? DB::raw("CASE WHEN status = 'approved' THEN 'approved' ELSE 'submitted' END")
+                            ? 'submitted'
                             : DB::raw("CASE WHEN status = 'approved' THEN 'approved' ELSE 'draft' END"),
                         'submitted_at' => $intent === 'submit' ? now() : DB::raw('submitted_at'),
                         'reviewer_notes' => $intent === 'submit' ? null : DB::raw('reviewer_notes'),

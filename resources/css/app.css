@@ -4410,7 +4410,7 @@ main.community-container {
 
 .validation-section-head {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
@@ -5898,6 +5898,16 @@ main.community-container {
 
 .validation-message-card:hover {
   background: rgba(249, 115, 22, 0.2);
+}
+
+.validation-message-dismiss {
+  color: #6b7280;
+  padding: 0.1rem;
+}
+
+.validation-message-dismiss:hover:not(:disabled) {
+  color: #4b5563;
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .auth-footer {

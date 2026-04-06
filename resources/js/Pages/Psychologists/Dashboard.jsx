@@ -468,15 +468,15 @@ export default function PsychologistDashboard({
                                 {validationMessages.map((message) => (
                                     <div key={message.id} className="warning u-mt-3 list-item validation-message-card">
                                         <div>
-                                            <strong>Mesaj superadmin:</strong> {message.message}
+                                            <strong>Mesaj Calming:</strong> {message.message}
                                         </div>
                                         <button
-                                            className="btn icon-only"
+                                            className="icon-btn plain validation-message-dismiss"
                                             type="button"
                                             aria-label="Închide mesajul"
                                             onClick={() => deleteValidationMessage(message.id)}
                                         >
-                                            <FiX size={16} />
+                                            <FiX size={14} />
                                         </button>
                                     </div>
                                 ))}
@@ -693,7 +693,7 @@ export default function PsychologistDashboard({
                                             {validationForm.processing ? 'Se salvează...' : 'Salvează'}
                                         </button>
                                         <button className="btn btn-success" type="button" onClick={(event) => submitValidation(event, 'submit')} disabled={validationForm.processing}>
-                                            {reviewStatus === 'submitted' ? 'Cerere validare trimisă' : 'Cerere validare'}
+                                            {reviewStatus === 'approved' ? 'Retrimitere cerere validare' : reviewStatus === 'submitted' ? 'Cerere validare trimisă' : 'Cerere validare'}
                                         </button>
                                     </div>
                                 </form>

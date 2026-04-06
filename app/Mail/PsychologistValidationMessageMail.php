@@ -23,7 +23,7 @@ class PsychologistValidationMessageMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Ai primit un mesaj nou legat de validarea contului',
+            subject: 'Ai primit un mesaj nou de la echipa Calming',
         );
     }
 

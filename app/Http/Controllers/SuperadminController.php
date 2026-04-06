@@ -654,16 +654,24 @@ class SuperadminController extends Controller
             return $superadmin;
         }
 
+        $currentStatus = DB::table('psychologist_validation_applications')
+            ->where('id', $applicationId)
+            ->value('status');
+
+        abort_unless($currentStatus, 404);
+
         DB::table('psychologist_validation_applications')
             ->where('id', $applicationId)
             ->update([
-                'status' => 'approved',
-                'reviewed_at' => now(),
+                'status' => $currentStatus === 'approved' ? 'submitted' : 'approved',
+                'reviewed_at' => $currentStatus === 'approved' ? null : now(),
                 'reviewer_notes' => null,
                 'updated_at' => now(),
             ]);
 
-        return back()->with('status', 'Cererea de validare a fost aprobată.');
+        return back()->with('status', $currentStatus === 'approved'
+            ? 'Cererea de validare a revenit in asteptarea aprobarii.'
+            : 'Cererea de validare a fost aprobata.');
     }
 
     public function rejectValidationApplication(Request $request, int $applicationId): RedirectResponse

@@ -393,7 +393,7 @@ export default function SuperadminDashboard({
                                                                 <div className="superadmin-actions">
                                                                     {application.application_id ? (
                                                                         <button className="status-pill status-pill--valid superadmin-pill-compact" type="button" onClick={() => router.post(route('superadmin.validation.approve', application.application_id), {}, { preserveScroll: true })}>
-                                                                            Approve
+                                                                            {application.status === 'approved' ? 'Unapprove' : 'Approve'}
                                                                         </button>
                                                                     ) : null}
                                                                     {application.application_id ? (
