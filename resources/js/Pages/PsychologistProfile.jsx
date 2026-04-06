@@ -9,6 +9,7 @@ export default function PsychologistProfile({ psychologist }) {
     const hasOffice = Boolean(psychologist.address?.trim());
     const mapsHref = hasOffice ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(psychologist.address)}` : null;
     const emailHref = psychologist.email ? `mailto:${psychologist.email}` : null;
+    const isImported = psychologist.recordType === 'import';
 
     return (
         <>
@@ -37,9 +38,9 @@ export default function PsychologistProfile({ psychologist }) {
                         <div>
                             <div className="section-title">{displayName}</div>
                             <div className="psychologist-detail-badges">
-                                <span className="badge badge-success">
+                                <span className={`badge ${isImported ? 'badge-info' : 'badge-success'}`}>
                                     <FiCheck size={14} aria-hidden />
-                                    Specialist verificat
+                                    {isImported ? 'Specialist activ' : 'Specialist verificat'}
                                 </span>
                                 {psychologist.supports_online ? <span className="badge badge-info">Online</span> : null}
                                 {hasOffice ? <span className="badge badge-info">Cabinet</span> : null}
@@ -47,59 +48,107 @@ export default function PsychologistProfile({ psychologist }) {
                         </div>
                     </div>
 
-                    {psychologist.details?.length ? (
+                    {isImported ? (
                         <div className="psychologist-detail-sections">
-                            {psychologist.details.map((item) => (
-                                <section key={item.label} className="psychologist-detail-section">
-                                    <div className="psychologist-detail-label">{item.label}</div>
-                                    {item.value ? <p className="muted psychologist-detail-copy">{item.value}</p> : null}
-                                    {item.values?.length ? (
-                                        <div className="psychologists-specialties">
-                                            {item.values.map((value) => (
-                                                <span className="pill pill-muted" key={`${item.label}-${value}`}>
-                                                    {value}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    ) : null}
-                                </section>
-                            ))}
+                            <section className="psychologist-detail-section">
+                                <div className="psychologist-detail-label">Detalii</div>
+                                <div className="psychologist-import-grid psychologist-import-grid--details">
+                                    <DetailField label="Nume" value={displayName} />
+                                    <DetailField label="Telefon" value={psychologist.phone} href={phoneHref} />
+                                    <DetailField label="Email" value={psychologist.email} href={emailHref} />
+                                    <DetailField label="Cod personal" value={psychologist.rupaCode} />
+                                    <DetailField label="Oraș" value={psychologist.city} />
+                                </div>
+                            </section>
+
+                            <section className="psychologist-detail-section">
+                                <div className="psychologist-detail-label">ATESTATE</div>
+                                {psychologist.attestations?.length ? (
+                                    <div className="psychologist-import-attestations">
+                                        {psychologist.attestations.map((attestation) => (
+                                            <article className="psychologist-import-attestation" key={attestation.id}>
+                                                <div className="psychologist-import-grid">
+                                                    <DetailField label="Specializare" value={attestation.specialization} strong />
+                                                    <DetailField label="Treapta de specializare" value={attestation.professionalGrade} />
+                                                    <DetailField label="Regim de practică" value={attestation.practiceRegime} />
+                                                    <DetailField label="Vechime" value={attestation.experience} />
+                                                    <DetailField label="Număr atestat" value={attestation.attestationNumber} />
+                                                    <DetailField label="Data" value={attestation.issueDate} />
+                                                    <DetailField label="Comisia de specialitate" value={attestation.specialtyCommission} />
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="muted psychologist-detail-copy">Nu exista atestate disponibile pentru acest specialist.</div>
+                                )}
+                            </section>
                         </div>
                     ) : (
-                        <div className="muted psychologist-detail-copy">Nu exista momentan detalii profesionale suplimentare afisabile pentru acest specialist.</div>
+                        <div className="psychologist-detail-sections">
+                            <section className="psychologist-detail-section">
+                                <div className="psychologist-detail-label">Detalii</div>
+                                <div className="psychologist-import-grid psychologist-import-grid--details">
+                                    <DetailField label="Nume" value={displayName} />
+                                    <DetailField label="Telefon" value={psychologist.phone} href={phoneHref} />
+                                    <DetailField label="Email" value={psychologist.email} href={emailHref} />
+                                    <DetailField label="Oras" value={psychologist.city} />
+                                    <DetailField label="Adresa" value={psychologist.address} />
+                                </div>
+                            </section>
+
+                            {psychologist.details?.length ? (
+                                psychologist.details.map((item) => (
+                                    <section key={item.label} className="psychologist-detail-section">
+                                        <div className="psychologist-detail-label">{item.label}</div>
+                                        {item.value ? <p className="muted psychologist-detail-copy">{item.value}</p> : null}
+                                        {item.values?.length ? (
+                                            <div className="psychologists-specialties">
+                                                {item.values.map((value) => (
+                                                    <span className="pill pill-muted" key={`${item.label}-${value}`}>
+                                                        {value}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : null}
+                                    </section>
+                                ))
+                            ) : (
+                                <div className="muted psychologist-detail-copy">Nu exista momentan detalii profesionale suplimentare afisabile pentru acest specialist.</div>
+                            )}
+                        </div>
                     )}
 
                     <div className="psychologist-detail-actions">
-                        {phoneHref ? (
-                            <a className="btn icon-only" href={phoneHref} aria-label={`Suna ${displayName}`}>
-                                <FiPhone />
-                            </a>
+                        {!isImported ? (
+                            <Link className="btn primary" href={psychologist.slug ? `/appointments?psychologist=${psychologist.slug}` : '/psychologists'}>
+                                Programeaza
+                            </Link>
                         ) : null}
-                        {mapsHref ? (
-                            <a className="btn icon-only" href={mapsHref} target="_blank" rel="noopener noreferrer" aria-label={`Indicatii catre ${displayName}`}>
-                                <FiSend />
-                            </a>
-                        ) : null}
-                        {emailHref ? (
-                            <a className="btn icon-only" href={emailHref} aria-label={`Trimite email catre ${displayName}`}>
-                                <FiMail />
-                            </a>
-                        ) : null}
-                        <Link className="btn primary" href={psychologist.slug ? `/appointments?psychologist=${psychologist.slug}` : '/psychologists'}>
-                            Programează
-                        </Link>
                     </div>
 
-                    <div className="psychologists-meta">
-                        {location ? (
-                            <span className="psychologists-meta-item">
-                                <FiMapPin /> {location}
-                            </span>
-                        ) : null}
-                    </div>
                 </section>
             </main>
         </>
+    );
+}
+
+function DetailField({ label, value, href = null, strong = false }) {
+    if (!value) {
+        return null;
+    }
+
+    return (
+        <div className="psychologist-import-field">
+            <div className="psychologist-import-field__label">{label}</div>
+            {href ? (
+                <a className={`psychologist-import-field__value psychologist-import-field__link${strong ? ' psychologist-import-field__value--strong' : ''}`} href={href}>
+                    {value}
+                </a>
+            ) : (
+                <div className={`psychologist-import-field__value${strong ? ' psychologist-import-field__value--strong' : ''}`}>{value}</div>
+            )}
+        </div>
     );
 }
 

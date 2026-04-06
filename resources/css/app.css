@@ -4145,6 +4145,12 @@ main.community-container {
   color: black;
 }
 
+.psychologists-meta-item--inline {
+  width: auto;
+  color: var(--muted-500);
+  white-space: nowrap;
+}
+
 .psychologists-meta-item:first-child {
   margin-top: 5px;
 }
@@ -4153,6 +4159,23 @@ main.community-container {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.psychologists-pagination__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.psychologists-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.psychologists-pagination__page {
+  white-space: nowrap;
 }
 
 .psychologist-detail-page {
@@ -4204,6 +4227,64 @@ main.community-container {
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.psychologist-import-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.psychologist-import-grid--details {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.psychologist-import-field {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.psychologist-import-field__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-500);
+}
+
+.psychologist-import-field__value {
+  color: var(--text-900);
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.psychologist-import-field__value--strong {
+  font-weight: 700;
+}
+
+.psychologist-import-field__link {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.psychologist-import-field__link:hover,
+.psychologist-import-field__link:focus-visible {
+  text-decoration: underline;
+}
+
+.psychologist-import-attestations {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.psychologist-import-attestation {
+  padding: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 20px;
+  background: #fff;
 }
 
 .badge {
@@ -4276,6 +4357,23 @@ main.community-container {
 
   .psychologist-detail-actions {
     flex-direction: row;
+  }
+
+  .psychologist-import-grid--details {
+    grid-template-columns: 1fr;
+  }
+
+  .psychologists-pagination__row,
+  .psychologists-pagination__controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .psychologists-pagination__button,
+  .psychologists-pagination__page,
+  .psychologists-pagination__summary {
+    width: 100%;
+    text-align: center;
   }
 }
 

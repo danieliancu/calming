@@ -127,7 +127,7 @@ export default function Notifications({ notifications, guestDefaults, unreadCoun
                         <span className="notification-toolbar__icon" aria-hidden>
                             <FiCheck size={12} />
                         </span>
-                        <span>Bifeaza toate citite</span>
+                        <span>Bifează toate citite</span>
                     </button>
                 </div>
                 <NotificationBlock title="Astăzi" highlight items={todayItems} onToggleRead={handleToggleRead} />

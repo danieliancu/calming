@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -701,6 +702,9 @@ class CalmPageController extends Controller
     {
         $activePsychologistId = Auth::guard('psychologist')->id();
         $activePsychologist = null;
+        $page = max(1, (int) request()->integer('page', 1));
+        $perPage = 50;
+        $search = trim((string) request()->query('q', ''));
 
         if ($activePsychologistId) {
             $activePsychologistRow = DB::table('psychologists')
@@ -755,43 +759,182 @@ class CalmPageController extends Controller
                 ->where('is_registered', false)
                 ->orderBy('name')
                 ->get()
-                ->map(fn ($entry) => [
-                    'id' => "import-{$entry->id}",
-                    'recordType' => 'import',
-                    'slug' => null,
-                    'title' => null,
-                    'name' => $entry->name,
-                    'surname' => null,
-                    'supports_online' => false,
-                    'phone' => $entry->phone,
-                    'email' => $entry->professional_email,
-                    'address' => null,
-                    'city' => $entry->city,
-                    'county' => null,
-                    'specialties' => array_values(array_filter([
-                        $entry->specialization,
-                        $entry->specialty_commission,
-                        $entry->professional_grade,
-                    ])),
-                    'validationStatus' => 0,
-                ])
+                ->groupBy(fn ($entry) => trim((string) $entry->name))
+                ->values()
+                ->map(function ($entries) {
+                    $first = $entries->first();
+                    $specialties = $entries
+                        ->pluck('specialization')
+                        ->filter(fn ($value) => filled($value))
+                        ->map(fn ($value) => trim((string) $value))
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    return [
+                        'id' => "import-{$first->id}",
+                        'recordType' => 'import',
+                        'slug' => "import-{$first->id}",
+                        'title' => null,
+                        'name' => $first->name,
+                        'surname' => null,
+                        'supports_online' => false,
+                        'phone' => $entries->pluck('phone')->first(fn ($value) => filled($value)),
+                        'email' => $entries->pluck('professional_email')->first(fn ($value) => filled($value)),
+                        'address' => null,
+                        'city' => $entries->pluck('city')->first(fn ($value) => filled($value)),
+                        'county' => null,
+                        'specialties' => $specialties,
+                        'validationStatus' => 0,
+                    ];
+                })
             : collect();
 
-        return Inertia::render('Psychologists', [
-            'psychologists' => $approvedPsychologists
-                ->concat($importedPsychologists)
-                ->sortBy([
-                    ['validationStatus', 'desc'],
-                    ['surname', 'asc'],
-                    ['name', 'asc'],
+        $psychologists = $approvedPsychologists
+            ->concat($importedPsychologists)
+            ->sortBy([
+                ['validationStatus', 'desc'],
+                ['surname', 'asc'],
+                ['name', 'asc'],
+            ])
+            ->values();
+
+        if ($search !== '') {
+            $normalizedSearch = Str::of($search)
+                ->lower()
+                ->ascii()
+                ->value();
+
+            $psychologists = $psychologists->filter(function ($entry) use ($normalizedSearch) {
+                $haystack = collect([
+                    $entry['title'] ?? null,
+                    $entry['name'] ?? null,
+                    $entry['surname'] ?? null,
+                    ...($entry['specialties'] ?? []),
+                    $entry['address'] ?? null,
+                    $entry['city'] ?? null,
+                    $entry['county'] ?? null,
+                    $entry['email'] ?? null,
+                    ! empty($entry['supports_online']) ? 'online' : null,
                 ])
-                ->values(),
+                    ->filter()
+                    ->implode(' ');
+
+                $normalizedHaystack = Str::of($haystack)
+                    ->lower()
+                    ->ascii()
+                    ->value();
+
+                return str_contains($normalizedHaystack, $normalizedSearch);
+            })->values();
+        }
+
+        $paginatedPsychologists = new LengthAwarePaginator(
+            items: $psychologists->forPage($page, $perPage)->values(),
+            total: $psychologists->count(),
+            perPage: $perPage,
+            currentPage: $page,
+            options: [
+                'path' => route('psychologists'),
+                'query' => request()->query(),
+            ],
+        );
+
+        return Inertia::render('Psychologists', [
+            'psychologists' => $paginatedPsychologists->items(),
+            'pagination' => [
+                'currentPage' => $paginatedPsychologists->currentPage(),
+                'lastPage' => $paginatedPsychologists->lastPage(),
+                'perPage' => $paginatedPsychologists->perPage(),
+                'total' => $paginatedPsychologists->total(),
+                'from' => $paginatedPsychologists->firstItem(),
+                'to' => $paginatedPsychologists->lastItem(),
+                'previousPageUrl' => $paginatedPsychologists->previousPageUrl(),
+                'nextPageUrl' => $paginatedPsychologists->nextPageUrl(),
+            ],
+            'filters' => [
+                'q' => $search,
+            ],
             'activePsychologist' => $activePsychologist,
         ]);
     }
 
     public function psychologistProfile(string $slug): Response|\Illuminate\Http\RedirectResponse
     {
+        if (str_starts_with($slug, 'import-') && Schema::hasTable('psychologist_imports')) {
+            $importId = (int) Str::after($slug, 'import-');
+            $importEntry = DB::table('psychologist_imports')
+                ->where('id', $importId)
+                ->where('is_registered', false)
+                ->first();
+
+            if ($importEntry) {
+                $entries = DB::table('psychologist_imports')
+                    ->where('name', $importEntry->name)
+                    ->where('is_registered', false)
+                    ->get();
+
+                $oldestIssueDate = $entries
+                    ->pluck('license_issue_date')
+                    ->filter(fn ($value) => filled($value))
+                    ->map(fn ($value) => Carbon::parse($value)->startOfDay())
+                    ->sort()
+                    ->first();
+
+                $experienceLabel = $this->formatImportedPsychologistExperience($oldestIssueDate);
+
+                $attestations = $entries
+                    ->map(function ($entry) use ($experienceLabel) {
+                        $issueDate = filled($entry->license_issue_date)
+                            ? Carbon::parse($entry->license_issue_date)
+                            : null;
+
+                        return [
+                            'id' => $entry->id,
+                            'attestationNumber' => trim((string) ($entry->attestation_number ?? '')) ?: null,
+                            'issueDate' => $issueDate?->format('d.m.Y'),
+                            'sortableIssueDate' => $issueDate?->format('Y-m-d'),
+                            'specialization' => $this->sanitizeImportedProfessionalText($entry->specialization),
+                            'professionalGrade' => $this->sanitizeImportedProfessionalText($entry->professional_grade),
+                            'experience' => $experienceLabel,
+                            'practiceRegime' => $this->sanitizeImportedProfessionalText($entry->practice_regime),
+                            'specialtyCommission' => $this->sanitizeImportedProfessionalText($entry->specialty_commission),
+                        ];
+                    })
+                    ->sortBy([
+                        ['sortableIssueDate', 'asc'],
+                        ['attestationNumber', 'asc'],
+                    ])
+                    ->map(function ($attestation) {
+                        unset($attestation['sortableIssueDate']);
+
+                        return $attestation;
+                    })
+                    ->values()
+                    ->all();
+
+                return Inertia::render('PsychologistProfile', [
+                    'psychologist' => [
+                        'id' => "import-{$importEntry->id}",
+                        'slug' => $slug,
+                        'recordType' => 'import',
+                        'title' => null,
+                        'name' => $importEntry->name,
+                        'surname' => null,
+                        'supports_online' => false,
+                        'phone' => $entries->pluck('phone')->first(fn ($value) => filled($value)),
+                        'email' => $entries->pluck('professional_email')->first(fn ($value) => filled($value)),
+                        'rupaCode' => $entries->pluck('rupa_code')->first(fn ($value) => filled($value)),
+                        'address' => null,
+                        'city' => $entries->pluck('city')->first(fn ($value) => filled($value)),
+                        'county' => null,
+                        'attestations' => $attestations,
+                        'details' => [],
+                    ],
+                ]);
+            }
+        }
+
         $psychologist = DB::table('psychologists as p')
             ->leftJoin('psychologists_address as pa', 'pa.psychologist_id', '=', 'p.id')
             ->leftJoin('psychologist_individual_profiles as pip', 'pip.psychologist_id', '=', 'p.id')
@@ -849,6 +992,7 @@ class CalmPageController extends Controller
             'psychologist' => [
                 'id' => $psychologist->id,
                 'slug' => $psychologist->slug,
+                'recordType' => 'psychologist',
                 'title' => $psychologist->title,
                 'name' => $psychologist->name,
                 'surname' => $psychologist->surname,
@@ -1417,6 +1561,57 @@ class CalmPageController extends Controller
         }
 
         return preg_match('/\d/', $normalized) ? null : $normalized;
+    }
+
+    protected function sanitizeImportedProfessionalText(?string $value): ?string
+    {
+        $normalized = trim(preg_replace('/\s+/', ' ', (string) $value));
+
+        return $normalized !== '' ? $normalized : null;
+    }
+
+    protected function formatImportedPsychologistExperience(?Carbon $oldestIssueDate): ?string
+    {
+        if (! $oldestIssueDate) {
+            return null;
+        }
+
+        $today = Carbon::today();
+
+        if ($oldestIssueDate->greaterThan($today)) {
+            return null;
+        }
+
+        $diff = $oldestIssueDate->diff($today);
+
+        if ($diff->y >= 1) {
+            $parts = [
+                $this->formatRomanianCount($diff->y, 'an', 'ani'),
+            ];
+
+            if ($diff->m > 0) {
+                $parts[] = $this->formatRomanianCount($diff->m, 'luna', 'luni');
+            }
+
+            return implode(' ', $parts);
+        }
+
+        $parts = [];
+
+        if ($diff->m > 0) {
+            $parts[] = $this->formatRomanianCount($diff->m, 'luna', 'luni');
+        }
+
+        if ($diff->d > 0 || $parts === []) {
+            $parts[] = $this->formatRomanianCount($diff->d, 'zi', 'zile');
+        }
+
+        return implode(' ', $parts);
+    }
+
+    protected function formatRomanianCount(int $value, string $singular, string $plural): string
+    {
+        return $value.' '.($value === 1 ? $singular : $plural);
     }
 
     protected function legalPages(): array

@@ -2,35 +2,34 @@ import AccentCard from '@/Components/AccentCard';
 import AppLayout from '@/Layouts/AppLayout';
 import SignOutAction from '@/Components/SignOutAction';
 import { Head, Link, router, useRemember } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { FiCheck, FiClock, FiInfo, FiMail, FiMapPin, FiPhone, FiSearch, FiSend } from '@/lib/icons';
 
-export default function Psychologists({ psychologists, activePsychologist }) {
-    const [q, setQ] = useRemember('', 'psychologists.search');
+export default function Psychologists({ psychologists, pagination, filters, activePsychologist }) {
+    const [q, setQ] = useRemember(filters?.q ?? '', 'psychologists.search');
 
-    const list = useMemo(() => {
-        const term = normalize(q);
+    useEffect(() => {
+        setQ(filters?.q ?? '');
+    }, [filters?.q, setQ]);
 
-        if (!term) {
-            return psychologists;
-        }
+    useEffect(() => {
+        const timeoutId = window.setTimeout(() => {
+            const nextQ = (q ?? '').trim();
+            const currentQ = (filters?.q ?? '').trim();
 
-        return psychologists.filter((entry) => {
-            const haystack = normalize([
-                entry.title,
-                entry.name,
-                entry.surname,
-                ...(entry.specialties ?? []),
-                entry.address,
-                entry.city,
-                entry.county,
-                entry.email,
-                entry.supports_online ? 'online' : '',
-            ].filter(Boolean).join(' '));
+            if (nextQ === currentQ) {
+                return;
+            }
 
-            return haystack.includes(term);
-        });
-    }, [psychologists, q]);
+            router.get(route('psychologists'), nextQ ? { q: nextQ } : {}, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 250);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [filters?.q, q]);
 
     return (
         <>
@@ -50,11 +49,11 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 ) : (
                     <AccentCard dismissKey="psychologists-specialist-cta">
                         <div className="section-title">
-                            <FiCheck className="section-icon" /> Reteaua specialistilor Calming
+                            <FiCheck className="section-icon" /> Rețeaua specialiștilor Calming
                         </div>
                         <div className="muted">
-                            Aici apar specialistii verificati deja activi in platforma si profesionistii importati care nu s-au inscris inca. Esti profesionist si vrei sa te alaturi comunitatii?
-                            <Link style={{ paddingLeft: '4px', fontWeight: '800', color: 'var(--primary-600)' }} href="/psychologists/signup">Inscrie-te acum!</Link>
+                            Ești profesionist și vrei să te alături comunității?
+                            <Link style={{ paddingLeft: '4px', fontWeight: '800', color: 'var(--primary-600)' }} href="/psychologists/signup">Înscrie-te acum!</Link>
                         </div>
                     </AccentCard>
                 )}
@@ -65,13 +64,13 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                 <input
                     value={q}
                     onChange={(event) => setQ(event.target.value)}
-                    placeholder="Cauta specialisti, servicii, adrese..."
+                    placeholder="Caută specialiști, servicii, adrese..."
                     className="form-input search-card__input"
                 />
             </section>
 
             <div className="grid psychologists-grid">
-                {list.map((p) => {
+                {psychologists.map((p) => {
                     const displayName = formatPsychologistName(p);
                     const location = formatPsychologistLocation(p);
                     const phoneHref = p.phone ? `tel:${p.phone.replace(/\s+/g, '')}` : null;
@@ -86,11 +85,16 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                     <div className="psychologists-name-row">
                                         <div className="u-text-semibold">{displayName}</div>
                                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: '100%' }}>
-                                            <span className={`badge ${p.validationStatus === 1 ? 'badge-success' : 'badge-muted'}`}>
+                                            <span className={`badge ${p.validationStatus === 1 ? 'badge-success' : p.recordType === 'import' ? 'badge-info' : 'badge-muted'}`}>
                                                 {p.validationStatus === 1 ? (
                                                     <>
                                                         <FiCheck size={14} aria-hidden />
                                                         Specialist verificat
+                                                    </>
+                                                ) : p.recordType === 'import' ? (
+                                                    <>
+                                                        <FiCheck size={14} aria-hidden />
+                                                        Specialist activ
                                                     </>
                                                 ) : (
                                                     <>
@@ -99,6 +103,11 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                                     </>
                                                 )}
                                             </span>
+                                            {p.recordType === 'import' && location ? (
+                                                <span className="psychologists-meta-item psychologists-meta-item--inline">
+                                                    <FiMapPin /> {location}
+                                                </span>
+                                            ) : null}
                                             {p.supports_online ? (
                                                 <span className="badge badge-info">Online</span>
                                             ) : null}
@@ -117,14 +126,14 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                         </div>
                                     ) : null}
                                     <div className="muted psychologists-meta">
-                                        {location ? (
+                                        {location && p.recordType !== 'import' ? (
                                             <span className="psychologists-meta-item">
                                                 <FiMapPin /> {location}
                                             </span>
                                         ) : null}
                                     </div>
                                 </div>
-                                {p.validationStatus === 1 ? (
+                                {p.validationStatus === 1 || p.recordType === 'import' ? (
                                     <div className="psychologists-actions">
                                         {p.slug ? (
                                             <Link className="btn icon-only" href={route('psychologists.show', p.slug)} aria-label={`Detalii despre ${displayName}`}>
@@ -152,21 +161,56 @@ export default function Psychologists({ psychologists, activePsychologist }) {
                                                 <FiMail />
                                             </a>
                                         ) : null}
-                                        <Link className="btn primary" href={p.slug ? `/appointments?psychologist=${p.slug}` : '/psychologists'}>
-                                            Programeaza
-                                        </Link>
+                                        {p.validationStatus === 1 ? (
+                                            <Link className="btn primary" href={p.slug ? `/appointments?psychologist=${p.slug}` : '/psychologists'}>
+                                                Programeaza
+                                            </Link>
+                                        ) : null}
                                     </div>
                                 ) : null}
                             </div>
                         </div>
                     );
                 })}
-                {list.length === 0 ? (
+                {psychologists.length === 0 ? (
                     <div className="card">
                         <div className="muted">Nu am gasit specialisti care sa corespunda cautarii tale.</div>
                     </div>
                 ) : null}
             </div>
+
+            {pagination?.lastPage > 1 ? (
+                <section className="card u-mt-4 psychologists-pagination">
+                    <div className="psychologists-pagination__row">
+                        <div className="muted psychologists-pagination__summary">
+                            Afișare {pagination.from} - {pagination.to} din {pagination.total}
+                        </div>
+                        <div className="psychologists-pagination__controls">
+                            {pagination.previousPageUrl ? (
+                                <Link className="btn psychologists-pagination__button" href={pagination.previousPageUrl}>
+                                    Pagina anterioară
+                                </Link>
+                            ) : (
+                                <span className="btn disabled psychologists-pagination__button" aria-disabled="true">
+                                    Pagina anterioară
+                                </span>
+                            )}
+                            <span className="muted psychologists-pagination__page">
+                                Pagina {pagination.currentPage} din {pagination.lastPage}
+                            </span>
+                            {pagination.nextPageUrl ? (
+                                <Link className="btn psychologists-pagination__button" href={pagination.nextPageUrl}>
+                                    Pagina următoare
+                                </Link>
+                            ) : (
+                                <span className="btn disabled psychologists-pagination__button" aria-disabled="true">
+                                    Pagina următoare
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            ) : null}
         </>
     );
 }
