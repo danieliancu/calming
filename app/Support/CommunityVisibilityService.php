@@ -15,7 +15,7 @@ class CommunityVisibilityService
 
         return $query
             ->leftJoin('community_groups_validation as cgv', 'cgv.group_id', '=', 'community_groups.id')
-            ->where(function ($nested) use ($activePsychologistId) {
+            ->where(function ($nested) use ($activePsychologistId, $activeSuperadminId) {
                 $nested->where('cgv.is_valid', true);
 
                 if ($activePsychologistId > 0) {
