@@ -8,6 +8,12 @@ class NotificationDigestService
 {
     public function defaultGuestNotifications(): array
     {
+        $activeSpecialistsCount = DB::table('psychologist_imports')
+            ->where('is_registered', false)
+            ->select('name')
+            ->distinct()
+            ->count('name');
+
         $cities = DB::table('psychologists_address')
             ->select('city', DB::raw('COUNT(*) as total'))
             ->whereNotNull('city')
@@ -25,8 +31,8 @@ class NotificationDigestService
         return [
             [
                 'id' => 'guest-stats-psychologists',
-                'title' => 'Specialiști validați disponibili',
-                'body' => 'In aplicatie sunt '.DB::table('psychologist_validation_applications')->where('status', 'approved')->count().' psihologi validati.',
+                'title' => 'Specialisti activi disponibili',
+                'body' => 'In aplicatie sunt '.$activeSpecialistsCount.' specialisti activi.',
                 'category' => 'stats',
                 'icon' => 'FiTrendingUp',
                 'icon_color' => 'indigo',
@@ -36,11 +42,11 @@ class NotificationDigestService
                 'relative_time' => 'Acum 4 ore',
                 'is_new' => true,
                 'is_read' => false,
-                'cta' => ['kind' => 'open', 'label' => 'Vezi specialiștii', 'href' => '/psychologists'],
+                'cta' => ['kind' => 'open', 'label' => 'Vezi specialistii', 'href' => '/psychologists'],
             ],
             [
                 'id' => 'guest-stats-city',
-                'title' => 'Oraș bine reprezentat',
+                'title' => 'Oras bine reprezentat',
                 'body' => $cities ? 'Cei mai multi psihologi listati sunt in '.$cities->city.'.' : 'Descopera orasele in care poti gasi sprijin rapid.',
                 'category' => 'stats',
                 'icon' => 'FiMapPin',
@@ -51,7 +57,7 @@ class NotificationDigestService
                 'relative_time' => 'Ieri',
                 'is_new' => false,
                 'is_read' => false,
-                'cta' => ['kind' => 'open', 'label' => 'Explorează specialiștii', 'href' => '/psychologists'],
+                'cta' => ['kind' => 'open', 'label' => 'Exploreaza specialistii', 'href' => '/psychologists'],
             ],
             [
                 'id' => 'guest-stats-category',
