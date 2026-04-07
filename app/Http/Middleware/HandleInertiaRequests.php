@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
         if ($superadminId > 0) {
             $superadmin = DB::table('superadmins')
                 ->where('id', $superadminId)
-                ->first(['id', 'username']);
+                ->first(['id', 'username', 'email']);
         }
 
         return [
@@ -69,6 +69,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $superadmin ? [
                     'id' => $superadmin->id,
                     'username' => $superadmin->username,
+                    'email' => $superadmin->email,
                 ] : null,
             ],
             'preferences' => [

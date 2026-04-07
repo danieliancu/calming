@@ -2,21 +2,19 @@
 
 namespace App\Support;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class NotificationDigestService
 {
     public function defaultGuestNotifications(): array
     {
-        $approvedCount = DB::table('psychologist_validation_applications')
-            ->where('status', 'approved')
-            ->count();
-
-        $uniqueImportedPsychologists = $this->uniqueImportedPsychologists();
-        $activePsychologistsCount = $approvedCount + $uniqueImportedPsychologists->count();
-        $topCity = $this->topPsychologistCity($uniqueImportedPsychologists);
+        $cities = DB::table('psychologists_address')
+            ->select('city', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('city')
+            ->groupBy('city')
+            ->orderByDesc('total')
+            ->limit(1)
+            ->first();
 
         $topCategory = DB::table('article_topics as at')
             ->leftJoin('articles as a', 'a.topic_id', '=', 'at.id')
@@ -27,8 +25,8 @@ class NotificationDigestService
         return [
             [
                 'id' => 'guest-stats-psychologists',
-                'title' => 'Specialisti activi disponibili',
-                'body' => 'In aplicatie sunt '.$activePsychologistsCount.' specialisti activi disponibili.',
+                'title' => 'Specialiști validați disponibili',
+                'body' => 'In aplicatie sunt '.DB::table('psychologist_validation_applications')->where('status', 'approved')->count().' psihologi validati.',
                 'category' => 'stats',
                 'icon' => 'FiTrendingUp',
                 'icon_color' => 'indigo',
@@ -38,12 +36,12 @@ class NotificationDigestService
                 'relative_time' => 'Acum 4 ore',
                 'is_new' => true,
                 'is_read' => false,
-                'cta' => ['kind' => 'open', 'label' => 'Vezi specialistii', 'href' => '/psychologists'],
+                'cta' => ['kind' => 'open', 'label' => 'Vezi specialiștii', 'href' => '/psychologists'],
             ],
             [
                 'id' => 'guest-stats-city',
-                'title' => 'Oras bine reprezentat',
-                'body' => $topCity ? 'Cei mai multi psihologi listati sunt in '.$topCity.'.' : 'Descopera orasele in care poti gasi sprijin rapid.',
+                'title' => 'Oraș bine reprezentat',
+                'body' => $cities ? 'Cei mai multi psihologi listati sunt in '.$cities->city.'.' : 'Descopera orasele in care poti gasi sprijin rapid.',
                 'category' => 'stats',
                 'icon' => 'FiMapPin',
                 'icon_color' => 'sky',
@@ -53,7 +51,7 @@ class NotificationDigestService
                 'relative_time' => 'Ieri',
                 'is_new' => false,
                 'is_read' => false,
-                'cta' => ['kind' => 'open', 'label' => 'Exploreaza specialistii', 'href' => '/psychologists'],
+                'cta' => ['kind' => 'open', 'label' => 'Explorează specialiștii', 'href' => '/psychologists'],
             ],
             [
                 'id' => 'guest-stats-category',
@@ -71,39 +69,5 @@ class NotificationDigestService
                 'cta' => ['kind' => 'open', 'label' => 'Mergi la articole', 'href' => '/learn'],
             ],
         ];
-    }
-
-    protected function uniqueImportedPsychologists(): Collection
-    {
-        if (! Schema::hasTable('psychologist_imports')) {
-            return collect();
-        }
-
-        return DB::table('psychologist_imports')
-            ->where('is_registered', false)
-            ->get(['name', 'city'])
-            ->filter(fn ($row) => filled($row->name))
-            ->groupBy(fn ($row) => trim((string) $row->name))
-            ->map(fn ($rows) => $rows->first())
-            ->values();
-    }
-
-    protected function topPsychologistCity(Collection $uniqueImportedPsychologists): ?string
-    {
-        $approvedCities = DB::table('psychologists as p')
-            ->join('psychologist_validation_applications as pva', 'pva.psychologist_id', '=', 'p.id')
-            ->leftJoin('psychologists_address as pa', 'pa.psychologist_id', '=', 'p.id')
-            ->where('pva.status', 'approved')
-            ->whereNotNull('pa.city')
-            ->pluck('pa.city');
-
-        return $approvedCities
-            ->concat($uniqueImportedPsychologists->pluck('city'))
-            ->filter(fn ($city) => filled($city))
-            ->map(fn ($city) => trim((string) $city))
-            ->countBy()
-            ->sortDesc()
-            ->keys()
-            ->first();
     }
 }

@@ -15,6 +15,7 @@
 
         @if ($dashboardUrl)
             <p style="margin-top: 24px;">
+            <p style="margin-top: 24px;">
                 <a href="{{ $dashboardUrl }}" style="display: inline-block; padding: 10px 16px; background: #2f6db3; color: #ffffff; text-decoration: none; border-radius: 8px;">
                     Deschide dashboard-ul
                 </a>

@@ -13,6 +13,7 @@ return new class extends Migration
         Schema::create('superadmins', function (Blueprint $table) {
             $table->id();
             $table->string('username', 80)->unique();
+            $table->string('email', 190)->unique();
             $table->string('password_hash', 255);
             $table->dateTime('created_at')->useCurrent();
             $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();
@@ -20,6 +21,7 @@ return new class extends Migration
 
         DB::table('superadmins')->insert([
             'username' => 'admin',
+            'email' => 'admin@calming.test',
             'password_hash' => Hash::make('admin'),
             'created_at' => now(),
             'updated_at' => now(),

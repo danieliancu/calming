@@ -67,6 +67,7 @@ export default function SuperadminDashboard({
     const [notificationModal, setNotificationModal] = useState({ open: false, template: null });
     const profileForm = useForm({
         username: superadmin?.username ?? '',
+        email: superadmin?.email ?? '',
         current_password: '',
         password: '',
         password_confirmation: '',
@@ -891,6 +892,10 @@ export default function SuperadminDashboard({
                                 <label>
                                     <span>Username</span>
                                     <input value={profileForm.data.username} onChange={(event) => profileForm.setData('username', event.target.value)} required />
+                                </label>
+                                <label>
+                                    <span>Email</span>
+                                    <input type="email" value={profileForm.data.email} onChange={(event) => profileForm.setData('email', event.target.value)} required />
                                 </label>
                                 <label>
                                     <span>Parola curenta</span>

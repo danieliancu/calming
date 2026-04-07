@@ -166,6 +166,7 @@ function createSuperadminSessionUser(): int
 {
     return DB::table('superadmins')->insertGetId([
         'username' => 'superadmin-test',
+        'email' => 'superadmin-test@calming.test',
         'password_hash' => bcrypt('Password123!'),
         'created_at' => now(),
         'updated_at' => now(),

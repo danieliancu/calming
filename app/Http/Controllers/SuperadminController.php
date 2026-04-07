@@ -423,6 +423,7 @@ class SuperadminController extends Controller
             'superadmin' => [
                 'id' => $superadmin->id,
                 'username' => $superadmin->username,
+                'email' => $superadmin->email,
             ],
             'stats' => $stats,
             'validationApplications' => $validationApplications,
@@ -622,6 +623,7 @@ class SuperadminController extends Controller
 
         $validated = $request->validate([
             'username' => ['required', 'string', 'max:80', 'unique:superadmins,username,'.$superadmin->id],
+            'email' => ['required', 'string', 'email:rfc', 'max:190', 'unique:superadmins,email,'.$superadmin->id],
             'current_password' => ['required', 'string'],
             'password' => ['nullable', 'confirmed', Password::min(6)],
         ]);
@@ -634,6 +636,7 @@ class SuperadminController extends Controller
 
         $payload = [
             'username' => $validated['username'],
+            'email' => $validated['email'],
             'updated_at' => now(),
         ];
 
