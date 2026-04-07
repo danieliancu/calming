@@ -174,9 +174,10 @@ class CalmPageController extends Controller
         }
 
         $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
+        $activeSuperadminId = $this->activeSuperadminId($request);
         $groups = $this->communityVisibility
-            ->applyVisibleToPublicScope(DB::table('community_groups'), $activePsychologistId)
-            ->select('community_groups.id', 'community_groups.slug', 'community_groups.name', 'community_groups.is_private', 'community_groups.author')
+            ->applyVisibleToPublicScope(DB::table('community_groups'), $activePsychologistId, $activeSuperadminId)
+            ->select('community_groups.id', 'community_groups.slug', 'community_groups.name', 'community_groups.is_private', 'community_groups.author', 'community_groups.fallback_superadmin_id')
             ->get();
         $invitationCounts = DB::table('community_group_invitations')
             ->select('group_id', DB::raw('COUNT(*) as total'))
@@ -228,8 +229,8 @@ class CalmPageController extends Controller
                     'lastCommentPreview' => $groupStats[$group->id]['lastCommentPreview'] ?? null,
                     'lastMessageAt' => $groupStats[$group->id]['lastMessageAt']?->toIso8601String(),
                     'is_private' => (bool) $group->is_private,
-                    'canAccessConversations' => $this->canAccessCommunityGroupConversations($request, $group->id, (bool) $group->is_private, (int) ($group->author ?? 0)),
-                    'isModerator' => $activePsychologistId > 0 && $activePsychologistId === (int) ($group->author ?? 0),
+                    'canAccessConversations' => $this->canAccessCommunityGroupConversations($request, $group->id, (bool) $group->is_private, (int) ($group->author ?? 0), (int) ($group->fallback_superadmin_id ?? 0)),
+                    'isModerator' => $this->isCommunityModerator((int) ($group->author ?? 0), (int) ($group->fallback_superadmin_id ?? 0), $activePsychologistId, $activeSuperadminId),
                 ])
                 ->sortByDesc(fn ($group) => $group['lastMessageAt'] ?? '')
                 ->values(),
@@ -241,12 +242,13 @@ class CalmPageController extends Controller
         $group = $this->communityGroupPayload($groupSlug);
         abort_unless($group, 404);
         $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
+        $activeSuperadminId = $this->activeSuperadminId($request);
 
         return Inertia::render('CommunityGroup', [
             'group' => [
                 ...$group,
-                'canAccessConversations' => $this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null),
-                'isModerator' => $activePsychologistId > 0 && $activePsychologistId === (int) ($group['authorId'] ?? 0),
+                'canAccessConversations' => $this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null, $group['fallbackSuperadminId'] ?? null),
+                'isModerator' => $this->isCommunityModerator((int) ($group['authorId'] ?? 0), (int) ($group['fallbackSuperadminId'] ?? 0), $activePsychologistId, $activeSuperadminId),
             ],
         ]);
     }
@@ -257,8 +259,9 @@ class CalmPageController extends Controller
         abort_unless($group, 404);
 
         $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
-        $isModerator = $activePsychologistId > 0 && $activePsychologistId === (int) ($group['authorId'] ?? 0);
-        $canAccess = $this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null);
+        $activeSuperadminId = $this->activeSuperadminId($request);
+        $isModerator = $this->isCommunityModerator((int) ($group['authorId'] ?? 0), (int) ($group['fallbackSuperadminId'] ?? 0), $activePsychologistId, $activeSuperadminId);
+        $canAccess = $this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null, $group['fallbackSuperadminId'] ?? null);
 
         return Inertia::render('CommunityConversations', [
             'group' => [
@@ -275,11 +278,12 @@ class CalmPageController extends Controller
         abort_unless($group, 404);
 
         $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
-        $isModerator = $activePsychologistId > 0 && $activePsychologistId === (int) ($group['authorId'] ?? 0);
+        $activeSuperadminId = $this->activeSuperadminId($request);
+        $isModerator = $this->isCommunityModerator((int) ($group['authorId'] ?? 0), (int) ($group['fallbackSuperadminId'] ?? 0), $activePsychologistId, $activeSuperadminId);
         $user = $request->user();
 
         abort_unless($user || $isModerator, 401);
-        abort_unless($this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null), 403);
+        abort_unless($this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null, $group['fallbackSuperadminId'] ?? null), 403);
 
         $validated = $request->validate([
             'text' => ['required', 'string', 'max:3000'],
@@ -302,10 +306,9 @@ class CalmPageController extends Controller
         }
 
         if ($isModerator) {
-            $psychologist = DB::table('psychologists')
-                ->where('id', $activePsychologistId)
-                ->first(['title', 'name', 'surname']);
-            $sender = trim(collect([$psychologist?->title, $psychologist?->name, $psychologist?->surname])->filter()->implode(' ')) ?: ($group['facilitator'] ?? 'Moderator');
+            $sender = $activePsychologistId > 0
+                ? $this->communityFacilitatorName($activePsychologistId, null)
+                : $this->communityFacilitatorName(null, $activeSuperadminId);
             $role = 'facilitator';
         } else {
             $sender = trim(($user->first_name ? $user->first_name.' ' : '').($user->last_name ?: '')) ?: $user->name;
@@ -372,11 +375,12 @@ class CalmPageController extends Controller
         abort_unless($group, 404);
 
         $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
-        $isModerator = $activePsychologistId > 0 && $activePsychologistId === (int) ($group['authorId'] ?? 0);
+        $activeSuperadminId = $this->activeSuperadminId($request);
+        $isModerator = $this->isCommunityModerator((int) ($group['authorId'] ?? 0), (int) ($group['fallbackSuperadminId'] ?? 0), $activePsychologistId, $activeSuperadminId);
         $user = $request->user();
 
         abort_unless($user || $isModerator, 401);
-        abort_unless($this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null), 403);
+        abort_unless($this->canAccessCommunityGroupConversations($request, $group['id'], $group['isPrivate'], $group['authorId'] ?? null, $group['fallbackSuperadminId'] ?? null), 403);
 
         return response()->json([
             'dialogues' => $group['dialogues'] ?? [],
@@ -1286,7 +1290,8 @@ class CalmPageController extends Controller
         }
 
         $activePsychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
-        if (! $this->communityVisibility->isVisibleToViewer($group, $activePsychologistId)) {
+        $activeSuperadminId = $this->activeSuperadminId(request());
+        if (! $this->communityVisibility->isVisibleToViewer($group, $activePsychologistId, $activeSuperadminId)) {
             return null;
         }
 
@@ -1314,11 +1319,15 @@ class CalmPageController extends Controller
                 ->pluck('total', 'group_id')
         );
         $lastMessageAt = $this->communityMessageDateTime($lastMessage?->stamp, $lastMessage?->time);
-        $facilitatorName = $this->communityFacilitatorName((int) ($group->author ?? 0));
+        $facilitatorName = $this->communityFacilitatorName(
+            (int) ($group->author ?? 0),
+            (int) ($group->fallback_superadmin_id ?? 0),
+        );
 
         $payload = [
             'id' => $group->id,
             'authorId' => $group->author,
+            'fallbackSuperadminId' => $group->fallback_superadmin_id,
             'slug' => $group->slug ?? str($group->name)->slug()->toString(),
             'name' => $group->name,
             'description' => $group->description,
@@ -1372,17 +1381,28 @@ class CalmPageController extends Controller
         ];
     }
 
-    protected function communityFacilitatorName(int $psychologistId): string
+    protected function communityFacilitatorName(?int $psychologistId, ?int $fallbackSuperadminId = null): string
     {
-        if ($psychologistId <= 0) {
-            return 'Specialist Calming';
+        if (($psychologistId ?? 0) > 0) {
+            $psychologist = DB::table('psychologists')
+                ->where('id', $psychologistId)
+                ->first(['title', 'name', 'surname']);
+
+            $name = trim(collect([$psychologist?->title, $psychologist?->name, $psychologist?->surname])->filter()->implode(' '));
+            if ($name !== '') {
+                return $name;
+            }
         }
 
-        $psychologist = DB::table('psychologists')
-            ->where('id', $psychologistId)
-            ->first(['title', 'name', 'surname']);
+        if (($fallbackSuperadminId ?? 0) > 0) {
+            $superadmin = DB::table('superadmins')
+                ->where('id', $fallbackSuperadminId)
+                ->first(['username', 'email']);
 
-        return trim(collect([$psychologist?->title, $psychologist?->name, $psychologist?->surname])->filter()->implode(' ')) ?: 'Specialist Calming';
+            return $superadmin?->username ?: $superadmin?->email ?: 'Superadmin Calming';
+        }
+
+        return 'Specialist Calming';
     }
 
     protected function communityRoleLabel(?string $role): ?string
@@ -1396,10 +1416,15 @@ class CalmPageController extends Controller
         };
     }
 
-    protected function canAccessCommunityGroupConversations(Request $request, int $groupId, bool $isPrivate, ?int $groupAuthorId = null): bool
+    protected function canAccessCommunityGroupConversations(Request $request, int $groupId, bool $isPrivate, ?int $groupAuthorId = null, ?int $fallbackSuperadminId = null): bool
     {
         $psychologistId = (int) (Auth::guard('psychologist')->id() ?? 0);
         if ($psychologistId > 0 && $groupAuthorId && $psychologistId === $groupAuthorId) {
+            return true;
+        }
+
+        $superadminId = $this->activeSuperadminId($request);
+        if ($superadminId > 0 && $fallbackSuperadminId && $superadminId === $fallbackSuperadminId) {
             return true;
         }
 
@@ -1417,6 +1442,26 @@ class CalmPageController extends Controller
             ->where('group_id', $groupId)
             ->where('user_id', $user->id)
             ->exists();
+    }
+
+    protected function activeSuperadminId(Request $request): int
+    {
+        $superadminId = (int) $request->session()->get('superadmin_id');
+
+        if ($superadminId <= 0) {
+            return 0;
+        }
+
+        return DB::table('superadmins')->where('id', $superadminId)->exists() ? $superadminId : 0;
+    }
+
+    protected function isCommunityModerator(int $groupAuthorId, int $fallbackSuperadminId, int $activePsychologistId, int $activeSuperadminId): bool
+    {
+        if ($activePsychologistId > 0 && $groupAuthorId > 0 && $activePsychologistId === $groupAuthorId) {
+            return true;
+        }
+
+        return $activeSuperadminId > 0 && $fallbackSuperadminId > 0 && $activeSuperadminId === $fallbackSuperadminId;
     }
 
     protected function communityDialogueStamp(\DateTimeInterface $date): string

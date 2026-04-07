@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 import { FiArrowLeft, FiArrowRight, FiCalendar, FiClock, FiLock, FiShield, FiUserCheck, FiUsers } from '@/lib/icons';
 
 export default function CommunityGroup({ group }) {
-    const { isAuthenticated, isPsychAuthenticated, authResolved, promptAuth } = useAuth();
+    const { isAuthenticated, isPsychAuthenticated, isSuperAuthenticated, authResolved, promptAuth } = useAuth();
     const [showPrivateNotice, setShowPrivateNotice] = useState(false);
 
     const handleConversationsNav = useCallback((event) => {
@@ -21,14 +21,14 @@ export default function CommunityGroup({ group }) {
             return;
         }
 
-        if (!isAuthenticated && !isPsychAuthenticated) {
+        if (!isAuthenticated && !isPsychAuthenticated && !isSuperAuthenticated) {
             event.preventDefault();
             promptAuth();
             return;
         }
 
         router.visit(`/community/${group.slug}/conversatii`);
-    }, [authResolved, group, isAuthenticated, isPsychAuthenticated, promptAuth]);
+    }, [authResolved, group, isAuthenticated, isPsychAuthenticated, isSuperAuthenticated, promptAuth]);
 
     if (!group) {
         return null;

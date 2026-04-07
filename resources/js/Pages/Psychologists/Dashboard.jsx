@@ -1,5 +1,4 @@
 ﻿import AppLayout from '@/Layouts/AppLayout';
-import SignOutAction from '@/Components/SignOutAction';
 import AccentCard from '@/Components/AccentCard';
 import { DEFAULT_PSYCH_DASHBOARD_SECTION, normalizePsychDashboardSection, PSYCH_DASHBOARD_MENU_ITEMS } from '@/data/psychDashboardNav';
 import { apiFetch } from '@/lib/http';
@@ -64,6 +63,7 @@ export default function PsychologistDashboard({
     const search = new URLSearchParams(page.url.split('?')[1] ?? '');
     const activeMenu = normalizePsychDashboardSection(search.get('section'));
     const signoutForm = useForm({});
+    const deleteAccountForm = useForm({});
     const validationForm = useForm(buildValidationFormData(initialValidationDraft));
     const displayName = [initialProfile.title, initialProfile.name, initialProfile.surname].filter(Boolean).join(' ');
     const isValidated = Number(initialValidationStatus) === 1;
@@ -79,6 +79,7 @@ export default function PsychologistDashboard({
     const [selectedSpecificDate, setSelectedSpecificDate] = useState(initialSpecificDate);
     const [copyMenuWeekday, setCopyMenuWeekday] = useState(null);
     const [copyTargets, setCopyTargets] = useState({});
+    const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
 
     const gradeCodeById = Object.fromEntries(validationCatalog.grades.map((item) => [String(item.id), item.code]));
     const roleIdByNormalizedLabel = Object.fromEntries(validationCatalog.roles.map((item) => [item.label.toLowerCase(), item.id]));
@@ -455,7 +456,22 @@ export default function PsychologistDashboard({
                             <span className="icon-shell"><FiExternalLink size={18} /></span>
                             <span>Website</span>
                         </Link>
-                        <SignOutAction className="psych-menu__link settings-signout-card" onClick={() => signoutForm.post(route('psychologists.signout'))} />
+                        <button
+                            type="button"
+                            className="psych-menu__link settings-signout-card"
+                            style={{ background: '#facc15', color: '#422006', borderColor: '#eab308' }}
+                            onClick={() => signoutForm.post(route('psychologists.signout'))}
+                        >
+                            <span>Iesire cont</span>
+                        </button>
+                        <button
+                            type="button"
+                            className="psych-menu__link settings-signout-card"
+                            style={{ background: '#dc2626', color: '#fff', borderColor: '#b91c1c' }}
+                            onClick={() => setDeleteAccountOpen(true)}
+                        >
+                            <span>Stergere cont</span>
+                        </button>
                     </aside>
 
                     <div className="psych-content">
@@ -1247,6 +1263,39 @@ export default function PsychologistDashboard({
                     </div>
                 </div>
             </div>
+            {deleteAccountOpen ? (
+                <div className="modal-root" role="dialog" aria-modal="true" aria-label="Stergere cont specialist">
+                    <div className="modal-backdrop" onClick={() => !deleteAccountForm.processing && setDeleteAccountOpen(false)} />
+                    <div className="modal-center">
+                        <section className="card psych-card superadmin-modal">
+                            <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <h2 className="u-m-0">Esti sigur ca vrei sa renunti la cont?</h2>
+                                </div>
+                                <button type="button" className="close" aria-label="Inchide" onClick={() => setDeleteAccountOpen(false)} disabled={deleteAccountForm.processing}>
+                                    <FiX />
+                                </button>
+                            </div>
+                            <p className="muted u-mt-3">
+                                Aceasta actiune iti va elmina datele personale din lista de psihologi verificati.
+                            </p>
+                            <div className="validation-actions u-mt-4">
+                                <button className="btn" type="button" onClick={() => setDeleteAccountOpen(false)} disabled={deleteAccountForm.processing}>
+                                    Inchide
+                                </button>
+                                <button
+                                    className="btn danger"
+                                    type="button"
+                                    disabled={deleteAccountForm.processing}
+                                    onClick={() => deleteAccountForm.delete(route('psychologists.account.destroy'))}
+                                >
+                                    {deleteAccountForm.processing ? 'Se sterge...' : 'Stergere cont'}
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            ) : null}
         </>
     );
 }

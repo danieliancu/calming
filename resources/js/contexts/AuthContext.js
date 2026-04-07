@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 
 export const AuthContext = createContext({
     isAuthenticated: false,
+    isSuperAuthenticated: false,
     authResolved: false,
     userId: null,
     userInitials: null,

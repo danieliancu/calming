@@ -7,7 +7,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { FiChevronRight, FiLock, FiMessageSquare, FiSearch, FiShield, FiUsers } from '@/lib/icons';
 
 export default function Community({ groups }) {
-    const { isAuthenticated, isPsychAuthenticated, promptAuth } = useAuth();
+    const { isAuthenticated, isPsychAuthenticated, isSuperAuthenticated, promptAuth } = useAuth();
     const [q, setQ] = useState('');
     const [privateGroup, setPrivateGroup] = useState(null);
 
@@ -26,13 +26,13 @@ export default function Community({ groups }) {
             return;
         }
 
-        if (!isAuthenticated && !isPsychAuthenticated) {
+        if (!isAuthenticated && !isPsychAuthenticated && !isSuperAuthenticated) {
             promptAuth();
             return;
         }
 
         router.visit(`/community/${group.slug}`);
-    }, [isAuthenticated, isPsychAuthenticated, promptAuth]);
+    }, [isAuthenticated, isPsychAuthenticated, isSuperAuthenticated, promptAuth]);
 
     const handleKeyDown = useCallback((event, group) => {
         if (event.key !== 'Enter' && event.key !== ' ') {

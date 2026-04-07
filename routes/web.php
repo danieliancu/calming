@@ -35,6 +35,7 @@ Route::get('/psychologists/mfa', [PsychologistController::class, 'mfaChallengePa
 Route::post('/psychologists/mfa', [PsychologistController::class, 'verifyMfaChallenge'])->name('psychologists.mfa.verify');
 Route::post('/psychologists/mfa/resend', [PsychologistController::class, 'resendMfaChallenge'])->name('psychologists.mfa.resend');
 Route::post('/psychologists/signout', [PsychologistController::class, 'signout'])->name('psychologists.signout');
+Route::delete('/psychologists/account', [PsychologistController::class, 'destroyAccount'])->name('psychologists.account.destroy');
 Route::get('/psychologists/dashboard', [PsychologistController::class, 'dashboard'])->name('psychologists.dashboard');
 Route::post('/psychologists/dashboard/validation', [PsychologistController::class, 'updateValidation'])->name('psychologists.validation.update');
 Route::delete('/psychologists/dashboard/validation/messages/{messageId}', [PsychologistController::class, 'destroyValidationMessage'])->name('psychologists.validation.messages.destroy');

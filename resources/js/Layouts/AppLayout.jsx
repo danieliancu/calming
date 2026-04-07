@@ -15,6 +15,7 @@ export default function AppLayout({ children }) {
     const { url } = page;
     const sharedAuthUser = page.props.auth?.user ?? null;
     const sharedPsychUser = page.props.psychAuth?.user ?? null;
+    const sharedSuperUser = page.props.superAuth?.user ?? null;
     const notificationsEnabled = Boolean(page.props.preferences?.notifications_enabled ?? true);
     const currentPath = useMemo(() => url.split('?')[0], [url]);
     const search = useMemo(() => new URLSearchParams(url.split('?')[1] ?? ''), [url]);
@@ -42,6 +43,7 @@ export default function AppLayout({ children }) {
     const [guestNotificationCount, setGuestNotificationCount] = useState(0);
     const isAuthenticated = typeof authUser.id === 'number' && authUser.id > 0;
     const isPsychAuthenticated = typeof sharedPsychUser?.id === 'number' && sharedPsychUser.id > 0;
+    const isSuperAuthenticated = typeof sharedSuperUser?.id === 'number' && sharedSuperUser.id > 0;
     const specialistFirstName = useMemo(() => {
         const source = sharedPsychUser?.first_name ?? sharedPsychUser?.name ?? '';
         const trimmed = String(source).trim();
@@ -354,6 +356,7 @@ export default function AppLayout({ children }) {
     const authContextValue = useMemo(
         () => ({
             isAuthenticated,
+            isSuperAuthenticated,
             isPsychAuthenticated,
             authResolved,
             userId: authUser.id,
@@ -367,7 +370,7 @@ export default function AppLayout({ children }) {
             signOut,
             refreshAuth: refreshAuthStatus,
         }),
-        [authResolved, authUser, isAuthenticated, isPsychAuthenticated, promptAuth, refreshAuthStatus, sharedPsychUser?.id, sharedPsychUser?.name, signOut],
+        [authResolved, authUser, isAuthenticated, isPsychAuthenticated, isSuperAuthenticated, promptAuth, refreshAuthStatus, sharedPsychUser?.id, sharedPsychUser?.name, signOut],
     );
 
     const toastContextValue = useMemo(

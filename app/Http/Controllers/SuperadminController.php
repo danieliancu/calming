@@ -843,14 +843,18 @@ class SuperadminController extends Controller
 
         abort_unless($psychologist, 404);
 
-        DB::transaction(function () use ($psychologistId) {
+        DB::transaction(function () use ($psychologistId, $superadmin) {
             $groupIds = DB::table('community_groups')
                 ->where('author', $psychologistId)
                 ->pluck('id');
 
             if ($groupIds->isNotEmpty()) {
-                DB::table('community_group_invitations')->whereIn('group_id', $groupIds)->delete();
-                DB::table('community_groups_validation')->whereIn('group_id', $groupIds)->delete();
+                DB::table('community_groups')
+                    ->whereIn('id', $groupIds)
+                    ->update([
+                        'author' => null,
+                        'fallback_superadmin_id' => $superadmin->id,
+                    ]);
             }
 
             DB::table('psychologists')->where('id', $psychologistId)->delete();
@@ -858,7 +862,7 @@ class SuperadminController extends Controller
 
         $displayName = trim(implode(' ', array_filter([$psychologist->name, $psychologist->surname]))) ?: $psychologist->email;
 
-        return back()->with('status', "Contul specialistului {$displayName} a fost șters.");
+        return back()->with('status', "Contul specialistului {$displayName} a fost șters, iar grupurile lui au fost transferate catre superadmin.");
     }
 
     public function approveArticle(Request $request, int $articleId): RedirectResponse

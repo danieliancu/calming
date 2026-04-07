@@ -293,6 +293,29 @@ class PsychologistController extends Controller
         return redirect()->route('psychologists.signin');
     }
 
+    public function destroyAccount(Request $request): RedirectResponse
+    {
+        $psychologist = $this->requirePsychologistSession($request);
+
+        if ($psychologist instanceof RedirectResponse) {
+            return $psychologist;
+        }
+
+        DB::table('psychologists')->where('id', $psychologist->id)->delete();
+
+        Auth::guard('psychologist')->logout();
+        $request->session()->forget([
+            'psychologist_mfa_confirmed_at',
+            'pending_psychologist_id',
+            'pending_psychologist_mfa_purpose',
+            'pending_psychologist_intended_url',
+        ]);
+
+        return redirect()
+            ->route('psychologists.signin')
+            ->with('status', 'Contul de specialist a fost sters.');
+    }
+
     public function dashboard(Request $request): Response|RedirectResponse
     {
         $row = $this->requirePsychologistSession($request);

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 class CommunityVisibilityService
 {
-    public function applyVisibleToPublicScope(Builder $query, ?int $activePsychologistId = null): Builder
+    public function applyVisibleToPublicScope(Builder $query, ?int $activePsychologistId = null, ?int $activeSuperadminId = null): Builder
     {
         if (! Schema::hasTable('community_groups_validation')) {
             return $query;
@@ -20,6 +20,10 @@ class CommunityVisibilityService
 
                 if ($activePsychologistId > 0) {
                     $nested->orWhere('community_groups.author', $activePsychologistId);
+                }
+
+                if ($activeSuperadminId > 0) {
+                    $nested->orWhere('community_groups.fallback_superadmin_id', $activeSuperadminId);
                 }
             });
     }
@@ -38,7 +42,7 @@ class CommunityVisibilityService
             });
     }
 
-    public function isVisibleToViewer(object $group, ?int $activePsychologistId = null): bool
+    public function isVisibleToViewer(object $group, ?int $activePsychologistId = null, ?int $activeSuperadminId = null): bool
     {
         if (! Schema::hasTable('community_groups_validation')) {
             return true;
@@ -52,6 +56,10 @@ class CommunityVisibilityService
             return true;
         }
 
-        return $activePsychologistId > 0 && $activePsychologistId === (int) ($group->author ?? 0);
+        if ($activePsychologistId > 0 && $activePsychologistId === (int) ($group->author ?? 0)) {
+            return true;
+        }
+
+        return $activeSuperadminId > 0 && $activeSuperadminId === (int) ($group->fallback_superadmin_id ?? 0);
     }
 }

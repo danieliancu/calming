@@ -6,7 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { FiArrowLeft, FiLock, FiReply, FiSend } from '@/lib/icons';
 
 export default function CommunityConversations({ group }) {
-    const { isAuthenticated, isPsychAuthenticated, authResolved, promptAuth } = useAuth();
+    const { isAuthenticated, isPsychAuthenticated, isSuperAuthenticated, authResolved, promptAuth } = useAuth();
     const [speakerFilter, setSpeakerFilter] = useState(null);
     const [replyTarget, setReplyTarget] = useState(null);
     const [dialogues, setDialogues] = useState(group?.dialogues ?? []);
@@ -30,10 +30,10 @@ export default function CommunityConversations({ group }) {
             return;
         }
 
-        if (group && !group.isPrivate && !isAuthenticated && !isPsychAuthenticated) {
+        if (group && !group.isPrivate && !isAuthenticated && !isPsychAuthenticated && !isSuperAuthenticated) {
             promptAuth();
         }
-    }, [authResolved, group, isAuthenticated, isPsychAuthenticated, promptAuth]);
+    }, [authResolved, group, isAuthenticated, isPsychAuthenticated, isSuperAuthenticated, promptAuth]);
 
     const scrollToLatestMessage = useCallback((behavior = 'smooth') => {
         const bottomAnchor = bottomAnchorRef.current;
@@ -57,7 +57,7 @@ export default function CommunityConversations({ group }) {
     }, [scrollToLatestMessage]);
 
     useEffect(() => {
-        if (!group?.slug || (!isAuthenticated && !isPsychAuthenticated)) {
+        if (!group?.slug || (!isAuthenticated && !isPsychAuthenticated && !isSuperAuthenticated)) {
             return undefined;
         }
 
@@ -90,7 +90,7 @@ export default function CommunityConversations({ group }) {
             active = false;
             window.clearInterval(intervalId);
         };
-    }, [group?.slug, isAuthenticated, isPsychAuthenticated]);
+    }, [group?.slug, isAuthenticated, isPsychAuthenticated, isSuperAuthenticated]);
 
     const toggleSpeaker = useCallback((speaker) => {
         setSpeakerFilter((current) => (current === speaker ? null : speaker));

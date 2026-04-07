@@ -116,6 +116,53 @@ it('enforces public and private access rules for community conversations', funct
         ->assertJsonCount(1, 'dialogues');
 });
 
+it('allows fallback superadmin moderators to access private group conversations after psychologist deletion', function () {
+    $author = createCommunityPsychologist('moderator-transfer');
+    $privateGroupId = createCommunityGroup($author->id, 'grup-transferat', true);
+    $superadminId = DB::table('superadmins')->insertGetId([
+        'username' => 'moderator-superadmin',
+        'email' => 'moderator-superadmin@example.test',
+        'password_hash' => bcrypt('Password123!'),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('community_groups')
+        ->where('id', $privateGroupId)
+        ->update([
+            'author' => null,
+            'fallback_superadmin_id' => $superadminId,
+        ]);
+
+    DB::table('community_groups_validation')->insert([
+        'group_id' => $privateGroupId,
+        'is_valid' => true,
+        'validated_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $dialogueId = DB::table('community_dialogues')->insertGetId([
+        'group_id' => $privateGroupId,
+        'stamp' => 'Miercuri, 3 martie 2026',
+        'sort_order' => 1,
+    ]);
+
+    DB::table('community_dialogue_messages')->insert([
+        'dialogue_id' => $dialogueId,
+        'sender' => 'Moderator transferat',
+        'role' => 'facilitator',
+        'time' => '12:00',
+        'text' => 'Salut din fallback',
+        'sort_order' => 1,
+    ]);
+
+    $this->withSession(['superadmin_id' => $superadminId])
+        ->get(route('community.group.conversations.messages.index', 'grup-transferat'))
+        ->assertOk()
+        ->assertJsonCount(1, 'dialogues');
+});
+
 function createCommunityPsychologist(string $slug): Psychologist
 {
     $id = DB::table('psychologists')->insertGetId([
